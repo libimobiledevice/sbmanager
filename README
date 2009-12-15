@@ -1,0 +1,11 @@
+sbmanager
+---------
+
+This tool allows to manage the SpringBoard icons for iPhone/iPod Touch devices
+having a firmware 3.1+.
+
+Note that it is not yet complete, the managing itself does not yet work. For
+now, it just displays the current icon state.
+
+README updated on:
+	2009-12-15
