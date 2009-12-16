@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../data/data.h"
 
-#define ITEM_FONT "Sans Bold 7"
+#define ITEM_FONT "FreeSans Bold 10px"
 
 typedef struct {
     GtkWidget *window;
@@ -49,7 +49,7 @@ typedef struct {
 
 ClutterActor *stage = NULL;
 ClutterActor *clock_label = NULL;
-ClutterColor text_color = {255, 255, 255, 255};
+ClutterColor text_color = {255, 255, 255, 210};
 
 GMutex *selected_mutex = NULL;
 ClutterActor *selected = NULL;
@@ -319,7 +319,7 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
 	    if (children) {
 		ClutterActor *icon = g_list_nth_data(children, 0);
 		ClutterActor *label = g_list_nth_data(children, 1);
-		clutter_actor_set_y(label, clutter_actor_get_y(icon) + 69.0);
+		clutter_actor_set_y(label, clutter_actor_get_y(icon) + 67.0);
 		g_list_free(children);
 	    }
 	}
@@ -360,7 +360,7 @@ static void redraw_icons(SBManagerApp *app)
 		g_signal_connect(actor, "button-release-event", G_CALLBACK (item_button_release), item);
 		clutter_actor_show(actor);
 		actor = item->label;
-		clutter_actor_set_position(actor, xpos+(59.0 - clutter_actor_get_width(actor))/2, ypos+69.0);
+		clutter_actor_set_position(actor, xpos+(59.0 - clutter_actor_get_width(actor))/2, ypos+67.0);
 		clutter_actor_show(actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(stage), grp);
@@ -524,7 +524,7 @@ int main(int argc, char **argv)
     }
 
     /* clock widget */
-    actor = clutter_text_new_full ("Sans Bold 9", "00:00\nblah", &text_color);
+    actor = clutter_text_new_full ("FreeSans Bold 12px", "00:00", &text_color);
     gint xpos = (clutter_actor_get_width(stage)-clutter_actor_get_width(actor))/2;
     clutter_actor_set_position(actor, xpos, 2);
     clutter_actor_show(actor);
