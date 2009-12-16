@@ -32,6 +32,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <clutter-gtk/clutter-gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+#include "../data/data.h"
+
 #define ITEM_FONT "Sans Bold 7"
 
 typedef struct {
@@ -509,16 +511,16 @@ int main(int argc, char **argv)
 
     /* dock background */
     GError *err = NULL;
-    actor = clutter_texture_new_from_file("./dock.png", &err);
+    actor = clutter_texture_new_from_file(BGPIC, &err);
     if (err) {
 	g_error_free(err);
     }
     if (actor) {
-	clutter_actor_set_position(actor, 0, clutter_actor_get_height(stage) - clutter_actor_get_height(actor));
+	clutter_actor_set_position(actor, 0, 0);
 	clutter_actor_show(actor);
 	clutter_group_add (CLUTTER_GROUP(stage), actor);
     } else {
-	fprintf(stderr, "could not load dock.png\n");
+	fprintf(stderr, "could not load background.png\n");
     }
 
     /* clock widget */

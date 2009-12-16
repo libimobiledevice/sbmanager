@@ -31,3 +31,4 @@ libtool
 stamp-h1
 src/.libs
 src/sbmanager
+data/data.h
