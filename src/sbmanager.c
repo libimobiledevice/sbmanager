@@ -53,6 +53,7 @@ typedef struct {
 } SBItem;
 
 ClutterActor *stage = NULL;
+ClutterActor *thedock = NULL;
 ClutterActor *clock_label = NULL;
 
 GMutex *selected_mutex = NULL;
@@ -287,6 +288,7 @@ static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *even
 		clutter_actor_set_y(label, clutter_actor_get_y(icon) + 62.0);
 		g_list_free(children);
 	    }
+	    clutter_actor_raise_top(thedock);
 	}
 	clutter_actor_set_scale_full(sc, 1.2, 1.2, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
 	clutter_actor_raise_top(sc);
@@ -350,8 +352,16 @@ static void redraw_icons(SBManagerApp *app)
     gfloat xpos;
 
     if (dockitems) {
-	ypos = 398.0;
-	xpos = 16.0;
+	/* draw items into the dock area */
+	gfloat start = 16.0;
+	gfloat step = 16.0;
+	if (g_list_length(dockitems) > 4) {
+	    // this is for 5 item dock
+	    step = 3.0;
+	    start = 4.0;
+	}
+	ypos = 8.0;
+	xpos = start;
   	printf("%s: drawing dock icons\n", __func__);
 	for (i = 0; i < g_list_length(dockitems); i++) {
 	    SBItem *item = (SBItem*)g_list_nth_data(dockitems, i);
@@ -370,9 +380,10 @@ static void redraw_icons(SBManagerApp *app)
 		clutter_text_set_color(CLUTTER_TEXT(actor), &dock_item_text_color);
 		clutter_actor_show(actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-		clutter_container_add_actor(CLUTTER_CONTAINER(stage), grp);
+		clutter_container_add_actor(CLUTTER_CONTAINER(thedock), grp);
+		xpos += (60.0 + step);
+		clutter_actor_set_position(thedock, (320 - xpos)/2, 390.0);
 	    }
-	    xpos += 76;
 	}
     }
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
@@ -538,6 +549,12 @@ int main(int argc, char **argv)
     clutter_actor_show(actor);
     clutter_group_add (CLUTTER_GROUP (stage), actor);
     clock_label = actor;
+
+    /* dock widget */
+    thedock = clutter_group_new();
+    clutter_actor_show (thedock);
+    clutter_actor_set_position(thedock, 0.0, 390.0);
+    clutter_group_add (CLUTTER_GROUP (stage), thedock);
 
     /* Show the stage: */
     clutter_actor_show (stage);
