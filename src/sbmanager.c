@@ -542,10 +542,6 @@ static gboolean form_map(GtkWidget *widget, GdkEvent *event, SBManagerApp *app)
     printf("%s: mapped\n", __func__);
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
 
-    redraw_icons(app);
-
-    clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
-
     return TRUE;
 }
 
