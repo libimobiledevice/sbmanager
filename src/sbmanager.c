@@ -107,14 +107,19 @@ static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sb
     valuenode = plist_dict_get_item(node, "displayIdentifier");
     if (valuenode && (plist_get_node_type(valuenode) == PLIST_STRING)) {
 	char *value = NULL;
+	char *icon_filename = NULL;
 	plist_get_string_val(valuenode, &value);
 	printf("retrieving icon for '%s'\n", value);
 	if ((sbservices_get_icon_pngdata(sbc, value, &png, &pngsize) == SBSERVICES_E_SUCCESS) && (pngsize > 0)) {
-	    FILE *f = fopen("/tmp/temp.png", "w");
+	    icon_filename = g_strdup_printf("/tmp/%s.png", value);
+	    FILE *f = fopen(icon_filename, "w");
 	    GError *err = NULL;
 	    fwrite(png, 1, pngsize, f);
 	    fclose(f);
-	    ClutterActor *actor = clutter_texture_new_from_file("/tmp/temp.png", &err);
+	    ClutterActor *actor = clutter_texture_new();
+	    clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
+	    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), icon_filename, &err);
+	    g_free(icon_filename);
 	    if (actor) {
 		plist_t nn = plist_dict_get_item(node, "displayName");
 		di = g_new0(SBItem, 1);
@@ -596,7 +601,9 @@ int main(int argc, char **argv)
 
     /* dock background */
     GError *err = NULL;
-    actor = clutter_texture_new_from_file(BGPIC, &err);
+    actor = clutter_texture_new();
+    clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), BGPIC, &err);
     if (err) {
 	g_error_free(err);
     }
