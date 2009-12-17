@@ -264,14 +264,18 @@ leave_cleanup:
     return FALSE;
 }
 
-static void clock_cb (ClutterTimeline *timeline, gint msecs, SBManagerApp *app)
+static void clock_set_time(ClutterActor *label, time_t t)
 {
-    time_t t = time(NULL);
     struct tm *curtime = localtime(&t);
     gchar *ctext = g_strdup_printf("%02d:%02d", curtime->tm_hour, curtime->tm_min);
-    clutter_text_set_text(CLUTTER_TEXT(clock_label), ctext);
-    clutter_actor_set_position(clock_label, (clutter_actor_get_width(stage)-clutter_actor_get_width(clock_label)) / 2, 2);
+    clutter_text_set_text(CLUTTER_TEXT(label), ctext);
+    clutter_actor_set_position(label, (clutter_actor_get_width(stage)-clutter_actor_get_width(label)) / 2, 2);
     g_free(ctext);
+}
+
+static void clock_update_cb (ClutterTimeline *timeline, gint msecs, SBManagerApp *app)
+{
+    clock_set_time(clock_label, time(NULL));
 }
 
 static void actor_get_abs_center(ClutterActor *actor, gfloat *center_x, gfloat *center_y)
@@ -623,9 +627,6 @@ int main(int argc, char **argv)
 
     /* clock widget */
     actor = clutter_text_new_full (CLOCK_FONT, "00:00", &clock_text_color);
-    gint xpos = (clutter_actor_get_width(stage)-clutter_actor_get_width(actor))/2;
-    clutter_actor_set_position(actor, xpos, 2);
-    clutter_actor_show(actor);
     clutter_group_add (CLUTTER_GROUP (stage), actor);
     clock_label = actor;
 
@@ -637,13 +638,10 @@ int main(int argc, char **argv)
     clutter_timeline_set_loop(timeline, TRUE);   /* have it loop */
 
     /* fire a callback for frame change */
-    g_signal_connect(timeline, "completed",  G_CALLBACK (clock_cb), app);
+    g_signal_connect(timeline, "completed",  G_CALLBACK (clock_update_cb), app);
 
     /* and start it */
     clutter_timeline_start (timeline);
-
-    /* Show the window: */
-    gtk_widget_show_all (GTK_WIDGET (app->window));
 
     g_signal_connect(stage, "motion-event", G_CALLBACK (stage_motion), app);
 
@@ -653,6 +651,13 @@ int main(int argc, char **argv)
     g_signal_connect( G_OBJECT(app->window), "focus-out-event", G_CALLBACK (form_focus_change), timeline);
 
     selected_mutex = g_mutex_new();
+
+    /* Show the window. This also sets the stage's bounding box. */
+    gtk_widget_show_all (GTK_WIDGET (app->window));
+
+    /* Position and update the clock */
+    clock_set_time(actor, time(NULL));
+    clutter_actor_show(clock_label);
 
     /* Load icons in an idle loop */
     g_idle_add((GSourceFunc)get_icons, app);
