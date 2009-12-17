@@ -34,6 +34,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../data/data.h"
 
+#define STAGE_WIDTH 320
+#define STAGE_HEIGHT 480
+#define DOCK_HEIGHT 90
+
 const char CLOCK_FONT[] = "FreeSans Bold 12px";
 ClutterColor clock_text_color = {255, 255, 255, 210};
 
@@ -53,7 +57,7 @@ typedef struct {
     gboolean is_dock_item;
 } SBItem;
 
-const ClutterActorBox dock_area = {0.0, 390.0, 320.0, 480.0};
+const ClutterActorBox dock_area = {0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH, STAGE_HEIGHT};
 
 ClutterActor *stage = NULL;
 ClutterActor *clock_label = NULL;
@@ -386,7 +390,7 @@ static void dock_align_icons()
 	spacing = 3.0;
     }
     gfloat totalwidth = count*60.0 + spacing*(count-1);
-    xpos = (320.0 - totalwidth)/2.0;
+    xpos = (STAGE_WIDTH - totalwidth)/2.0;
 
     gfloat cx = 0.0;
     gfloat cy = 0.0;
@@ -602,7 +606,7 @@ int main(int argc, char **argv)
     /* Set the size of the widget, because we should not set the size of its
      * stage when using GtkClutterEmbed.
      */ 
-    gtk_widget_set_size_request (clutter_widget, 320, 480);
+    gtk_widget_set_size_request (clutter_widget, STAGE_WIDTH, STAGE_HEIGHT);
 
     /* Get the stage and set its size and color: */
     stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (clutter_widget));
