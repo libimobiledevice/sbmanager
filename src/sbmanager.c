@@ -91,16 +91,18 @@ static void sbpage_free(GList *sbitems)
     }
 }
 
-static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sbc)
+static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sbc, gboolean skip_empty)
 {
     char *png = NULL;
     uint64_t pngsize = 0;
     SBItem *di = NULL;
     plist_t valuenode = NULL;
     if (plist_get_node_type(node) != PLIST_DICT) {
-	di = g_new0(SBItem, 1);
-	*list = g_list_append(*list, di);
-	return;
+	if (!skip_empty) {
+	    di = g_new0(SBItem, 1);
+	    *list = g_list_append(*list, di);
+	    return;
+	}
     }
     valuenode = plist_dict_get_item(node, "displayIdentifier");
     if (valuenode && (plist_get_node_type(valuenode) == PLIST_STRING)) {
@@ -203,7 +205,7 @@ static void get_icons(const char *uuid)
 	count = plist_array_get_size(dock);
 	for (i = 0; i < count; i++) {
 	    plist_t node = plist_array_get_item(dock, i);
-	    get_icon_for_node(node, &dockitems, sbc);
+	    get_icon_for_node(node, &dockitems, sbc, TRUE);
 	}
 	if (total > 1) {
 	    /* get all icons for the other pages */
@@ -227,7 +229,7 @@ static void get_icons(const char *uuid)
 		    count = plist_array_get_size(nrow);
 		    for (i = 0; i < count; i++) {
 			plist_t node = plist_array_get_item(nrow, i);
-			get_icon_for_node(node, &page, sbc);
+			get_icon_for_node(node, &page, sbc, FALSE);
 		    }
 		}
 		if (page) {
