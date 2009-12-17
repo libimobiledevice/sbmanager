@@ -43,6 +43,7 @@ ClutterColor dock_item_text_color = {255, 255, 255, 255};
 
 typedef struct {
     GtkWidget *window;
+    char *uuid;
 } SBManagerApp;
 
 typedef struct {
@@ -70,6 +71,7 @@ GList *this_page = NULL;
 int current_page = 0;
 
 static void dock_align_icons();
+static void redraw_icons(SBManagerApp *app);
 
 static void sbitem_free(SBItem *a)
 {
@@ -144,8 +146,9 @@ static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sb
     }
 }
 
-static void get_icons(const char *uuid)
+static gboolean get_icons(gpointer data)
 {
+    SBManagerApp *app = (SBManagerApp*)data;
     iphone_device_t phone = NULL;
     lockdownd_client_t client = NULL;
     sbservices_client_t sbc = NULL;
@@ -163,9 +166,9 @@ static void get_icons(const char *uuid)
 	dockitems = NULL;
     }
 
-    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
 	fprintf(stderr, "No iPhone found, is it plugged in?\n");
-	return;
+	return FALSE;
     }
 
     if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
@@ -244,6 +247,8 @@ static void get_icons(const char *uuid)
 	}
     }
 
+    redraw_icons(app);
+
 leave_cleanup:
     if (iconstate) {
 	plist_free(iconstate);
@@ -256,7 +261,7 @@ leave_cleanup:
     }
     iphone_device_free(phone);
 
-    return;
+    return FALSE;
 }
 
 static void clock_cb (ClutterTimeline *timeline, gint msecs, SBManagerApp *app)
@@ -562,14 +567,15 @@ int main(int argc, char **argv)
 	return -1;
     }
 
+    /* TODO: Read uuid from command line */
+    app->uuid = NULL;
+
     if (gtk_clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS) {
 	g_error ("Unable to initialize GtkClutter");
     }
 
     if (!g_thread_supported())
 		g_thread_init(NULL);
-
-    get_icons(NULL);
 
     /* Create the window and some child widgets: */
     app->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -647,6 +653,9 @@ int main(int argc, char **argv)
     g_signal_connect( G_OBJECT(app->window), "focus-out-event", G_CALLBACK (form_focus_change), timeline);
 
     selected_mutex = g_mutex_new();
+
+    /* Load icons in an idle loop */
+    g_idle_add((GSourceFunc)get_icons, app);
 
     /* Start the main loop, so we can respond to events: */
     gtk_main ();
