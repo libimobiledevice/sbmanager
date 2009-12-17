@@ -52,8 +52,6 @@ typedef struct {
     gboolean is_dock_item;
 } SBItem;
 
-const ClutterActorBox dock_area = {0.0, 390.0, 320.0, 480.0};
-
 ClutterActor *stage = NULL;
 ClutterActor *thedock = NULL;
 ClutterActor *clock_label = NULL;
@@ -347,36 +345,6 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
     return TRUE;
 }
 
-static void dock_align_icons()
-{
-    if (!thedock) return;
-    gint count = clutter_group_get_n_children(CLUTTER_GROUP(thedock));
-    if (count == 0) {
-	return;
-    }
-    gfloat spacing = 16.0;
-    gfloat ypos = 8.0;
-    gfloat xpos = 0.0;
-    gint i = 0;
-    if (count > 4) {
-	spacing = 3.0;
-    }
-    for (i = 0; i < count; i++) {
-	ClutterActor *icon = clutter_group_get_nth_child(CLUTTER_GROUP(thedock), i);
-	if (!icon) {
-	    continue;
-	}
-	clutter_actor_set_position(icon, xpos, ypos);
-	xpos += 60;
-	if (i < count-1) {
-	    xpos += spacing;
-	}
-    }
-    // center the whole dock
-    clutter_actor_set_width(thedock, xpos);
-    clutter_actor_set_position(thedock, (320 - xpos)/2, 390.0);
-}
-
 static void redraw_icons(SBManagerApp *app)
 {
     guint i;
@@ -385,8 +353,15 @@ static void redraw_icons(SBManagerApp *app)
 
     if (dockitems) {
 	/* draw items into the dock area */
-	xpos = 0.0;
-	ypos = 0.0;
+	gfloat start = 16.0;
+	gfloat step = 16.0;
+	if (g_list_length(dockitems) > 4) {
+	    // this is for 5 item dock
+	    step = 3.0;
+	    start = 4.0;
+	}
+	ypos = 8.0;
+	xpos = start;
   	printf("%s: drawing dock icons\n", __func__);
 	for (i = 0; i < g_list_length(dockitems); i++) {
 	    SBItem *item = (SBItem*)g_list_nth_data(dockitems, i);
@@ -406,7 +381,8 @@ static void redraw_icons(SBManagerApp *app)
 		clutter_actor_show(actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(thedock), grp);
-		dock_align_icons();
+		xpos += (60.0 + step);
+		clutter_actor_set_position(thedock, (320 - xpos)/2, 390.0);
 	    }
 	}
     }
@@ -464,25 +440,10 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
     start_x = event->x;
     start_y = event->y;
 
-    gfloat center_x = 0.0;
-    gfloat center_y = 0.0;
-    clutter_actor_get_scale_center(selected, &center_x, &center_y);
-    center_x += clutter_actor_get_x(selected);
-    center_y += clutter_actor_get_y(selected);
-
-
     if (selected_item->is_dock_item) {
-	if (center_y < 0) {
-	    printf("icon from dock moving outside the dock!\n");
-	} else {
-	    printf("icon from dock moving inside the dock!\n");
-	}
+	printf("an icon from the dock is moving\n");
     } else {
-	if (clutter_actor_box_contains(&dock_area, center_x, center_y)) {
-	    printf("regular icon is moving inside the dock!\n");
-	} else {
-	    printf("regular icon is moving!\n");
-	}
+	printf("a regular icon is moving\n");
     }
 
     return TRUE;
