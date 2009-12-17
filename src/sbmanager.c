@@ -387,15 +387,15 @@ static void dock_align_icons()
 	}
 
 	if (item != selected_item) {
-	    ClutterActorBox box;
-	    clutter_actor_get_allocation_box(icon, &box);
-	    //printf("box: %f,%f, %f,%f\n", box.x1,box.y1, box.x2,box.y2);
-	    if (clutter_actor_box_contains(&box, cx+(60.0-spacing), cy)) {
-		printf("move item %d\n", i);
-		xpos += 60.0;
-		xpos += spacing;
-	    } else {
-		printf("no!\n");
+	    if (selected_item) {
+		ClutterActorBox box;
+		clutter_actor_get_allocation_box(icon, &box);
+		//printf("box: %f,%f, %f,%f\n", box.x1,box.y1, box.x2,box.y2);
+		if (clutter_actor_box_contains(&box, cx+(60.0-spacing), cy)) {
+		    printf("move item %d\n", i);
+		    xpos += 60.0;
+		    xpos += spacing;
+		}
 	    }
 	    clutter_actor_set_position(icon, xpos, ypos);
 	}
