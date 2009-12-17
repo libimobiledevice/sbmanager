@@ -49,7 +49,6 @@ typedef struct {
     plist_t node;
     ClutterActor *texture;
     ClutterActor *label;
-    ClutterActor *icon;
     gboolean is_dock_item;
 } SBItem;
 
@@ -59,7 +58,6 @@ ClutterActor *stage = NULL;
 ClutterActor *clock_label = NULL;
 
 GMutex *selected_mutex = NULL;
-ClutterActor *selected = NULL;
 SBItem *selected_item = NULL;
 
 gfloat start_x = 0.0;
@@ -70,6 +68,8 @@ GList *sbpages = NULL;
 
 GList *this_page = NULL;
 int current_page = 0;
+
+static void dock_align_icons();
 
 static void sbitem_free(SBItem *a)
 {
@@ -264,6 +264,16 @@ static void clock_cb (ClutterTimeline *timeline, gint msecs, SBManagerApp *app)
     g_free(ctext);
 }
 
+static void actor_get_abs_center(ClutterActor *actor, gfloat *center_x, gfloat *center_y)
+{
+    *center_x = 0.0;
+    *center_y = 0.0;
+    if (!actor) return;
+    clutter_actor_get_scale_center(actor, center_x, center_y);
+    *center_x += clutter_actor_get_x(actor);
+    *center_y += clutter_actor_get_y(actor);
+}
+
 static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
     if (!user_data) {
@@ -296,7 +306,6 @@ static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *even
 	clutter_actor_set_scale_full(sc, 1.2, 1.2, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
 	clutter_actor_raise_top(sc);
 	clutter_actor_set_opacity(sc, 160);
-	selected = sc;
 	selected_item = item;
 	start_x = event->x;
 	start_y = event->y;
@@ -338,8 +347,8 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
 	clutter_actor_set_opacity(sc, 255);
     }
 
-    selected = NULL;
     selected_item = NULL;
+    dock_align_icons();
     start_x = 0.0;
     start_y = 0.0;
 
@@ -364,13 +373,33 @@ static void dock_align_icons()
     }
     gfloat totalwidth = count*60.0 + spacing*(count-1);
     xpos = (320.0 - totalwidth)/2.0;
+
+    gfloat cx = 0.0;
+    gfloat cy = 0.0;
+    if (selected_item) {
+	actor_get_abs_center(clutter_actor_get_parent(selected_item->texture), &cx, &cy);
+    }
     for (i = 0; i < count; i++) {
 	SBItem *item = g_list_nth_data(dockitems, i);
-	ClutterActor *icon = item->icon;
+	ClutterActor *icon = clutter_actor_get_parent(item->texture);
 	if (!icon) {
 	    continue;
 	}
-	clutter_actor_set_position(icon, xpos, ypos);
+
+	if (item != selected_item) {
+	    ClutterActorBox box;
+	    clutter_actor_get_allocation_box(icon, &box);
+	    //printf("box: %f,%f, %f,%f\n", box.x1,box.y1, box.x2,box.y2);
+	    if (clutter_actor_box_contains(&box, cx+(60.0-spacing), cy)) {
+		printf("move item %d\n", i);
+		xpos += 60.0;
+		xpos += spacing;
+	    } else {
+		printf("no!\n");
+	    }
+	    clutter_actor_set_position(icon, xpos, ypos);
+	}
+
 	xpos += 60;
 	if (i < count-1) {
 	    xpos += spacing;
@@ -406,7 +435,6 @@ static void redraw_icons(SBManagerApp *app)
 		clutter_actor_show(actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(stage), grp);
-		item->icon = grp;
 		dock_align_icons();
 	    }
 	}
@@ -451,33 +479,31 @@ static void redraw_icons(SBManagerApp *app)
 static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gpointer user_data)
 {
     /* check if an item has been raised */ 
-    if (!selected || !selected_item) {
+    if (!selected_item) {
 	return FALSE;
     }
 
-/*    gfloat oldx = clutter_actor_get_x(selected);
-    gfloat oldy = clutter_actor_get_y(selected);
-
-    clutter_actor_set_position(selected, oldx + (event->x - start_x), oldy + (event->y - start_y));
-*/
-    clutter_actor_move_by(selected, (event->x - start_x), event->y - start_y);
+    clutter_actor_move_by(clutter_actor_get_parent(selected_item->texture), (event->x - start_x), event->y - start_y);
 
     start_x = event->x;
     start_y = event->y;
 
-    gfloat center_x = 0.0;
-    gfloat center_y = 0.0;
-    clutter_actor_get_scale_center(selected, &center_x, &center_y);
-    center_x += clutter_actor_get_x(selected);
-    center_y += clutter_actor_get_y(selected);
-
+    gfloat center_x;
+    gfloat center_y;
+    actor_get_abs_center(clutter_actor_get_parent(selected_item->texture), &center_x, &center_y);
 
     if (selected_item->is_dock_item) {
 	if (clutter_actor_box_contains(&dock_area, center_x, center_y)) {
 	    printf("icon from dock moving inside the dock!\n");
+	    GList *found = g_list_find(dockitems, selected_item);
+	    if (!found) {
+		dockitems = g_list_insert(dockitems, selected_item, 3);
+	    }
 	} else {
 	    printf("icon from dock moving outside the dock!\n");
+	    dockitems = g_list_remove(dockitems, selected_item);
 	}
+	dock_align_icons();
     } else {
 	if (clutter_actor_box_contains(&dock_area, center_x, center_y)) {
 	    printf("regular icon is moving inside the dock!\n");
