@@ -71,6 +71,8 @@ gfloat start_y = 0.0;
 GList *dockitems = NULL;
 GList *sbpages = NULL;
 
+guint num_dock_items = 0;
+
 GList *this_page = NULL;
 int current_page = 0;
 
@@ -215,6 +217,7 @@ static gboolean get_icons(gpointer data)
 	    goto leave_cleanup;
 	}
 	count = plist_array_get_size(dock);
+	num_dock_items = count;
 	for (i = 0; i < count; i++) {
 	    plist_t node = plist_array_get_item(dock, i);
 	    get_icon_for_node(node, &dockitems, sbc, TRUE);
@@ -562,6 +565,133 @@ static gboolean form_focus_change(GtkWidget *widget, GdkEventFocus *event, gpoin
     return TRUE;
 }
 
+static gboolean set_icons(gpointer data)
+{
+    SBManagerApp *app = (SBManagerApp*)data;
+
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    sbservices_client_t sbc = NULL;
+    int port = 0;
+
+    gboolean result = FALSE;
+    plist_t iconstate = NULL;
+    plist_t pdockarray = NULL;
+    plist_t pdockitems = NULL;
+    guint i;
+
+    if (!dockitems || !sbpages) {
+	printf("missing dockitems or sbpages\n");
+	return result;
+    }
+
+    printf("About to uploaded new iconstate...\n");
+
+    guint count = g_list_length(dockitems);
+    pdockitems = plist_new_array();
+    for (i = 0; i < count; i++) {
+	SBItem *item = g_list_nth_data(dockitems, i);
+	if (!item) {
+	    continue;
+	}
+    	plist_t valuenode = plist_dict_get_item(item->node, "displayIdentifier");
+	if (!valuenode) {
+	    printf("could not get displayIdentifier\n");
+	    continue;
+	}
+
+	plist_t pitem = plist_new_dict();
+	plist_dict_insert_item(pitem, "displayIdentifier", plist_copy(valuenode));	
+	plist_array_append_item(pdockitems, pitem);
+    }
+    for (i = count; i < num_dock_items; i++) {
+	plist_array_append_item(pdockitems, plist_new_bool(0));
+    }
+    pdockarray = plist_new_array();
+    plist_array_append_item(pdockarray, pdockitems);
+
+    iconstate = plist_new_array();
+    plist_array_append_item(iconstate, pdockarray);
+
+    for (i = 0; i < g_list_length(sbpages); i++) {
+	GList *page = g_list_nth_data(sbpages, i);
+	if (page) {
+	    guint j;
+	    plist_t ppage = plist_new_array();
+	    plist_t row = NULL;
+	    for (j = 0; j < g_list_length(page); j++) {
+		SBItem *item = g_list_nth_data(page, j);
+		if ((j % 4) == 0) {
+		    row = plist_new_array();
+		    plist_array_append_item(ppage, row);
+		}
+		if (item->node) {
+		    plist_t valuenode = plist_dict_get_item(item->node, "displayIdentifier");
+	    	    if (!valuenode) {
+	    		printf("could not get displayIdentifier\n");
+	    		continue;
+	    	    }
+
+	    	    plist_t pitem = plist_new_dict();
+	    	    plist_dict_insert_item(pitem, "displayIdentifier", plist_copy(valuenode));	
+	    	    plist_array_append_item(row, pitem);
+		} else {
+		    plist_array_append_item(row, plist_new_bool(0));
+		}
+	    }
+	    plist_array_append_item(iconstate, plist_copy(ppage));
+	    plist_free(ppage);
+	}
+    }
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+	fprintf(stderr, "No iPhone found, is it plugged in?\n");
+	return result;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+	fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+	goto leave_cleanup;
+    }
+
+    if ((lockdownd_start_service(client, "com.apple.springboardservices", &port) != LOCKDOWN_E_SUCCESS) || !port) {
+	fprintf(stderr, "Could not start com.apple.springboardservices service! Remind that this feature is only supported in OS 3.1 and later!\n");
+	goto leave_cleanup;
+    }
+    if (sbservices_client_new(phone, port, &sbc) != SBSERVICES_E_SUCCESS) { 
+	fprintf(stderr, "Could not connect to springboardservices!\n");
+	goto leave_cleanup;
+    }
+    if (sbservices_set_icon_state(sbc, iconstate) != SBSERVICES_E_SUCCESS) {
+	fprintf(stderr, "ERROR: Could not set new icon state!\n");
+	goto leave_cleanup;
+    }
+
+    printf("Successfully uploaded new iconstate\n");
+    result = TRUE;
+
+leave_cleanup:
+    if (iconstate) {
+	plist_free(iconstate);
+    }
+    if (sbc) {
+	sbservices_client_free(sbc);
+    }
+    if (client) {
+	lockdownd_client_free(client);
+    }
+    iphone_device_free(phone);
+
+    return result;
+}
+
+static gboolean button_clicked(GtkButton *button, gpointer user_data)
+{
+    set_icons(user_data);
+
+    return TRUE;
+}
+
 int main(int argc, char **argv)
 {
     SBManagerApp *app;
@@ -595,6 +725,8 @@ int main(int argc, char **argv)
     gtk_box_pack_end (GTK_BOX (vbox), button, FALSE, FALSE, 0);
     gtk_widget_show (button);
 
+    g_signal_connect (button, "clicked", G_CALLBACK (button_clicked), app);
+    
     /* Stop the application when the window is closed: */
     g_signal_connect (app->window, "hide", G_CALLBACK (gtk_main_quit), app);
 
