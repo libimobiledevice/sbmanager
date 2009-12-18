@@ -62,6 +62,8 @@ const ClutterActorBox dock_area = {0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH,
 
 ClutterActor *stage = NULL;
 ClutterActor *clock_label = NULL;
+ClutterActor *page_indicator = NULL;
+ClutterActor *page_indicator_group = NULL;
 
 GMutex *selected_mutex = NULL;
 SBItem *selected_item = NULL;
@@ -78,7 +80,7 @@ GList *this_page = NULL;
 int current_page = 0;
 
 static void dock_align_icons();
-static void redraw_icons(SBManagerApp *app);
+static void redraw_icons();
 
 static void sbitem_free(SBItem *a)
 {
@@ -151,6 +153,37 @@ static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sb
 	}
 	free(value);
     }
+}
+
+static void page_indicator_group_align()
+{
+    gint count = clutter_group_get_n_children(CLUTTER_GROUP(page_indicator_group));
+    gint i;
+    gfloat xpos = 0.0;
+
+    if (count <= 0) return;
+
+    for (i = 0; i < count; i++) {
+	ClutterActor *dot = clutter_group_get_nth_child(CLUTTER_GROUP(page_indicator_group), i);
+	clutter_actor_set_position(dot, xpos, 0.0);
+	if (i == current_page) {
+	    clutter_actor_set_opacity(dot, 200);
+	} else {
+	    clutter_actor_set_opacity(dot, 100);
+	}
+	xpos += clutter_actor_get_width(dot);
+    }
+
+    clutter_actor_set_x(page_indicator_group, (STAGE_WIDTH - xpos) / 2.0);
+}
+
+static gboolean page_indicator_clicked(ClutterActor *actor, ClutterEvent *event, gpointer data)
+{
+    printf("page indicator clicked\n");
+    current_page = GPOINTER_TO_UINT(data);
+    redraw_icons();
+    
+    return TRUE;
 }
 
 static gboolean get_icons(gpointer data)
@@ -250,12 +283,19 @@ static gboolean get_icons(gpointer data)
 		}
 		if (page) {
 		    sbpages = g_list_append(sbpages, page);
+		    if (page_indicator) {
+			ClutterActor *actor = clutter_clone_new(page_indicator);
+			clutter_actor_reparent(actor, page_indicator_group);
+			g_signal_connect(actor, "button-press-event", G_CALLBACK(page_indicator_clicked), GUINT_TO_POINTER(p));
+			clutter_container_add_actor(CLUTTER_CONTAINER(page_indicator_group), actor);
+			page_indicator_group_align();
+		    }
 		}
 	    }
 	}
     }
 
-    redraw_icons(app);
+    redraw_icons();
 
 leave_cleanup:
     if (iconstate) {
@@ -429,7 +469,7 @@ static void dock_align_icons()
     }
 }
 
-static void redraw_icons(SBManagerApp *app)
+static void redraw_icons()
 {
     guint i;
     gfloat ypos;
@@ -749,6 +789,7 @@ int main(int argc, char **argv)
     clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), BGPIC, &err);
     if (err) {
 	g_error_free(err);
+	err = NULL;
     }
     if (actor) {
 	clutter_actor_set_position(actor, 0, 0);
@@ -759,9 +800,29 @@ int main(int argc, char **argv)
     }
 
     /* clock widget */
-    actor = clutter_text_new_full (CLOCK_FONT, "00:00", &clock_text_color);
-    clutter_group_add (CLUTTER_GROUP (stage), actor);
-    clock_label = actor;
+    clock_label = clutter_text_new_full (CLOCK_FONT, "00:00", &clock_text_color);
+    clutter_group_add (CLUTTER_GROUP (stage), clock_label);
+
+    /* page indicator group for holding the page indicator dots */
+    page_indicator_group = clutter_group_new();
+    clutter_group_add (CLUTTER_GROUP(stage), page_indicator_group);
+
+    /* alignment will be done when new indicators are added */
+    clutter_actor_set_position(page_indicator_group, 0, STAGE_HEIGHT - DOCK_HEIGHT - 18);
+
+    /* page indicator (dummy), will be cloned when the pages are created */
+    page_indicator = clutter_texture_new();
+    clutter_texture_set_load_async(CLUTTER_TEXTURE(page_indicator), TRUE);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(page_indicator), PAGE_DOT, &err);
+    if (err) {
+	fprintf(stderr, "Could not load texture " PAGE_DOT ": %s\n", err->message);
+	g_error_free(err);
+	err = NULL;
+    }
+    if (page_indicator) {
+	clutter_actor_hide(page_indicator);
+	clutter_container_add_actor(CLUTTER_CONTAINER(stage), page_indicator);
+    }
 
     /* Show the stage: */
     clutter_actor_show (stage);
@@ -789,7 +850,7 @@ int main(int argc, char **argv)
     gtk_widget_show_all (GTK_WIDGET (app->window));
 
     /* Position and update the clock */
-    clock_set_time(actor, time(NULL));
+    clock_set_time(clock_label, time(NULL));
     clutter_actor_show(clock_label);
 
     /* Load icons in an idle loop */

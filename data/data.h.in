@@ -1,1 +1,2 @@
 #define BGPIC "@prefix@/share/sbmanager/background.png"
+#define PAGE_DOT "@prefix@/share/sbmanager/dot.png"
