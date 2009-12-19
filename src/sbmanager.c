@@ -285,8 +285,9 @@ static gboolean get_icons(gpointer data)
 		    sbpages = g_list_append(sbpages, page);
 		    if (page_indicator) {
 			ClutterActor *actor = clutter_clone_new(page_indicator);
-			clutter_actor_reparent(actor, page_indicator_group);
-			g_signal_connect(actor, "button-press-event", G_CALLBACK(page_indicator_clicked), GUINT_TO_POINTER(p));
+			clutter_actor_unparent(actor);
+			clutter_actor_set_reactive(actor, TRUE);
+			g_signal_connect(actor, "button-press-event", G_CALLBACK(page_indicator_clicked), GUINT_TO_POINTER(p-1));
 			clutter_container_add_actor(CLUTTER_CONTAINER(page_indicator_group), actor);
 			page_indicator_group_align();
 		    }
