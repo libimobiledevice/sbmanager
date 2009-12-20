@@ -182,13 +182,11 @@ static void page_indicator_group_align()
 
 static gboolean page_indicator_clicked(ClutterActor *actor, ClutterEvent *event, gpointer data)
 {
-    printf("page indicator clicked\n");
     current_page = GPOINTER_TO_UINT(data);
 
     page_indicator_group_align();
 
-    /* TODO: Add animation here */
-    clutter_actor_set_x(the_sb, -(current_page * STAGE_WIDTH));
+    clutter_actor_animate(the_sb, CLUTTER_EASE_IN_OUT_CUBIC, 400, "x", (gfloat)(-(current_page*STAGE_WIDTH)), NULL);
 
     return TRUE;
 }
