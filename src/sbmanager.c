@@ -435,7 +435,7 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
     }
 
     selected_item = NULL;
-    dock_align_icons();
+    dock_align_icons(TRUE);
     start_x = 0.0;
     start_y = 0.0;
 
@@ -444,7 +444,7 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
     return TRUE;
 }
 
-static void dock_align_icons()
+static void dock_align_icons(gboolean animated)
 {
     if (!dockitems) return;
     gint count = g_list_length(dockitems);
@@ -484,7 +484,11 @@ static void dock_align_icons()
 		    xpos += spacing;
 		}
 	    }
-	    clutter_actor_set_position(icon, xpos, ypos);
+	    if (animated) {
+		clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+	    } else {
+		clutter_actor_set_position(icon, xpos, ypos);
+	    }
 	}
 
 	xpos += 60;
@@ -523,7 +527,7 @@ static void redraw_icons()
 		clutter_actor_show(actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(the_dock), grp);
-		dock_align_icons();
+		dock_align_icons(FALSE);
 	    }
 	}
     }
@@ -593,7 +597,7 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
 	    printf("icon from dock moving outside the dock!\n");
 	    dockitems = g_list_remove(dockitems, selected_item);
 	}
-	dock_align_icons();
+	dock_align_icons(TRUE);
     } else {
 	if (clutter_actor_box_contains(&dock_area, center_x, center_y)) {
 	    printf("regular icon is moving inside the dock!\n");
