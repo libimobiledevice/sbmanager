@@ -60,7 +60,11 @@ typedef struct {
 
 const ClutterActorBox dock_area = {0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH, STAGE_HEIGHT};
 
+const ClutterActorBox sb_area = {0.0, 16.0, STAGE_WIDTH, STAGE_HEIGHT-DOCK_HEIGHT-16.0};
+
 ClutterActor *stage = NULL;
+ClutterActor *the_dock = NULL;
+ClutterActor *the_sb = NULL;
 ClutterActor *clock_label = NULL;
 ClutterActor *page_indicator = NULL;
 ClutterActor *page_indicator_group = NULL;
@@ -76,7 +80,6 @@ GList *sbpages = NULL;
 
 guint num_dock_items = 0;
 
-GList *this_page = NULL;
 int current_page = 0;
 
 static void dock_align_icons();
@@ -181,8 +184,12 @@ static gboolean page_indicator_clicked(ClutterActor *actor, ClutterEvent *event,
 {
     printf("page indicator clicked\n");
     current_page = GPOINTER_TO_UINT(data);
-    redraw_icons();
-    
+
+    page_indicator_group_align();
+
+    /* TODO: Add animation here */
+    clutter_actor_set_x(the_sb, -(current_page * STAGE_WIDTH));
+
     return TRUE;
 }
 
@@ -343,6 +350,11 @@ static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *even
 	return FALSE;
     }
 
+    if (selected_item) {
+	/* do not allow a button_press event without a prior release */
+	return FALSE;
+    }
+
     SBItem *item = (SBItem*)user_data;
 
     char *strval = NULL;
@@ -355,6 +367,8 @@ static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *even
     printf("%s: %s mouse pressed\n", __func__, strval);
 
     if (actor) {
+	gfloat diffx = 0.0;
+	gfloat diffy = 0.0;
 	ClutterActor *sc = clutter_actor_get_parent(actor);
 	if (item->is_dock_item) {
 	    GList *children = clutter_container_get_children(CLUTTER_CONTAINER(sc));
@@ -365,9 +379,16 @@ static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *even
 		clutter_actor_set_y(label, clutter_actor_get_y(icon) + 62.0);
 		g_list_free(children);
 	    }
+	    diffx = dock_area.x1;
+	    diffy = dock_area.y1;
+	} else {
+	    diffx = sb_area.x1;
+	    diffy = sb_area.y1;
 	}
-	clutter_actor_set_scale_full(sc, 1.2, 1.2, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
+	clutter_actor_reparent(sc, stage);
+	clutter_actor_set_position(sc, clutter_actor_get_x(sc) + diffx, clutter_actor_get_y(sc) + diffy);
 	clutter_actor_raise_top(sc);
+	clutter_actor_set_scale_full(sc, 1.2, 1.2, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
 	clutter_actor_set_opacity(sc, 160);
 	selected_item = item;
 	start_x = event->x;
@@ -396,6 +417,8 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
 
     if (actor) {
 	ClutterActor *sc = clutter_actor_get_parent(actor);
+	clutter_actor_set_scale_full(sc, 1.0, 1.0, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
+	clutter_actor_set_opacity(sc, 255);
 	if (item->is_dock_item) {
 	    GList *children = clutter_container_get_children(CLUTTER_CONTAINER(sc));
 	    if (children) {
@@ -405,9 +428,12 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
 		clutter_actor_set_y(label, clutter_actor_get_y(icon) + 67.0);
 		g_list_free(children);
 	    }
+	    clutter_actor_reparent(sc, the_dock);
+	    clutter_actor_set_position(sc, clutter_actor_get_x(sc) - dock_area.x1, clutter_actor_get_y(sc) - dock_area.y1);
+	} else {
+	    clutter_actor_reparent(sc, the_sb);
+	    clutter_actor_set_position(sc, clutter_actor_get_x(sc) - sb_area.x1, clutter_actor_get_y(sc) - sb_area.y1);
 	}
-	clutter_actor_set_scale_full(sc, 1.0, 1.0, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
-	clutter_actor_set_opacity(sc, 255);
     }
 
     selected_item = NULL;
@@ -428,7 +454,7 @@ static void dock_align_icons()
 	return;
     }
     gfloat spacing = 16.0;
-    gfloat ypos = dock_area.y1 + 8.0;
+    gfloat ypos = 8.0;
     gfloat xpos = 0.0;
     gint i = 0;
     if (count > 4) {
@@ -473,6 +499,7 @@ static void dock_align_icons()
 static void redraw_icons()
 {
     guint i;
+    guint j;
     gfloat ypos;
     gfloat xpos;
 
@@ -497,42 +524,44 @@ static void redraw_icons()
 		clutter_text_set_color(CLUTTER_TEXT(actor), &dock_item_text_color);
 		clutter_actor_show(actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-		clutter_container_add_actor(CLUTTER_CONTAINER(stage), grp);
+		clutter_container_add_actor(CLUTTER_CONTAINER(the_dock), grp);
 		dock_align_icons();
 	    }
 	}
     }
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
     if (sbpages) {
-	ypos = 32.0;
-	xpos = 16.0;
 	printf("%s: %d pages\n", __func__, g_list_length(sbpages));
-  	printf("%s: drawing page icons for page %d\n", __func__, current_page);
-	this_page = g_list_nth_data(sbpages, current_page);
-	for (i = 0; i < g_list_length(this_page); i++) {
-	    SBItem *item = (SBItem*)g_list_nth_data(this_page, i);
-	    if (item && item->texture && item->node) {
-		item->is_dock_item = FALSE;
-		ClutterActor *grp = clutter_group_new();
-		ClutterActor *actor = item->texture;
-		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-		clutter_actor_set_position(actor, xpos, ypos);
-		clutter_actor_set_reactive(actor, TRUE);
-		g_signal_connect(actor, "button-press-event", G_CALLBACK (item_button_press), item);
-		g_signal_connect(actor, "button-release-event", G_CALLBACK (item_button_release), item);
-		clutter_actor_show(actor);
-		actor = item->label;
-		clutter_text_set_color(CLUTTER_TEXT(actor), &item_text_color);
-		clutter_actor_set_position(actor, xpos+(59.0 - clutter_actor_get_width(actor))/2, ypos+62.0);
-		clutter_actor_show(actor);
-		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-		clutter_container_add_actor(CLUTTER_CONTAINER(stage), grp);
-	    }
-	    if (((i+1) % 4) == 0) {
-		xpos = 16.0;
-		ypos += 88.0;
-	    } else {
-		xpos += 76.0;
+	for (j = 0; j < g_list_length(sbpages); j++) {
+	    GList *cpage = g_list_nth_data(sbpages, j);
+    	    ypos = 16.0;
+	    xpos = 16.0 + (j * STAGE_WIDTH);
+	    printf("%s: drawing page icons for page %d\n", __func__, j);
+	    for (i = 0; i < g_list_length(cpage); i++) {
+		SBItem *item = (SBItem*)g_list_nth_data(cpage, i);
+		if (item && item->texture && item->node) {
+		    item->is_dock_item = FALSE;
+		    ClutterActor *grp = clutter_group_new();
+		    ClutterActor *actor = item->texture;
+		    clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
+		    clutter_actor_set_position(actor, xpos, ypos);
+		    clutter_actor_set_reactive(actor, TRUE);
+		    g_signal_connect(actor, "button-press-event", G_CALLBACK (item_button_press), item);
+		    g_signal_connect(actor, "button-release-event", G_CALLBACK (item_button_release), item);
+		    clutter_actor_show(actor);
+		    actor = item->label;
+		    clutter_text_set_color(CLUTTER_TEXT(actor), &item_text_color);
+		    clutter_actor_set_position(actor, xpos+(59.0 - clutter_actor_get_width(actor))/2, ypos+62.0);
+		    clutter_actor_show(actor);
+		    clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
+		    clutter_container_add_actor(CLUTTER_CONTAINER(the_sb), grp);
+		}
+		if (((i+1) % 4) == 0) {
+		    xpos = 16.0 + (j * STAGE_WIDTH);
+		    ypos += 88.0;
+		} else {
+		    xpos += 76.0;
+		}
 	    }
 	}
     }
@@ -824,6 +853,16 @@ int main(int argc, char **argv)
 	clutter_actor_hide(page_indicator);
 	clutter_container_add_actor(CLUTTER_CONTAINER(stage), page_indicator);
     }
+
+    /* a group for the springboard icons */
+    the_sb = clutter_group_new();
+    clutter_group_add (CLUTTER_GROUP(stage), the_sb);
+    clutter_actor_set_position(the_sb, 0, 16);
+
+    /* a group for the dock icons */
+    the_dock = clutter_group_new();
+    clutter_group_add (CLUTTER_GROUP(stage), the_dock);
+    clutter_actor_set_position(the_dock, dock_area.x1, dock_area.y1);
 
     /* Show the stage: */
     clutter_actor_show (stage);
