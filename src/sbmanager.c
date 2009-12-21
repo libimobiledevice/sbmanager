@@ -380,7 +380,7 @@ static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *even
 	    diffx = dock_area.x1;
 	    diffy = dock_area.y1;
 	} else {
-	    diffx = sb_area.x1;
+	    diffx = sb_area.x1 - (current_page*STAGE_WIDTH);
 	    diffy = sb_area.y1;
 	}
 	clutter_actor_reparent(sc, stage);
@@ -430,7 +430,7 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
 	    clutter_actor_set_position(sc, clutter_actor_get_x(sc) - dock_area.x1, clutter_actor_get_y(sc) - dock_area.y1);
 	} else {
 	    clutter_actor_reparent(sc, the_sb);
-	    clutter_actor_set_position(sc, clutter_actor_get_x(sc) - sb_area.x1, clutter_actor_get_y(sc) - sb_area.y1);
+	    clutter_actor_set_position(sc, clutter_actor_get_x(sc) + (current_page*STAGE_WIDTH) - sb_area.x1, clutter_actor_get_y(sc) - sb_area.y1);
 	}
     }
 
@@ -577,7 +577,7 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
 	return FALSE;
     }
 
-    clutter_actor_move_by(clutter_actor_get_parent(selected_item->texture), (event->x - start_x), event->y - start_y);
+    clutter_actor_move_by(clutter_actor_get_parent(selected_item->texture), (event->x - start_x), (event->y - start_y));
 
     start_x = event->x;
     start_y = event->y;
