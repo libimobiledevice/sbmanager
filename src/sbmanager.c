@@ -82,7 +82,7 @@ guint num_dock_items = 0;
 
 int current_page = 0;
 
-static void dock_align_icons();
+static void dock_align_icons(gboolean animated);
 static void redraw_icons();
 
 static void sbitem_free(SBItem *a)
