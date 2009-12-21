@@ -591,16 +591,19 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
 	    printf("icon from dock moving inside the dock!\n");
 	    GList *found = g_list_find(dockitems, selected_item);
 	    if (!found) {
+		selected_item->is_dock_item = TRUE;
 		dockitems = g_list_insert(dockitems, selected_item, 3);
 	    }
 	} else {
 	    printf("icon from dock moving outside the dock!\n");
 	    dockitems = g_list_remove(dockitems, selected_item);
+	    selected_item->is_dock_item = FALSE;
 	}
 	dock_align_icons(TRUE);
     } else {
 	if (center_y >= dock_area.y1) {
 	    printf("regular icon is moving inside the dock!\n");
+	    selected_item->is_dock_item = TRUE;
 	} else {
 	    printf("regular icon is moving!\n");
 	}
