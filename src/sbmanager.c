@@ -461,11 +461,9 @@ static void dock_align_icons(gboolean animated)
     gfloat totalwidth = count*60.0 + spacing*(count-1);
     xpos = (STAGE_WIDTH - totalwidth)/2.0;
 
-    gfloat cx = 0.0;
-    gfloat cy = 0.0;
-    if (selected_item) {
-	actor_get_abs_center(clutter_actor_get_parent(selected_item->texture), &cx, &cy);
-    }
+    /* 1. store the current icon positions (except the selected one) */
+    gfloat *x_pos = g_new0(gfloat, count);
+    ClutterActor **actors = g_new0(ClutterActor*, count);
     for (i = 0; i < count; i++) {
 	SBItem *item = g_list_nth_data(dockitems, i);
 	ClutterActor *icon = clutter_actor_get_parent(item->texture);
@@ -473,22 +471,12 @@ static void dock_align_icons(gboolean animated)
 	    continue;
 	}
 
+	x_pos[i] = xpos;
+
 	if (item != selected_item) {
-	    if (selected_item) {
-		ClutterActorBox box;
-		clutter_actor_get_allocation_box(icon, &box);
-		//printf("box: %f,%f, %f,%f\n", box.x1,box.y1, box.x2,box.y2);
-		if (clutter_actor_box_contains(&box, cx+(60.0-spacing), cy)) {
-		    printf("move item %d\n", i);
-		    xpos += 60.0;
-		    xpos += spacing;
-		}
-	    }
-	    if (animated) {
-		clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
-	    } else {
-		clutter_actor_set_position(icon, xpos, ypos);
-	    }
+	    actors[i] = icon;
+	} else {
+	    sel_item = item;
 	}
 
 	xpos += 60;
@@ -496,6 +484,27 @@ static void dock_align_icons(gboolean animated)
 	    xpos += spacing;
 	}
     }
+
+    if (sel_item && selected_item) {
+	/* perform position calculation */
+    	gfloat cx = 0.0;
+    	gfloat cy = 0.0;
+	actor_get_abs_center(clutter_actor_get_parent(selected_item->texture), &cx, &cy);
+    }
+
+    /* finally, set the positions */
+    for (i = 0; i < count; i++) {
+	if (actors[i]) {
+	    xpos = x_pos[i];
+	    if (animated) {
+		clutter_actor_animate(actors[i], CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+	    } else {
+		clutter_actor_set_position(actors[i], xpos, ypos);
+	    }
+	}
+    }
+    g_free(x_pos);
+    g_free(actors);
 }
 
 static void redraw_icons()
