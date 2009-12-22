@@ -455,6 +455,7 @@ static void dock_align_icons(gboolean animated)
     gfloat ypos = 8.0;
     gfloat xpos = 0.0;
     gint i = 0;
+    SBItem *sel_item = NULL;
     if (count > 4) {
 	spacing = 3.0;
     }
