@@ -460,16 +460,13 @@ static void dock_align_icons(gboolean animated)
     gfloat ypos = 8.0;
     gfloat xpos = 0.0;
     gint i = 0;
-    SBItem *sel_item = NULL;
     if (count > 4) {
 	spacing = 3.0;
     }
     gfloat totalwidth = count*60.0 + spacing*(count-1);
     xpos = (STAGE_WIDTH - totalwidth)/2.0;
 
-    /* 1. store the current icon positions (except the selected one) */
-    gfloat *x_pos = g_new0(gfloat, count);
-    ClutterActor **actors = g_new0(ClutterActor*, count);
+    /* set positions */
     for (i = 0; i < count; i++) {
 	SBItem *item = g_list_nth_data(dockitems, i);
 	ClutterActor *icon = clutter_actor_get_parent(item->texture);
@@ -477,12 +474,12 @@ static void dock_align_icons(gboolean animated)
 	    continue;
 	}
 
-	x_pos[i] = xpos;
-
 	if (item != selected_item) {
-	    actors[i] = icon;
-	} else {
-	    sel_item = item;
+	    if (animated) {
+		clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+	    } else {
+		clutter_actor_set_position(icon, xpos, ypos);
+	    }
 	}
 
 	xpos += 60;
@@ -490,27 +487,6 @@ static void dock_align_icons(gboolean animated)
 	    xpos += spacing;
 	}
     }
-
-    if (sel_item && selected_item) {
-	/* perform position calculation */
-    	gfloat cx = 0.0;
-    	gfloat cy = 0.0;
-	actor_get_abs_center(clutter_actor_get_parent(selected_item->texture), &cx, &cy);
-    }
-
-    /* finally, set the positions */
-    for (i = 0; i < count; i++) {
-	if (actors[i]) {
-	    xpos = x_pos[i];
-	    if (animated) {
-		clutter_actor_animate(actors[i], CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
-	    } else {
-		clutter_actor_set_position(actors[i], xpos, ypos);
-	    }
-	}
-    }
-    g_free(x_pos);
-    g_free(actors);
 }
 
 static void sb_align_icons(guint page_num, gboolean animated)
@@ -530,12 +506,8 @@ static void sb_align_icons(guint page_num, gboolean animated)
     gfloat ypos = 16.0;
     gfloat xpos = 16.0 + (page_num * STAGE_WIDTH);
     gint i = 0;
-    SBItem *sel_item = NULL;
 
-    /* store the current icon positions (except the selected one) */
-    gfloat *x_pos = g_new0(gfloat, count);
-    gfloat *y_pos = g_new0(gfloat, count);
-    ClutterActor **actors = g_new0(ClutterActor*, count);
+    /* set positions */
     for (i = 0; i < count; i++) {
 	SBItem *item = g_list_nth_data(pageitems, i);
 	if (!item) {
@@ -551,13 +523,12 @@ static void sb_align_icons(guint page_num, gboolean animated)
 	    continue;
 	}
 
-	x_pos[i] = xpos;
-	y_pos[i] = ypos;
-
 	if (item != selected_item) {
-	    actors[i] = icon;
-	} else {
-	    sel_item = item;
+	    if (animated) {
+		clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+	    } else {
+		clutter_actor_set_position(icon, xpos, ypos);
+	    }
 	}
 
     	if (((i+1) % 4) == 0) {
@@ -569,29 +540,6 @@ static void sb_align_icons(guint page_num, gboolean animated)
     	    xpos += 76;
     	}
     }
-
-    if (sel_item && selected_item) {
-	/* perform position calculation */
-    	gfloat cx = 0.0;
-    	gfloat cy = 0.0;
-	actor_get_abs_center(clutter_actor_get_parent(selected_item->texture), &cx, &cy);
-    }
-
-    /* finally, set the positions */
-    for (i = 0; i < count; i++) {
-	if (actors[i]) {
-	    xpos = x_pos[i];
-	    ypos = y_pos[i];
-	    if (animated) {
-		clutter_actor_animate(actors[i], CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
-	    } else {
-		clutter_actor_set_position(actors[i], xpos, ypos);
-	    }
-	}
-    }
-    g_free(actors);
-    g_free(y_pos);
-    g_free(x_pos);
 }
 
 static void redraw_icons()
