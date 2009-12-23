@@ -156,6 +156,9 @@ static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sb
 	}
 	free(value);
     }
+    if (png) {
+	free(png);
+    }
 }
 
 static void page_indicator_group_align()
