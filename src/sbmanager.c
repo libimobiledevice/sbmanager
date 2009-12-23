@@ -609,6 +609,37 @@ static void redraw_icons()
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
 }
 
+static GList *insert_into_icon_list(GList *iconlist, SBItem *newitem, gfloat item_x, gfloat item_y)
+{
+    if (!newitem || !iconlist) {
+	return iconlist;
+    }
+    gint i;
+    gint count = g_list_length(iconlist);
+    gint newpos = count;
+    if (count <= 0) {
+	return iconlist;
+    }
+
+    for (i = 0; i < count; i++) {
+	SBItem *item = g_list_nth_data(iconlist, i);
+	ClutterActor *icon = clutter_actor_get_parent(item->texture);
+	gfloat xpos = clutter_actor_get_x(icon);
+	gfloat ypos = clutter_actor_get_y(icon);
+
+	if ((item_y > ypos+70) || (item_y < ypos-10)) {
+	   /* this is not the row we are in */
+	   continue;
+	}
+        if (item_x < xpos+30) {
+	    newpos = i;
+	    break;
+	}
+    }
+
+    return g_list_insert(iconlist, selected_item, newpos);
+}
+
 static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gpointer user_data)
 {
     /* check if an item has been raised */ 
@@ -628,31 +659,25 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
     actor_get_abs_center(icon, &center_x, &center_y);
 
     if (selected_item->is_dock_item) {
+	dockitems = g_list_remove(dockitems, selected_item);
 	if (center_y >= dock_area.y1) {
 	    printf("icon from dock moving inside the dock!\n");
-	    GList *found = g_list_find(dockitems, selected_item);
-	    if (!found) {
-		selected_item->is_dock_item = TRUE;
-		dockitems = g_list_append(dockitems, selected_item);
-	    }
+	    selected_item->is_dock_item = TRUE;
+	    dockitems = insert_into_icon_list(dockitems, selected_item, (center_x - dock_area.x1), (center_y - dock_area.y1));
 	} else {
 	    printf("icon from dock moving outside the dock!\n");
-	    dockitems = g_list_remove(dockitems, selected_item);
 	    selected_item->is_dock_item = FALSE;
 	}
     } else {
 	GList *pageitems = g_list_nth_data(sbpages, current_page);
 	sbpages = g_list_remove(sbpages, pageitems);
+	pageitems = g_list_remove(pageitems, selected_item);
 	if (center_y >= dock_area.y1) {
 	    printf("regular icon is moving inside the dock!\n");
-	    pageitems = g_list_remove(pageitems, selected_item);
 	    selected_item->is_dock_item = TRUE;
 	} else {
 	    printf("regular icon is moving!\n");
-	    GList *found = g_list_find(pageitems, selected_item);
-	    if (!found) {
-		pageitems = g_list_append(pageitems, selected_item);
-	    }
+	    pageitems = insert_into_icon_list(pageitems, selected_item, (center_x - sb_area.x1), (center_y - sb_area.y1));
 	}
 	sbpages = g_list_insert(sbpages, pageitems, current_page);
     }
