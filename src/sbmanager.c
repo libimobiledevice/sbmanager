@@ -83,6 +83,7 @@ guint num_dock_items = 0;
 int current_page = 0;
 
 static void dock_align_icons(gboolean animated);
+static void sb_align_icons(guint page_num, gboolean animated);
 static void redraw_icons();
 
 static void sbitem_free(SBItem *a)
@@ -439,6 +440,7 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
 
     selected_item = NULL;
     dock_align_icons(TRUE);
+    sb_align_icons(current_page, TRUE);
     start_x = 0.0;
     start_y = 0.0;
 
@@ -511,6 +513,87 @@ static void dock_align_icons(gboolean animated)
     g_free(actors);
 }
 
+static void sb_align_icons(guint page_num, gboolean animated)
+{
+    if (!sbpages) return;
+    if (g_list_length(sbpages) == 0) {
+	printf("%s: no pages? that's strange...\n", __func__);
+	return;
+    }
+    GList *pageitems = g_list_nth_data(sbpages, page_num);
+    if (!pageitems) {
+	printf("%s: no items on page %d\n", __func__, page_num);
+	return;
+    }
+    gint count = g_list_length(pageitems);
+
+    gfloat ypos = 16.0;
+    gfloat xpos = 16.0 + (page_num * STAGE_WIDTH);
+    gint i = 0;
+    SBItem *sel_item = NULL;
+
+    /* store the current icon positions (except the selected one) */
+    gfloat *x_pos = g_new0(gfloat, count);
+    gfloat *y_pos = g_new0(gfloat, count);
+    ClutterActor **actors = g_new0(ClutterActor*, count);
+    for (i = 0; i < count; i++) {
+	SBItem *item = g_list_nth_data(pageitems, i);
+	if (!item) {
+	    printf("%s: item is null for i=%d\n", __func__, i);
+	    continue;
+	}
+	if (!item->texture) {
+	    printf("%s(%d,%d): i=%d item->texture is null\n", __func__, page_num, animated, i);
+	    continue;
+	}
+	ClutterActor *icon = clutter_actor_get_parent(item->texture);
+	if (!icon) {
+	    continue;
+	}
+
+	x_pos[i] = xpos;
+	y_pos[i] = ypos;
+
+	if (item != selected_item) {
+	    actors[i] = icon;
+	} else {
+	    sel_item = item;
+	}
+
+    	if (((i+1) % 4) == 0) {
+    	    xpos = 16.0 + (page_num * STAGE_WIDTH);
+	    if (ypos+88.0 < sb_area.y2-sb_area.y1) {
+		ypos += 88.0;
+	    }
+    	} else {
+    	    xpos += 76;
+    	}
+    }
+
+    if (sel_item && selected_item) {
+	/* perform position calculation */
+    	gfloat cx = 0.0;
+    	gfloat cy = 0.0;
+	actor_get_abs_center(clutter_actor_get_parent(selected_item->texture), &cx, &cy);
+    }
+
+    /* finally, set the positions */
+    for (i = 0; i < count; i++) {
+	if (actors[i]) {
+	    xpos = x_pos[i];
+	    ypos = y_pos[i];
+	    if (animated) {
+		clutter_actor_animate(actors[i], CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+	    } else {
+		clutter_actor_set_position(actors[i], xpos, ypos);
+	    }
+	}
+    }
+    g_free(actors);
+    g_free(y_pos);
+    g_free(x_pos);
+}
+
 static void redraw_icons()
 {
     guint i;
@@ -549,8 +632,8 @@ static void redraw_icons()
 	printf("%s: %d pages\n", __func__, g_list_length(sbpages));
 	for (j = 0; j < g_list_length(sbpages); j++) {
 	    GList *cpage = g_list_nth_data(sbpages, j);
-    	    ypos = 16.0;
-	    xpos = 16.0 + (j * STAGE_WIDTH);
+    	    ypos = 0.0;
+	    xpos = 0.0;
 	    printf("%s: drawing page icons for page %d\n", __func__, j);
 	    for (i = 0; i < g_list_length(cpage); i++) {
 		SBItem *item = (SBItem*)g_list_nth_data(cpage, i);
@@ -570,12 +653,7 @@ static void redraw_icons()
 		    clutter_actor_show(actor);
 		    clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
 		    clutter_container_add_actor(CLUTTER_CONTAINER(the_sb), grp);
-		}
-		if (((i+1) % 4) == 0) {
-		    xpos = 16.0 + (j * STAGE_WIDTH);
-		    ypos += 88.0;
-		} else {
-		    xpos += 76.0;
+		    sb_align_icons(j, FALSE);
 		}
 	    }
 	}
@@ -590,14 +668,16 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
 	return FALSE;
     }
 
-    clutter_actor_move_by(clutter_actor_get_parent(selected_item->texture), (event->x - start_x), (event->y - start_y));
+    ClutterActor *icon = clutter_actor_get_parent(selected_item->texture);
+
+    clutter_actor_move_by(icon, (event->x - start_x), (event->y - start_y));
 
     start_x = event->x;
     start_y = event->y;
 
     gfloat center_x;
     gfloat center_y;
-    actor_get_abs_center(clutter_actor_get_parent(selected_item->texture), &center_x, &center_y);
+    actor_get_abs_center(icon, &center_x, &center_y);
 
     if (selected_item->is_dock_item) {
 	if (center_y >= dock_area.y1) {
@@ -605,22 +685,31 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
 	    GList *found = g_list_find(dockitems, selected_item);
 	    if (!found) {
 		selected_item->is_dock_item = TRUE;
-		dockitems = g_list_insert(dockitems, selected_item, 3);
+		dockitems = g_list_append(dockitems, selected_item);
 	    }
 	} else {
 	    printf("icon from dock moving outside the dock!\n");
 	    dockitems = g_list_remove(dockitems, selected_item);
 	    selected_item->is_dock_item = FALSE;
 	}
-	dock_align_icons(TRUE);
     } else {
+	GList *pageitems = g_list_nth_data(sbpages, current_page);
+	sbpages = g_list_remove(sbpages, pageitems);
 	if (center_y >= dock_area.y1) {
 	    printf("regular icon is moving inside the dock!\n");
+	    pageitems = g_list_remove(pageitems, selected_item);
 	    selected_item->is_dock_item = TRUE;
 	} else {
 	    printf("regular icon is moving!\n");
+	    GList *found = g_list_find(pageitems, selected_item);
+	    if (!found) {
+		pageitems = g_list_append(pageitems, selected_item);
+	    }
 	}
+	sbpages = g_list_insert(sbpages, pageitems, current_page);
     }
+    dock_align_icons(TRUE);
+    sb_align_icons(current_page, TRUE);
 
     return TRUE;
 }
