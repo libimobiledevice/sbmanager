@@ -49,6 +49,7 @@ ClutterColor dock_item_text_color = {255, 255, 255, 255};
 typedef struct {
     GtkWidget *window;
     char *uuid;
+    plist_t battery;
 } SBManagerApp;
 
 typedef struct {
@@ -66,6 +67,7 @@ ClutterActor *stage = NULL;
 ClutterActor *the_dock = NULL;
 ClutterActor *the_sb = NULL;
 ClutterActor *clock_label = NULL;
+ClutterActor *battery_level = NULL;
 ClutterActor *page_indicator = NULL;
 ClutterActor *page_indicator_group = NULL;
 
@@ -839,6 +841,93 @@ static gboolean button_clicked(GtkButton *button, gpointer user_data)
     return TRUE;
 }
 
+static guint battery_init(SBManagerApp *app)
+{
+    guint interval = 60;
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    plist_t info_plist = NULL;
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+	fprintf(stderr, "No iPhone found, is it plugged in?\n");
+	goto leave_cleanup;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+	fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+	goto leave_cleanup;
+    }
+
+    lockdownd_get_value(client, "com.apple.mobile.iTunes", "BatteryPollInterval", &info_plist);
+    plist_get_uint_val(info_plist, (uint64_t*)&interval);
+    plist_free(info_plist);
+
+    printf("Have to poll battery every %d seconds...\n", interval);
+
+leave_cleanup:
+    if (client) {
+	lockdownd_client_free(client);
+    }
+    iphone_device_free(phone);
+
+    /* Let's default to the default */
+    return interval;
+}
+
+static guint battery_get_current_capacity(SBManagerApp *app)
+{
+    uint64_t current_capacity = 0;
+    plist_t node = NULL;
+
+    if (app->battery == NULL)
+        return current_capacity;
+
+    node = plist_dict_get_item(app->battery, "BatteryCurrentCapacity");
+    if (node != NULL)
+    {
+        plist_get_uint_val(node, &current_capacity);
+        plist_free(node);
+    }
+    
+    return (guint)current_capacity;
+}
+
+static gboolean battery_update_cb(gpointer data)
+{
+    SBManagerApp *app = (SBManagerApp*)data;
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    guint capacity = 0;
+
+    printf("Updating battery information...\n");
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+	fprintf(stderr, "No iPhone found, is it plugged in?\n");
+	goto leave_cleanup;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+	fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+	goto leave_cleanup;
+    }
+
+    lockdownd_get_value(client, "com.apple.mobile.battery", NULL, &app->battery);
+
+    capacity = battery_get_current_capacity(app);
+    printf("Battery capacity is at %d%%\n", capacity);
+
+    clutter_actor_set_size(battery_level, (guint)(((double)(capacity)/100.0)*15), 6);
+    clutter_actor_set_position(battery_level, 298, 6);
+
+leave_cleanup:
+    if (client) {
+	lockdownd_client_free(client);
+    }
+    iphone_device_free(phone);
+
+    return TRUE;
+}
+
 int main(int argc, char **argv)
 {
     SBManagerApp *app;
@@ -972,6 +1061,14 @@ int main(int argc, char **argv)
     /* Position and update the clock */
     clock_set_time(clock_label, time(NULL));
     clutter_actor_show(clock_label);
+
+   /* Load BatteryPollInterval and register battery state read timeout */
+    g_timeout_add_seconds(battery_init(app), (GSourceFunc)battery_update_cb, app);
+
+     /* battery capacity */
+    battery_level = clutter_rectangle_new_with_color(clutter_color_new(0xff, 0xff, 0xff, 0x9f));
+    battery_update_cb(app);
+    clutter_group_add (CLUTTER_GROUP (stage), battery_level);
 
     /* Load icons in an idle loop */
     g_idle_add((GSourceFunc)get_icons, app);
