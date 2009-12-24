@@ -2,6 +2,7 @@
 sbmanager -- Manage iPhone/iPod Touch SpringBoard icons from your computer!
 
 Copyright (C) 2009      Nikias Bassen <nikias@gmx.li>
+Copyright (C) 2009      Martin Szulecki <opensuse@sukimashita.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,10 +33,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <clutter-gtk/clutter-gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-#define ITEM_FONT "Sans Bold 7"
+#include "../data/data.h"
+
+#define STAGE_WIDTH 320
+#define STAGE_HEIGHT 480
+#define DOCK_HEIGHT 90
+
+const char CLOCK_FONT[] = "FreeSans Bold 12px";
+ClutterColor clock_text_color = {255, 255, 255, 210};
+
+const char ITEM_FONT[] = "FreeSans Bold 10px";
+ClutterColor item_text_color = {255, 255, 255, 210};
+ClutterColor dock_item_text_color = {255, 255, 255, 255};
 
 typedef struct {
     GtkWidget *window;
+    char *uuid;
+    plist_t battery;
 } SBManagerApp;
 
 typedef struct {
@@ -45,12 +59,20 @@ typedef struct {
     gboolean is_dock_item;
 } SBItem;
 
+const ClutterActorBox dock_area = {0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH, STAGE_HEIGHT};
+
+const ClutterActorBox sb_area = {0.0, 16.0, STAGE_WIDTH, STAGE_HEIGHT-DOCK_HEIGHT-16.0};
+
 ClutterActor *stage = NULL;
+ClutterActor *the_dock = NULL;
+ClutterActor *the_sb = NULL;
+ClutterActor *name_label = NULL;
 ClutterActor *clock_label = NULL;
-ClutterColor text_color = {255, 255, 255, 255};
+ClutterActor *battery_level = NULL;
+ClutterActor *page_indicator = NULL;
+ClutterActor *page_indicator_group = NULL;
 
 GMutex *selected_mutex = NULL;
-ClutterActor *selected = NULL;
 SBItem *selected_item = NULL;
 
 gfloat start_x = 0.0;
@@ -59,8 +81,13 @@ gfloat start_y = 0.0;
 GList *dockitems = NULL;
 GList *sbpages = NULL;
 
-GList *this_page = NULL;
+guint num_dock_items = 0;
+
 int current_page = 0;
+
+static void dock_align_icons(gboolean animated);
+static void sb_align_icons(guint page_num, gboolean animated);
+static void redraw_icons();
 
 static void sbitem_free(SBItem *a)
 {
@@ -82,28 +109,35 @@ static void sbpage_free(GList *sbitems)
     }
 }
 
-static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sbc)
+static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sbc, gboolean skip_empty)
 {
     char *png = NULL;
     uint64_t pngsize = 0;
     SBItem *di = NULL;
     plist_t valuenode = NULL;
     if (plist_get_node_type(node) != PLIST_DICT) {
-	di = g_new0(SBItem, 1);
-	*list = g_list_append(*list, di);
-	return;
+	if (!skip_empty) {
+	    di = g_new0(SBItem, 1);
+	    *list = g_list_append(*list, di);
+	    return;
+	}
     }
     valuenode = plist_dict_get_item(node, "displayIdentifier");
     if (valuenode && (plist_get_node_type(valuenode) == PLIST_STRING)) {
 	char *value = NULL;
+	char *icon_filename = NULL;
 	plist_get_string_val(valuenode, &value);
 	printf("retrieving icon for '%s'\n", value);
 	if ((sbservices_get_icon_pngdata(sbc, value, &png, &pngsize) == SBSERVICES_E_SUCCESS) && (pngsize > 0)) {
-	    FILE *f = fopen("/tmp/temp.png", "w");
+	    icon_filename = g_strdup_printf("/tmp/%s.png", value);
+	    FILE *f = fopen(icon_filename, "w");
 	    GError *err = NULL;
 	    fwrite(png, 1, pngsize, f);
 	    fclose(f);
-	    ClutterActor *actor = clutter_texture_new_from_file("/tmp/temp.png", &err);
+	    ClutterActor *actor = clutter_texture_new();
+	    clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
+	    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), icon_filename, &err);
+	    g_free(icon_filename);
 	    if (actor) {
 		plist_t nn = plist_dict_get_item(node, "displayName");
 		di = g_new0(SBItem, 1);
@@ -112,7 +146,7 @@ static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sb
 		if (nn && (plist_get_node_type(nn) == PLIST_STRING)) {
 		    char *txtval = NULL;
 		    plist_get_string_val(nn, &txtval);
-		    actor = clutter_text_new_full(ITEM_FONT, txtval, &text_color);
+		    actor = clutter_text_new_with_text(ITEM_FONT, txtval);
 		    di->label = actor;
 		}
 		*list = g_list_append(*list, di);
@@ -126,10 +160,47 @@ static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sb
 	}
 	free(value);
     }
+    if (png) {
+	free(png);
+    }
 }
 
-static void get_icons(const char *uuid)
+static void page_indicator_group_align()
 {
+    gint count = clutter_group_get_n_children(CLUTTER_GROUP(page_indicator_group));
+    gint i;
+    gfloat xpos = 0.0;
+
+    if (count <= 0) return;
+
+    for (i = 0; i < count; i++) {
+	ClutterActor *dot = clutter_group_get_nth_child(CLUTTER_GROUP(page_indicator_group), i);
+	clutter_actor_set_position(dot, xpos, 0.0);
+	if (i == current_page) {
+	    clutter_actor_set_opacity(dot, 200);
+	} else {
+	    clutter_actor_set_opacity(dot, 100);
+	}
+	xpos += clutter_actor_get_width(dot);
+    }
+
+    clutter_actor_set_x(page_indicator_group, (STAGE_WIDTH - xpos) / 2.0);
+}
+
+static gboolean page_indicator_clicked(ClutterActor *actor, ClutterEvent *event, gpointer data)
+{
+    current_page = GPOINTER_TO_UINT(data);
+
+    page_indicator_group_align();
+
+    clutter_actor_animate(the_sb, CLUTTER_EASE_IN_OUT_CUBIC, 400, "x", (gfloat)(-(current_page*STAGE_WIDTH)), NULL);
+
+    return TRUE;
+}
+
+static gboolean get_icons(gpointer data)
+{
+    SBManagerApp *app = (SBManagerApp*)data;
     iphone_device_t phone = NULL;
     lockdownd_client_t client = NULL;
     sbservices_client_t sbc = NULL;
@@ -147,9 +218,9 @@ static void get_icons(const char *uuid)
 	dockitems = NULL;
     }
 
-    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
 	fprintf(stderr, "No iPhone found, is it plugged in?\n");
-	return;
+	return FALSE;
     }
 
     if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
@@ -192,9 +263,10 @@ static void get_icons(const char *uuid)
 	    goto leave_cleanup;
 	}
 	count = plist_array_get_size(dock);
+	num_dock_items = count;
 	for (i = 0; i < count; i++) {
 	    plist_t node = plist_array_get_item(dock, i);
-	    get_icon_for_node(node, &dockitems, sbc);
+	    get_icon_for_node(node, &dockitems, sbc, TRUE);
 	}
 	if (total > 1) {
 	    /* get all icons for the other pages */
@@ -218,15 +290,25 @@ static void get_icons(const char *uuid)
 		    count = plist_array_get_size(nrow);
 		    for (i = 0; i < count; i++) {
 			plist_t node = plist_array_get_item(nrow, i);
-			get_icon_for_node(node, &page, sbc);
+			get_icon_for_node(node, &page, sbc, FALSE);
 		    }
 		}
 		if (page) {
 		    sbpages = g_list_append(sbpages, page);
+		    if (page_indicator) {
+			ClutterActor *actor = clutter_clone_new(page_indicator);
+			clutter_actor_unparent(actor);
+			clutter_actor_set_reactive(actor, TRUE);
+			g_signal_connect(actor, "button-press-event", G_CALLBACK(page_indicator_clicked), GUINT_TO_POINTER(p-1));
+			clutter_container_add_actor(CLUTTER_CONTAINER(page_indicator_group), actor);
+			page_indicator_group_align();
+		    }
 		}
 	    }
 	}
     }
+
+    redraw_icons();
 
 leave_cleanup:
     if (iconstate) {
@@ -240,22 +322,41 @@ leave_cleanup:
     }
     iphone_device_free(phone);
 
-    return;
+    return FALSE;
 }
 
-static void clock_cb (ClutterTimeline *timeline, gint msecs, SBManagerApp *app)
+static void clock_set_time(ClutterActor *label, time_t t)
 {
-    time_t t = time(NULL);
     struct tm *curtime = localtime(&t);
     gchar *ctext = g_strdup_printf("%02d:%02d", curtime->tm_hour, curtime->tm_min);
-    clutter_text_set_text(CLUTTER_TEXT(clock_label), ctext);
-    clutter_actor_set_position(clock_label, (clutter_actor_get_width(stage)-clutter_actor_get_width(clock_label)) / 2, 2);
+    clutter_text_set_text(CLUTTER_TEXT(label), ctext);
+    clutter_actor_set_position(label, (clutter_actor_get_width(stage)-clutter_actor_get_width(label)) / 2, 2);
     g_free(ctext);
+}
+
+static void clock_update_cb (ClutterTimeline *timeline, gint msecs, SBManagerApp *app)
+{
+    clock_set_time(clock_label, time(NULL));
+}
+
+static void actor_get_abs_center(ClutterActor *actor, gfloat *center_x, gfloat *center_y)
+{
+    *center_x = 0.0;
+    *center_y = 0.0;
+    if (!actor) return;
+    clutter_actor_get_scale_center(actor, center_x, center_y);
+    *center_x += clutter_actor_get_x(actor);
+    *center_y += clutter_actor_get_y(actor);
 }
 
 static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
     if (!user_data) {
+	return FALSE;
+    }
+
+    if (selected_item) {
+	/* do not allow a button_press event without a prior release */
 	return FALSE;
     }
 
@@ -271,20 +372,29 @@ static gboolean item_button_press (ClutterActor *actor, ClutterButtonEvent *even
     printf("%s: %s mouse pressed\n", __func__, strval);
 
     if (actor) {
+	gfloat diffx = 0.0;
+	gfloat diffy = 0.0;
 	ClutterActor *sc = clutter_actor_get_parent(actor);
 	if (item->is_dock_item) {
 	    GList *children = clutter_container_get_children(CLUTTER_CONTAINER(sc));
 	    if (children) {
 		ClutterActor *icon = g_list_nth_data(children, 0);
 		ClutterActor *label = g_list_nth_data(children, 1);
+		clutter_text_set_color(CLUTTER_TEXT(label), &item_text_color);
 		clutter_actor_set_y(label, clutter_actor_get_y(icon) + 62.0);
 		g_list_free(children);
 	    }
+	    diffx = dock_area.x1;
+	    diffy = dock_area.y1;
+	} else {
+	    diffx = sb_area.x1 - (current_page*STAGE_WIDTH);
+	    diffy = sb_area.y1;
 	}
-	clutter_actor_set_scale_full(sc, 1.2, 1.2, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
+	clutter_actor_reparent(sc, stage);
+	clutter_actor_set_position(sc, clutter_actor_get_x(sc) + diffx, clutter_actor_get_y(sc) + diffy);
 	clutter_actor_raise_top(sc);
+	clutter_actor_set_scale_full(sc, 1.2, 1.2, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
 	clutter_actor_set_opacity(sc, 160);
-	selected = sc;
 	selected_item = item;
 	start_x = event->x;
 	start_y = event->y;
@@ -312,21 +422,28 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
 
     if (actor) {
 	ClutterActor *sc = clutter_actor_get_parent(actor);
+	clutter_actor_set_scale_full(sc, 1.0, 1.0, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
+	clutter_actor_set_opacity(sc, 255);
 	if (item->is_dock_item) {
 	    GList *children = clutter_container_get_children(CLUTTER_CONTAINER(sc));
 	    if (children) {
 		ClutterActor *icon = g_list_nth_data(children, 0);
 		ClutterActor *label = g_list_nth_data(children, 1);
-		clutter_actor_set_y(label, clutter_actor_get_y(icon) + 69.0);
+		clutter_text_set_color(CLUTTER_TEXT(label), &dock_item_text_color);
+		clutter_actor_set_y(label, clutter_actor_get_y(icon) + 67.0);
 		g_list_free(children);
 	    }
+	    clutter_actor_reparent(sc, the_dock);
+	    clutter_actor_set_position(sc, clutter_actor_get_x(sc) - dock_area.x1, clutter_actor_get_y(sc) - dock_area.y1);
+	} else {
+	    clutter_actor_reparent(sc, the_sb);
+	    clutter_actor_set_position(sc, clutter_actor_get_x(sc) + (current_page*STAGE_WIDTH) - sb_area.x1, clutter_actor_get_y(sc) - sb_area.y1);
 	}
-	clutter_actor_set_scale_full(sc, 1.0, 1.0, clutter_actor_get_x(actor) + clutter_actor_get_width(actor)/2, clutter_actor_get_y(actor) + clutter_actor_get_height(actor)/2);
-	clutter_actor_set_opacity(sc, 255);
     }
 
-    selected = NULL;
     selected_item = NULL;
+    dock_align_icons(TRUE);
+    sb_align_icons(current_page, TRUE);
     start_x = 0.0;
     start_y = 0.0;
 
@@ -335,15 +452,109 @@ static gboolean item_button_release (ClutterActor *actor, ClutterButtonEvent *ev
     return TRUE;
 }
 
-static void redraw_icons(SBManagerApp *app)
+static void dock_align_icons(gboolean animated)
+{
+    if (!dockitems) return;
+    gint count = g_list_length(dockitems);
+    if (count == 0) {
+	return;
+    }
+    gfloat spacing = 16.0;
+    gfloat ypos = 8.0;
+    gfloat xpos = 0.0;
+    gint i = 0;
+    if (count > 4) {
+	spacing = 3.0;
+    }
+    gfloat totalwidth = count*60.0 + spacing*(count-1);
+    xpos = (STAGE_WIDTH - totalwidth)/2.0;
+
+    /* set positions */
+    for (i = 0; i < count; i++) {
+	SBItem *item = g_list_nth_data(dockitems, i);
+	ClutterActor *icon = clutter_actor_get_parent(item->texture);
+	if (!icon) {
+	    continue;
+	}
+
+	if (item != selected_item) {
+	    if (animated) {
+		clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+	    } else {
+		clutter_actor_set_position(icon, xpos, ypos);
+	    }
+	}
+
+	xpos += 60;
+	if (i < count-1) {
+	    xpos += spacing;
+	}
+    }
+}
+
+static void sb_align_icons(guint page_num, gboolean animated)
+{
+    if (!sbpages) return;
+    if (g_list_length(sbpages) == 0) {
+	printf("%s: no pages? that's strange...\n", __func__);
+	return;
+    }
+    GList *pageitems = g_list_nth_data(sbpages, page_num);
+    if (!pageitems) {
+	printf("%s: no items on page %d\n", __func__, page_num);
+	return;
+    }
+    gint count = g_list_length(pageitems);
+
+    gfloat ypos = 16.0;
+    gfloat xpos = 16.0 + (page_num * STAGE_WIDTH);
+    gint i = 0;
+
+    /* set positions */
+    for (i = 0; i < count; i++) {
+	SBItem *item = g_list_nth_data(pageitems, i);
+	if (!item) {
+	    printf("%s: item is null for i=%d\n", __func__, i);
+	    continue;
+	}
+	if (!item->texture) {
+	    printf("%s(%d,%d): i=%d item->texture is null\n", __func__, page_num, animated, i);
+	    continue;
+	}
+	ClutterActor *icon = clutter_actor_get_parent(item->texture);
+	if (!icon) {
+	    continue;
+	}
+
+	if (item != selected_item) {
+	    if (animated) {
+		clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+	    } else {
+		clutter_actor_set_position(icon, xpos, ypos);
+	    }
+	}
+
+    	if (((i+1) % 4) == 0) {
+    	    xpos = 16.0 + (page_num * STAGE_WIDTH);
+	    if (ypos+88.0 < sb_area.y2-sb_area.y1) {
+		ypos += 88.0;
+	    }
+    	} else {
+    	    xpos += 76;
+    	}
+    }
+}
+
+static void redraw_icons()
 {
     guint i;
+    guint j;
     gfloat ypos;
     gfloat xpos;
 
     if (dockitems) {
-	ypos = 398.0;
-	xpos = 16.0;
+	xpos = 0.0;
+	ypos = 0.0;
   	printf("%s: drawing dock icons\n", __func__);
 	for (i = 0; i < g_list_length(dockitems); i++) {
 	    SBItem *item = (SBItem*)g_list_nth_data(dockitems, i);
@@ -358,72 +569,123 @@ static void redraw_icons(SBManagerApp *app)
 		g_signal_connect(actor, "button-release-event", G_CALLBACK (item_button_release), item);
 		clutter_actor_show(actor);
 		actor = item->label;
-		clutter_actor_set_position(actor, xpos+(59.0 - clutter_actor_get_width(actor))/2, ypos+69.0);
+		clutter_actor_set_position(actor, xpos+(59.0 - clutter_actor_get_width(actor))/2, ypos+67.0);
+		clutter_text_set_color(CLUTTER_TEXT(actor), &dock_item_text_color);
 		clutter_actor_show(actor);
 		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-		clutter_container_add_actor(CLUTTER_CONTAINER(stage), grp);
+		clutter_container_add_actor(CLUTTER_CONTAINER(the_dock), grp);
+		dock_align_icons(FALSE);
 	    }
-	    xpos += 76;
 	}
     }
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
     if (sbpages) {
-	ypos = 32.0;
-	xpos = 16.0;
 	printf("%s: %d pages\n", __func__, g_list_length(sbpages));
-  	printf("%s: drawing page icons for page %d\n", __func__, current_page);
-	this_page = g_list_nth_data(sbpages, current_page);
-	for (i = 0; i < g_list_length(this_page); i++) {
-	    SBItem *item = (SBItem*)g_list_nth_data(this_page, i);
-	    if (item && item->texture && item->node) {
-		item->is_dock_item = FALSE;
-		ClutterActor *grp = clutter_group_new();
-		ClutterActor *actor = item->texture;
-		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-		clutter_actor_set_position(actor, xpos, ypos);
-		clutter_actor_set_reactive(actor, TRUE);
-		g_signal_connect(actor, "button-press-event", G_CALLBACK (item_button_press), item);
-		g_signal_connect(actor, "button-release-event", G_CALLBACK (item_button_release), item);
-		clutter_actor_show(actor);
-		actor = item->label;
-		clutter_actor_set_position(actor, xpos+(59.0 - clutter_actor_get_width(actor))/2, ypos+62.0);
-		clutter_actor_show(actor);
-		clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-		clutter_container_add_actor(CLUTTER_CONTAINER(stage), grp);
-	    }
-	    if (((i+1) % 4) == 0) {
-		xpos = 16.0;
-		ypos += 88.0;
-	    } else {
-		xpos += 76.0;
+	for (j = 0; j < g_list_length(sbpages); j++) {
+	    GList *cpage = g_list_nth_data(sbpages, j);
+    	    ypos = 0.0;
+	    xpos = 0.0;
+	    printf("%s: drawing page icons for page %d\n", __func__, j);
+	    for (i = 0; i < g_list_length(cpage); i++) {
+		SBItem *item = (SBItem*)g_list_nth_data(cpage, i);
+		if (item && item->texture && item->node) {
+		    item->is_dock_item = FALSE;
+		    ClutterActor *grp = clutter_group_new();
+		    ClutterActor *actor = item->texture;
+		    clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
+		    clutter_actor_set_position(actor, xpos, ypos);
+		    clutter_actor_set_reactive(actor, TRUE);
+		    g_signal_connect(actor, "button-press-event", G_CALLBACK (item_button_press), item);
+		    g_signal_connect(actor, "button-release-event", G_CALLBACK (item_button_release), item);
+		    clutter_actor_show(actor);
+		    actor = item->label;
+		    clutter_text_set_color(CLUTTER_TEXT(actor), &item_text_color);
+		    clutter_actor_set_position(actor, xpos+(59.0 - clutter_actor_get_width(actor))/2, ypos+62.0);
+		    clutter_actor_show(actor);
+		    clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
+		    clutter_container_add_actor(CLUTTER_CONTAINER(the_sb), grp);
+		    sb_align_icons(j, FALSE);
+		}
 	    }
 	}
     }
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
 }
 
+static GList *insert_into_icon_list(GList *iconlist, SBItem *newitem, gfloat item_x, gfloat item_y)
+{
+    if (!newitem || !iconlist) {
+	return iconlist;
+    }
+    gint i;
+    gint count = g_list_length(iconlist);
+    gint newpos = count;
+    if (count <= 0) {
+	return iconlist;
+    }
+
+    for (i = 0; i < count; i++) {
+	SBItem *item = g_list_nth_data(iconlist, i);
+	ClutterActor *icon = clutter_actor_get_parent(item->texture);
+	gfloat xpos = clutter_actor_get_x(icon);
+	gfloat ypos = clutter_actor_get_y(icon);
+
+	if ((item_y > ypos+70) || (item_y < ypos-10)) {
+	   /* this is not the row we are in */
+	   continue;
+	}
+        if (item_x < xpos+30) {
+	    newpos = i;
+	    break;
+	}
+    }
+
+    return g_list_insert(iconlist, selected_item, newpos);
+}
+
 static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gpointer user_data)
 {
     /* check if an item has been raised */ 
-    if (!selected || !selected_item) {
+    if (!selected_item) {
 	return FALSE;
     }
 
-/*    gfloat oldx = clutter_actor_get_x(selected);
-    gfloat oldy = clutter_actor_get_y(selected);
+    ClutterActor *icon = clutter_actor_get_parent(selected_item->texture);
 
-    clutter_actor_set_position(selected, oldx + (event->x - start_x), oldy + (event->y - start_y));
-*/
-    clutter_actor_move_by(selected, (event->x - start_x), event->y - start_y);
+    clutter_actor_move_by(icon, (event->x - start_x), (event->y - start_y));
 
     start_x = event->x;
     start_y = event->y;
 
+    gfloat center_x;
+    gfloat center_y;
+    actor_get_abs_center(icon, &center_x, &center_y);
+
     if (selected_item->is_dock_item) {
-	printf("an icon from the dock is moving\n");
+	dockitems = g_list_remove(dockitems, selected_item);
+	if (center_y >= dock_area.y1) {
+	    printf("icon from dock moving inside the dock!\n");
+	    selected_item->is_dock_item = TRUE;
+	    dockitems = insert_into_icon_list(dockitems, selected_item, (center_x - dock_area.x1), (center_y - dock_area.y1));
+	} else {
+	    printf("icon from dock moving outside the dock!\n");
+	    selected_item->is_dock_item = FALSE;
+	}
     } else {
-	printf("a regular icon is moving\n");
+	GList *pageitems = g_list_nth_data(sbpages, current_page);
+	sbpages = g_list_remove(sbpages, pageitems);
+	pageitems = g_list_remove(pageitems, selected_item);
+	if (center_y >= dock_area.y1) {
+	    printf("regular icon is moving inside the dock!\n");
+	    selected_item->is_dock_item = TRUE;
+	} else {
+	    printf("regular icon is moving!\n");
+	    pageitems = insert_into_icon_list(pageitems, selected_item, (center_x - sb_area.x1), (center_y - sb_area.y1));
+	}
+	sbpages = g_list_insert(sbpages, pageitems, current_page);
     }
+    dock_align_icons(TRUE);
+    sb_align_icons(current_page, TRUE);
 
     return TRUE;
 }
@@ -431,10 +693,6 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
 static gboolean form_map(GtkWidget *widget, GdkEvent *event, SBManagerApp *app)
 {
     printf("%s: mapped\n", __func__);
-    clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
-
-    redraw_icons(app);
-
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
 
     return TRUE;
@@ -457,6 +715,247 @@ static gboolean form_focus_change(GtkWidget *widget, GdkEventFocus *event, gpoin
     return TRUE;
 }
 
+static gboolean set_icons(gpointer data)
+{
+    SBManagerApp *app = (SBManagerApp*)data;
+
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    sbservices_client_t sbc = NULL;
+    int port = 0;
+
+    gboolean result = FALSE;
+    plist_t iconstate = NULL;
+    plist_t pdockarray = NULL;
+    plist_t pdockitems = NULL;
+    guint i;
+
+    if (!dockitems || !sbpages) {
+	printf("missing dockitems or sbpages\n");
+	return result;
+    }
+
+    printf("About to uploaded new iconstate...\n");
+
+    guint count = g_list_length(dockitems);
+    pdockitems = plist_new_array();
+    for (i = 0; i < count; i++) {
+	SBItem *item = g_list_nth_data(dockitems, i);
+	if (!item) {
+	    continue;
+	}
+    	plist_t valuenode = plist_dict_get_item(item->node, "displayIdentifier");
+	if (!valuenode) {
+	    printf("could not get displayIdentifier\n");
+	    continue;
+	}
+
+	plist_t pitem = plist_new_dict();
+	plist_dict_insert_item(pitem, "displayIdentifier", plist_copy(valuenode));	
+	plist_array_append_item(pdockitems, pitem);
+    }
+    for (i = count; i < num_dock_items; i++) {
+	plist_array_append_item(pdockitems, plist_new_bool(0));
+    }
+    pdockarray = plist_new_array();
+    plist_array_append_item(pdockarray, pdockitems);
+
+    iconstate = plist_new_array();
+    plist_array_append_item(iconstate, pdockarray);
+
+    for (i = 0; i < g_list_length(sbpages); i++) {
+	GList *page = g_list_nth_data(sbpages, i);
+	if (page) {
+	    guint j;
+	    plist_t ppage = plist_new_array();
+	    plist_t row = NULL;
+	    for (j = 0; j < g_list_length(page); j++) {
+		SBItem *item = g_list_nth_data(page, j);
+		if ((j % 4) == 0) {
+		    row = plist_new_array();
+		    plist_array_append_item(ppage, row);
+		}
+		if (item->node) {
+		    plist_t valuenode = plist_dict_get_item(item->node, "displayIdentifier");
+	    	    if (!valuenode) {
+	    		printf("could not get displayIdentifier\n");
+	    		continue;
+	    	    }
+
+	    	    plist_t pitem = plist_new_dict();
+	    	    plist_dict_insert_item(pitem, "displayIdentifier", plist_copy(valuenode));	
+	    	    plist_array_append_item(row, pitem);
+		} else {
+		    plist_array_append_item(row, plist_new_bool(0));
+		}
+	    }
+	    plist_array_append_item(iconstate, plist_copy(ppage));
+	    plist_free(ppage);
+	}
+    }
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+	fprintf(stderr, "No iPhone found, is it plugged in?\n");
+	return result;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+	fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+	goto leave_cleanup;
+    }
+
+    if ((lockdownd_start_service(client, "com.apple.springboardservices", &port) != LOCKDOWN_E_SUCCESS) || !port) {
+	fprintf(stderr, "Could not start com.apple.springboardservices service! Remind that this feature is only supported in OS 3.1 and later!\n");
+	goto leave_cleanup;
+    }
+    if (sbservices_client_new(phone, port, &sbc) != SBSERVICES_E_SUCCESS) { 
+	fprintf(stderr, "Could not connect to springboardservices!\n");
+	goto leave_cleanup;
+    }
+    if (sbservices_set_icon_state(sbc, iconstate) != SBSERVICES_E_SUCCESS) {
+	fprintf(stderr, "ERROR: Could not set new icon state!\n");
+	goto leave_cleanup;
+    }
+
+    printf("Successfully uploaded new iconstate\n");
+    result = TRUE;
+
+leave_cleanup:
+    if (iconstate) {
+	plist_free(iconstate);
+    }
+    if (sbc) {
+	sbservices_client_free(sbc);
+    }
+    if (client) {
+	lockdownd_client_free(client);
+    }
+    iphone_device_free(phone);
+
+    return result;
+}
+
+static gboolean button_clicked(GtkButton *button, gpointer user_data)
+{
+    set_icons(user_data);
+
+    return TRUE;
+}
+
+static guint battery_init(SBManagerApp *app)
+{
+    guint interval = 60;
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    plist_t info_plist = NULL;
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+	fprintf(stderr, "No iPhone found, is it plugged in?\n");
+	goto leave_cleanup;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+	fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+	goto leave_cleanup;
+    }
+
+    lockdownd_get_value(client, "com.apple.mobile.iTunes", "BatteryPollInterval", &info_plist);
+    plist_get_uint_val(info_plist, (uint64_t*)&interval);
+    plist_free(info_plist);
+
+    printf("Have to poll battery every %d seconds...\n", interval);
+
+leave_cleanup:
+    if (client) {
+	lockdownd_client_free(client);
+    }
+    iphone_device_free(phone);
+
+    /* Let's default to the default */
+    return interval;
+}
+
+static guint battery_get_current_capacity(SBManagerApp *app)
+{
+    uint64_t current_capacity = 0;
+    plist_t node = NULL;
+
+    if (app->battery == NULL)
+        return current_capacity;
+
+    node = plist_dict_get_item(app->battery, "BatteryCurrentCapacity");
+    if (node != NULL)
+    {
+        plist_get_uint_val(node, &current_capacity);
+        plist_free(node);
+    }
+    
+    return (guint)current_capacity;
+}
+
+static gboolean battery_update_cb(gpointer data)
+{
+    SBManagerApp *app = (SBManagerApp*)data;
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    guint capacity = 0;
+
+    printf("Updating battery information...\n");
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+	fprintf(stderr, "No iPhone found, is it plugged in?\n");
+	goto leave_cleanup;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+	fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+	goto leave_cleanup;
+    }
+
+    lockdownd_get_value(client, "com.apple.mobile.battery", NULL, &app->battery);
+
+    capacity = battery_get_current_capacity(app);
+    printf("Battery capacity is at %d%%\n", capacity);
+
+    clutter_actor_set_size(battery_level, (guint)(((double)(capacity)/100.0)*15), 6);
+    clutter_actor_set_position(battery_level, 298, 6);
+
+leave_cleanup:
+    if (client) {
+	lockdownd_client_free(client);
+    }
+    iphone_device_free(phone);
+
+    return TRUE;
+}
+
+static gchar *get_device_name(SBManagerApp *app)
+{
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    gchar *devname = NULL;
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+	fprintf(stderr, "No iPhone found, is it plugged in?\n");
+	goto leave_cleanup;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+	fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+	goto leave_cleanup;
+    }
+
+    lockdownd_get_device_name(client, &devname);
+
+leave_cleanup:
+    if (client) {
+	lockdownd_client_free(client);
+    }
+    iphone_device_free(phone);
+
+    return devname;
+}
+
 int main(int argc, char **argv)
 {
     SBManagerApp *app;
@@ -470,14 +969,15 @@ int main(int argc, char **argv)
 	return -1;
     }
 
+    /* TODO: Read uuid from command line */
+    app->uuid = NULL;
+
     if (gtk_clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS) {
 	g_error ("Unable to initialize GtkClutter");
     }
 
     if (!g_thread_supported())
 		g_thread_init(NULL);
-
-    get_icons(NULL);
 
     /* Create the window and some child widgets: */
     app->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -489,6 +989,8 @@ int main(int argc, char **argv)
     gtk_box_pack_end (GTK_BOX (vbox), button, FALSE, FALSE, 0);
     gtk_widget_show (button);
 
+    g_signal_connect (button, "clicked", G_CALLBACK (button_clicked), app);
+    
     /* Stop the application when the window is closed: */
     g_signal_connect (app->window, "hide", G_CALLBACK (gtk_main_quit), app);
 
@@ -500,7 +1002,7 @@ int main(int argc, char **argv)
     /* Set the size of the widget, because we should not set the size of its
      * stage when using GtkClutterEmbed.
      */ 
-    gtk_widget_set_size_request (clutter_widget, 320, 480);
+    gtk_widget_set_size_request (clutter_widget, STAGE_WIDTH, STAGE_HEIGHT);
 
     /* Get the stage and set its size and color: */
     stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (clutter_widget));
@@ -509,25 +1011,62 @@ int main(int argc, char **argv)
 
     /* dock background */
     GError *err = NULL;
-    actor = clutter_texture_new_from_file("./dock.png", &err);
+    actor = clutter_texture_new();
+    clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), BGPIC, &err);
     if (err) {
 	g_error_free(err);
+	err = NULL;
     }
     if (actor) {
-	clutter_actor_set_position(actor, 0, clutter_actor_get_height(stage) - clutter_actor_get_height(actor));
+	clutter_actor_set_position(actor, 0, 0);
 	clutter_actor_show(actor);
 	clutter_group_add (CLUTTER_GROUP(stage), actor);
     } else {
-	fprintf(stderr, "could not load dock.png\n");
+	fprintf(stderr, "could not load background.png\n");
     }
 
+    /* device name widget */
+    gchar *devname = get_device_name(app);
+    name_label = clutter_text_new_full (CLOCK_FONT, devname, &clock_text_color);
+    clutter_group_add (CLUTTER_GROUP (stage), name_label);
+    clutter_actor_set_position(name_label, 2.0, 2.0);
+    g_free(devname);
+
     /* clock widget */
-    actor = clutter_text_new_full ("Sans Bold 9", "00:00\nblah", &text_color);
-    gint xpos = (clutter_actor_get_width(stage)-clutter_actor_get_width(actor))/2;
-    clutter_actor_set_position(actor, xpos, 2);
-    clutter_actor_show(actor);
-    clutter_group_add (CLUTTER_GROUP (stage), actor);
-    clock_label = actor;
+    clock_label = clutter_text_new_full (CLOCK_FONT, "00:00", &clock_text_color);
+    clutter_group_add (CLUTTER_GROUP (stage), clock_label);
+
+    /* page indicator group for holding the page indicator dots */
+    page_indicator_group = clutter_group_new();
+    clutter_group_add (CLUTTER_GROUP(stage), page_indicator_group);
+
+    /* alignment will be done when new indicators are added */
+    clutter_actor_set_position(page_indicator_group, 0, STAGE_HEIGHT - DOCK_HEIGHT - 18);
+
+    /* page indicator (dummy), will be cloned when the pages are created */
+    page_indicator = clutter_texture_new();
+    clutter_texture_set_load_async(CLUTTER_TEXTURE(page_indicator), TRUE);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(page_indicator), PAGE_DOT, &err);
+    if (err) {
+	fprintf(stderr, "Could not load texture " PAGE_DOT ": %s\n", err->message);
+	g_error_free(err);
+	err = NULL;
+    }
+    if (page_indicator) {
+	clutter_actor_hide(page_indicator);
+	clutter_container_add_actor(CLUTTER_CONTAINER(stage), page_indicator);
+    }
+
+    /* a group for the springboard icons */
+    the_sb = clutter_group_new();
+    clutter_group_add (CLUTTER_GROUP(stage), the_sb);
+    clutter_actor_set_position(the_sb, 0, 16);
+
+    /* a group for the dock icons */
+    the_dock = clutter_group_new();
+    clutter_group_add (CLUTTER_GROUP(stage), the_dock);
+    clutter_actor_set_position(the_dock, dock_area.x1, dock_area.y1);
 
     /* Show the stage: */
     clutter_actor_show (stage);
@@ -537,13 +1076,10 @@ int main(int argc, char **argv)
     clutter_timeline_set_loop(timeline, TRUE);   /* have it loop */
 
     /* fire a callback for frame change */
-    g_signal_connect(timeline, "completed",  G_CALLBACK (clock_cb), app);
+    g_signal_connect(timeline, "completed",  G_CALLBACK (clock_update_cb), app);
 
     /* and start it */
     clutter_timeline_start (timeline);
-
-    /* Show the window: */
-    gtk_widget_show_all (GTK_WIDGET (app->window));
 
     g_signal_connect(stage, "motion-event", G_CALLBACK (stage_motion), app);
 
@@ -553,6 +1089,24 @@ int main(int argc, char **argv)
     g_signal_connect( G_OBJECT(app->window), "focus-out-event", G_CALLBACK (form_focus_change), timeline);
 
     selected_mutex = g_mutex_new();
+
+    /* Show the window. This also sets the stage's bounding box. */
+    gtk_widget_show_all (GTK_WIDGET (app->window));
+
+    /* Position and update the clock */
+    clock_set_time(clock_label, time(NULL));
+    clutter_actor_show(clock_label);
+
+   /* Load BatteryPollInterval and register battery state read timeout */
+    g_timeout_add_seconds(battery_init(app), (GSourceFunc)battery_update_cb, app);
+
+     /* battery capacity */
+    battery_level = clutter_rectangle_new_with_color(clutter_color_new(0xff, 0xff, 0xff, 0x9f));
+    battery_update_cb(app);
+    clutter_group_add (CLUTTER_GROUP (stage), battery_level);
+
+    /* Load icons in an idle loop */
+    g_idle_add((GSourceFunc)get_icons, app);
 
     /* Start the main loop, so we can respond to events: */
     gtk_main ();
