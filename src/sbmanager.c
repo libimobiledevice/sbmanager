@@ -66,6 +66,7 @@ const ClutterActorBox sb_area = {0.0, 16.0, STAGE_WIDTH, STAGE_HEIGHT-DOCK_HEIGH
 ClutterActor *stage = NULL;
 ClutterActor *the_dock = NULL;
 ClutterActor *the_sb = NULL;
+ClutterActor *name_label = NULL;
 ClutterActor *clock_label = NULL;
 ClutterActor *battery_level = NULL;
 ClutterActor *page_indicator = NULL;
@@ -928,6 +929,33 @@ leave_cleanup:
     return TRUE;
 }
 
+static gchar *get_device_name(SBManagerApp *app)
+{
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    gchar *devname = NULL;
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+	fprintf(stderr, "No iPhone found, is it plugged in?\n");
+	goto leave_cleanup;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+	fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+	goto leave_cleanup;
+    }
+
+    lockdownd_get_device_name(client, &devname);
+
+leave_cleanup:
+    if (client) {
+	lockdownd_client_free(client);
+    }
+    iphone_device_free(phone);
+
+    return devname;
+}
+
 int main(int argc, char **argv)
 {
     SBManagerApp *app;
@@ -997,6 +1025,13 @@ int main(int argc, char **argv)
     } else {
 	fprintf(stderr, "could not load background.png\n");
     }
+
+    /* device name widget */
+    gchar *devname = get_device_name(app);
+    name_label = clutter_text_new_full (CLOCK_FONT, devname, &clock_text_color);
+    clutter_group_add (CLUTTER_GROUP (stage), name_label);
+    clutter_actor_set_position(name_label, 2.0, 2.0);
+    g_free(devname);
 
     /* clock widget */
     clock_label = clutter_text_new_full (CLOCK_FONT, "00:00", &clock_text_color);
