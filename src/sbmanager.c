@@ -956,7 +956,7 @@ static void get_device_info(SBManagerApp *app)
 	plist_get_string_val(node, &devtype);
 	if (devtype) {
 	    int i;
-	    for (i = 0; i < 3; i++) {
+	    for (i = 0; i < 6; i++) {
 		if (g_str_equal(devtypes[i][0], devtype)) {
 		    app->device_type = g_strdup(devtypes[i][1]);
 		    break;
