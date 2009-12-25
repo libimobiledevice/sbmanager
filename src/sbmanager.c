@@ -704,7 +704,7 @@ static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpo
         } else {
             printf("regular icon is moving!\n");
             pageitems =
-                insert_into_icon_list(pageitems, selected_item, (center_x - sb_area.x1), (center_y - sb_area.y1));
+                insert_into_icon_list(pageitems, selected_item, (center_x - sb_area.x1) + (current_page * STAGE_WIDTH), (center_y - sb_area.y1));
         }
         sbpages = g_list_insert(sbpages, pageitems, current_page);
     }
