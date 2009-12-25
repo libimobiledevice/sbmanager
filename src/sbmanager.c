@@ -677,7 +677,7 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
 	GList *pageitems = g_list_nth_data(sbpages, current_page);
 	sbpages = g_list_remove(sbpages, pageitems);
 	pageitems = g_list_remove(pageitems, selected_item);
-	if (center_y >= dock_area.y1) {
+	if (center_y >= dock_area.y1 && (g_list_length(dockitems) < num_dock_items)) {
 	    printf("regular icon is moving inside the dock!\n");
 	    selected_item->is_dock_item = TRUE;
 	} else {
