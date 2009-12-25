@@ -50,6 +50,8 @@ typedef struct {
     GtkWidget *window;
     char *uuid;
     plist_t battery;
+    char *device_name;
+    char *device_type;
 } SBManagerApp;
 
 typedef struct {
@@ -66,7 +68,7 @@ const ClutterActorBox sb_area = {0.0, 16.0, STAGE_WIDTH, STAGE_HEIGHT-DOCK_HEIGH
 ClutterActor *stage = NULL;
 ClutterActor *the_dock = NULL;
 ClutterActor *the_sb = NULL;
-ClutterActor *name_label = NULL;
+ClutterActor *type_label = NULL;
 ClutterActor *clock_label = NULL;
 ClutterActor *battery_level = NULL;
 ClutterActor *page_indicator = NULL;
@@ -675,7 +677,7 @@ static gboolean stage_motion (ClutterActor *actor, ClutterMotionEvent *event, gp
 	GList *pageitems = g_list_nth_data(sbpages, current_page);
 	sbpages = g_list_remove(sbpages, pageitems);
 	pageitems = g_list_remove(pageitems, selected_item);
-	if (center_y >= dock_area.y1) {
+	if (center_y >= dock_area.y1 && (g_list_length(dockitems) < num_dock_items)) {
 	    printf("regular icon is moving inside the dock!\n");
 	    selected_item->is_dock_item = TRUE;
 	} else {
@@ -929,11 +931,11 @@ leave_cleanup:
     return TRUE;
 }
 
-static gchar *get_device_name(SBManagerApp *app)
+static void get_device_info(SBManagerApp *app)
 {
     iphone_device_t phone = NULL;
     lockdownd_client_t client = NULL;
-    gchar *devname = NULL;
+    plist_t node;
 
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
 	fprintf(stderr, "No iPhone found, is it plugged in?\n");
@@ -945,15 +947,29 @@ static gchar *get_device_name(SBManagerApp *app)
 	goto leave_cleanup;
     }
 
-    lockdownd_get_device_name(client, &devname);
+    lockdownd_get_device_name(client, &app->device_name);
+
+    lockdownd_get_value(client, NULL, "ProductType", &node);
+    if (node) {
+	char *devtype = NULL;
+	const char *devtypes[6][2] = {{"iPhone1,1", "iPhone"}, {"iPhone1,2", "iPhone 3G"}, {"iPhone2,1", "iPhone 3GS"}, {"iPod1,1", "iPod Touch"}, {"iPod2,1", "iPod touch (2G)"}, {"iPod3,1", "iPod Touch (3G)"}};
+	plist_get_string_val(node, &devtype);
+	if (devtype) {
+	    int i;
+	    for (i = 0; i < 6; i++) {
+		if (g_str_equal(devtypes[i][0], devtype)) {
+		    app->device_type = g_strdup(devtypes[i][1]);
+		    break;
+		}
+	    }
+	}
+    }
 
 leave_cleanup:
     if (client) {
 	lockdownd_client_free(client);
     }
     iphone_device_free(phone);
-
-    return devname;
 }
 
 int main(int argc, char **argv)
@@ -972,6 +988,8 @@ int main(int argc, char **argv)
     /* TODO: Read uuid from command line */
     app->uuid = NULL;
 
+    get_device_info(app);
+
     if (gtk_clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS) {
 	g_error ("Unable to initialize GtkClutter");
     }
@@ -981,7 +999,10 @@ int main(int argc, char **argv)
 
     /* Create the window and some child widgets: */
     app->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title (GTK_WINDOW(app->window), "SpringBoard Manager");
+    gtk_window_set_resizable(GTK_WINDOW(app->window), FALSE);
+    gchar *wndtitle = g_strdup_printf("%s - SBManager", app->device_name);
+    gtk_window_set_title (GTK_WINDOW(app->window), wndtitle);
+    g_free(wndtitle);
     GtkWidget *vbox = gtk_vbox_new (FALSE, 6);
     gtk_container_add (GTK_CONTAINER (app->window), vbox);
     gtk_widget_show (vbox);
@@ -1026,12 +1047,10 @@ int main(int argc, char **argv)
 	fprintf(stderr, "could not load background.png\n");
     }
 
-    /* device name widget */
-    gchar *devname = get_device_name(app);
-    name_label = clutter_text_new_full (CLOCK_FONT, devname, &clock_text_color);
-    clutter_group_add (CLUTTER_GROUP (stage), name_label);
-    clutter_actor_set_position(name_label, 2.0, 2.0);
-    g_free(devname);
+    /* device type widget */
+    type_label = clutter_text_new_full (CLOCK_FONT, app->device_type, &clock_text_color);
+    clutter_group_add (CLUTTER_GROUP (stage), type_label);
+    clutter_actor_set_position(type_label, 3.0, 2.0);
 
     /* clock widget */
     clock_label = clutter_text_new_full (CLOCK_FONT, "00:00", &clock_text_color);
