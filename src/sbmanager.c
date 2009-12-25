@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <libiphone/libiphone.h>
 #include <libiphone/lockdown.h>
 #include <libiphone/sbservices.h>
@@ -931,11 +932,12 @@ leave_cleanup:
     return TRUE;
 }
 
-static void get_device_info(SBManagerApp *app)
+static gboolean get_device_info(SBManagerApp *app)
 {
     iphone_device_t phone = NULL;
     lockdownd_client_t client = NULL;
     plist_t node;
+    gboolean res = FALSE;
 
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
 	fprintf(stderr, "No iPhone found, is it plugged in?\n");
@@ -965,11 +967,28 @@ static void get_device_info(SBManagerApp *app)
 	}
     }
 
+    res = TRUE;
+
 leave_cleanup:
     if (client) {
 	lockdownd_client_free(client);
     }
     iphone_device_free(phone);
+
+    return res;
+}
+
+static void print_usage(int argc, char **argv)
+{
+	char *name = NULL;
+	
+	name = strrchr(argv[0], '/');
+	printf("Usage: %s [OPTIONS]\n", (name ? name + 1: argv[0]));
+	printf("Manage SpringBoard icons of an iPhone/iPod Touch.\n\n");
+	printf("  -d, --debug\t\tenable communication debugging\n");
+	printf("  -u, --uuid UUID\ttarget specific device by its 40-digit device UUID\n");
+	printf("  -h, --help\t\tprints usage information\n");
+	printf("\n");
 }
 
 int main(int argc, char **argv)
@@ -978,6 +997,7 @@ int main(int argc, char **argv)
     ClutterTimeline *timeline;
     ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff }; /* Black */
     ClutterActor *actor;
+    int i;
 
     app = g_new0 (SBManagerApp, 1);
     if (!app) {
@@ -985,10 +1005,38 @@ int main(int argc, char **argv)
 	return -1;
     }
 
-    /* TODO: Read uuid from command line */
     app->uuid = NULL;
 
-    get_device_info(app);
+	/* parse cmdline args */
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")) {
+			iphone_set_debug_mask(DBGMASK_ALL);
+			iphone_set_debug_level(1);
+			continue;
+		}
+		else if (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--uuid")) {
+			i++;
+			if (!argv[i] || (strlen(argv[i]) != 40)) {
+				print_usage(argc, argv);
+				return 0;
+			}
+			app->uuid = g_strndup(argv[i], 40);
+			continue;
+		}
+		else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
+			print_usage(argc, argv);
+			return 0;
+		}
+		else {
+			print_usage(argc, argv);
+			return 0;
+		}
+	}
+
+    if (!get_device_info(app)) {
+	g_error ("Could not read information from device.");
+	return 0;
+    }
 
     if (gtk_clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS) {
 	g_error ("Unable to initialize GtkClutter");
