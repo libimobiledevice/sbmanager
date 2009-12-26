@@ -81,6 +81,8 @@ SBItem *selected_item = NULL;
 gfloat start_x = 0.0;
 gfloat start_y = 0.0;
 
+gboolean move_left = TRUE;
+
 GList *dockitems = NULL;
 GList *sbpages = NULL;
 
@@ -656,9 +658,16 @@ static GList *insert_into_icon_list(GList *iconlist, SBItem *newitem, gfloat ite
             /* this is not the row we are in */
             continue;
         }
-        if (item_x < xpos + 30) {
-            newpos = i;
-            break;
+        if (move_left) {
+            if (item_x < xpos + 40) {
+                newpos = i;
+                break;
+            }
+        } else {
+            if (item_x < xpos - 10) {
+                newpos = i;
+                break;
+            }
         }
     }
 
@@ -675,6 +684,12 @@ static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpo
     ClutterActor *icon = clutter_actor_get_parent(selected_item->texture);
 
     clutter_actor_move_by(icon, (event->x - start_x), (event->y - start_y));
+
+    if (event->x-start_x > 0) {
+        move_left = FALSE;
+    } else {
+        move_left = TRUE;
+    }
 
     start_x = event->x;
     start_y = event->y;
