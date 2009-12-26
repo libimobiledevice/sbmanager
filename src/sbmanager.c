@@ -654,17 +654,19 @@ static GList *insert_into_icon_list(GList *iconlist, SBItem *newitem, gfloat ite
         gfloat xpos = clutter_actor_get_x(icon);
         gfloat ypos = clutter_actor_get_y(icon);
 
-        if ((item_y > ypos + 70) || (item_y < ypos - 10)) {
-            /* this is not the row we are in */
-            continue;
-        }
+        gint nrow = (ypos - 16) / 88;
+        gint irow = (item_y - 16) / 88;
+
+        xpos += nrow*STAGE_WIDTH;
+        gfloat ixpos = item_x + irow*STAGE_WIDTH;
+
         if (move_left) {
-            if (item_x < xpos + 40) {
+            if (ixpos < xpos + 40) {
                 newpos = i;
                 break;
             }
         } else {
-            if (item_x < xpos - 10) {
+            if (ixpos < xpos - 10) {
                 newpos = i;
                 break;
             }
