@@ -94,6 +94,19 @@ static void dock_align_icons(gboolean animated);
 static void sb_align_icons(guint page_num, gboolean animated);
 static void redraw_icons();
 
+gboolean debug_app = FALSE;
+static void debug_printf(const char *format, ...);
+
+static void debug_printf(const char *format, ...)
+{
+    if (debug_app) {
+        va_list args;
+        va_start (args, format);
+        vprintf(format, args);
+        va_end (args);
+    }
+}
+
 static void sbitem_free(SBItem *a)
 {
     if (a) {
@@ -114,25 +127,21 @@ static void sbpage_free(GList *sbitems)
     }
 }
 
-static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sbc, gboolean skip_empty)
+static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sbc)
 {
     char *png = NULL;
     uint64_t pngsize = 0;
     SBItem *di = NULL;
     plist_t valuenode = NULL;
     if (plist_get_node_type(node) != PLIST_DICT) {
-        if (!skip_empty) {
-            di = g_new0(SBItem, 1);
-            *list = g_list_append(*list, di);
-            return;
-        }
+        return;
     }
     valuenode = plist_dict_get_item(node, "displayIdentifier");
     if (valuenode && (plist_get_node_type(valuenode) == PLIST_STRING)) {
         char *value = NULL;
         char *icon_filename = NULL;
         plist_get_string_val(valuenode, &value);
-        printf("retrieving icon for '%s'\n", value);
+        debug_printf("retrieving icon for '%s'\n", value);
         if ((sbservices_get_icon_pngdata(sbc, value, &png, &pngsize) == SBSERVICES_E_SUCCESS) && (pngsize > 0)) {
             icon_filename = g_strdup_printf("/tmp/%s.png", value);
             FILE *f = fopen(icon_filename, "w");
@@ -274,7 +283,7 @@ static gboolean get_icons(gpointer data)
         num_dock_items = count;
         for (i = 0; i < count; i++) {
             plist_t node = plist_array_get_item(dock, i);
-            get_icon_for_node(node, &dockitems, sbc, TRUE);
+            get_icon_for_node(node, &dockitems, sbc);
         }
         if (total > 1) {
             /* get all icons for the other pages */
@@ -289,7 +298,7 @@ static gboolean get_icons(gpointer data)
                 }
                 rows = plist_array_get_size(npage);
                 for (r = 0; r < rows; r++) {
-                    printf("page %d, row %d\n", p, r);
+                    debug_printf("page %d, row %d\n", p, r);
 
                     plist_t nrow = plist_array_get_item(npage, r);
                     if (plist_get_node_type(nrow) != PLIST_ARRAY) {
@@ -300,7 +309,7 @@ static gboolean get_icons(gpointer data)
                     for (i = 0; i < count; i++) {
                         plist_t node = plist_array_get_item(nrow,
                                                             i);
-                        get_icon_for_node(node, &page, sbc, FALSE);
+                        get_icon_for_node(node, &page, sbc);
                     }
                 }
                 if (page) {
@@ -382,7 +391,7 @@ static gboolean item_button_press(ClutterActor *actor, ClutterButtonEvent *event
     }
 
     g_mutex_lock(selected_mutex);
-    printf("%s: %s mouse pressed\n", __func__, strval);
+    debug_printf("%s: %s mouse pressed\n", __func__, strval);
 
     if (actor) {
         gfloat diffx = 0.0;
@@ -434,7 +443,7 @@ static gboolean item_button_release(ClutterActor *actor, ClutterButtonEvent *eve
     }
 
     g_mutex_lock(selected_mutex);
-    printf("%s: %s mouse released\n", __func__, strval);
+    debug_printf("%s: %s mouse released\n", __func__, strval);
 
     if (actor) {
         ClutterActor *sc = clutter_actor_get_parent(actor);
@@ -579,7 +588,7 @@ static void redraw_icons()
     if (dockitems) {
         xpos = 0.0;
         ypos = 0.0;
-        printf("%s: drawing dock icons\n", __func__);
+        debug_printf("%s: drawing dock icons\n", __func__);
         for (i = 0; i < g_list_length(dockitems); i++) {
             SBItem *item = (SBItem*)g_list_nth_data(dockitems, i);
             if (item && item->texture && item->node) {
@@ -604,12 +613,12 @@ static void redraw_icons()
     }
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
     if (sbpages) {
-        printf("%s: %d pages\n", __func__, g_list_length(sbpages));
+        debug_printf("%s: %d pages\n", __func__, g_list_length(sbpages));
         for (j = 0; j < g_list_length(sbpages); j++) {
             GList *cpage = g_list_nth_data(sbpages, j);
             ypos = 0.0;
             xpos = 0.0;
-            printf("%s: drawing page icons for page %d\n", __func__, j);
+            debug_printf("%s: drawing page icons for page %d\n", __func__, j);
             for (i = 0; i < g_list_length(cpage); i++) {
                 SBItem *item = (SBItem*)g_list_nth_data(cpage, i);
                 if (item && item->texture && item->node) {
@@ -638,8 +647,12 @@ static void redraw_icons()
 
 static GList *insert_into_icon_list(GList *iconlist, SBItem *newitem, gfloat item_x, gfloat item_y)
 {
-    if (!newitem || !iconlist) {
+    if (!newitem) {
         return iconlist;
+    }
+    if (!iconlist) {
+        /* for empty lists just add the element */
+        return g_list_append(iconlist, newitem);
     }
     gint i;
     gint count = g_list_length(iconlist);
@@ -673,7 +686,7 @@ static GList *insert_into_icon_list(GList *iconlist, SBItem *newitem, gfloat ite
         }
     }
 
-    return g_list_insert(iconlist, selected_item, newpos);
+    return g_list_insert(iconlist, newitem, newpos);
 }
 
 static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpointer user_data)
@@ -703,12 +716,12 @@ static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpo
     if (selected_item->is_dock_item) {
         dockitems = g_list_remove(dockitems, selected_item);
         if (center_y >= dock_area.y1) {
-            printf("icon from dock moving inside the dock!\n");
+            debug_printf("icon from dock moving inside the dock!\n");
             selected_item->is_dock_item = TRUE;
             dockitems =
                 insert_into_icon_list(dockitems, selected_item, (center_x - dock_area.x1), (center_y - dock_area.y1));
         } else {
-            printf("icon from dock moving outside the dock!\n");
+            debug_printf("icon from dock moving outside the dock!\n");
             selected_item->is_dock_item = FALSE;
         }
     } else {
@@ -716,10 +729,10 @@ static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpo
         sbpages = g_list_remove(sbpages, pageitems);
         pageitems = g_list_remove(pageitems, selected_item);
         if (center_y >= dock_area.y1 && (g_list_length(dockitems) < num_dock_items)) {
-            printf("regular icon is moving inside the dock!\n");
+            debug_printf("regular icon is moving inside the dock!\n");
             selected_item->is_dock_item = TRUE;
         } else {
-            printf("regular icon is moving!\n");
+            debug_printf("regular icon is moving!\n");
             pageitems =
                 insert_into_icon_list(pageitems, selected_item, (center_x - sb_area.x1) + (current_page * STAGE_WIDTH), (center_y - sb_area.y1));
         }
@@ -733,7 +746,7 @@ static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpo
 
 static gboolean form_map(GtkWidget *widget, GdkEvent *event, SBManagerApp *app)
 {
-    printf("%s: mapped\n", __func__);
+    debug_printf("%s: mapped\n", __func__);
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
 
     return TRUE;
@@ -808,15 +821,19 @@ static gboolean set_icons(gpointer data)
         GList *page = g_list_nth_data(sbpages, i);
         if (page) {
             guint j;
+            count = g_list_length(page);
+            if (count <= 0) {
+                continue;
+            }
             plist_t ppage = plist_new_array();
             plist_t row = NULL;
-            for (j = 0; j < g_list_length(page); j++) {
+            for (j = 0; j < 16; j++) {
                 SBItem *item = g_list_nth_data(page, j);
                 if ((j % 4) == 0) {
                     row = plist_new_array();
                     plist_array_append_item(ppage, row);
                 }
-                if (item->node) {
+                if (item && item->node) {
                     plist_t valuenode = plist_dict_get_item(item->node,
                                                             "displayIdentifier");
                     if (!valuenode) {
@@ -1032,6 +1049,7 @@ static void print_usage(int argc, char **argv)
     printf("Usage: %s [OPTIONS]\n", (name ? name + 1 : argv[0]));
     printf("Manage SpringBoard icons of an iPhone/iPod Touch.\n\n");
     printf("  -d, --debug\t\tenable communication debugging\n");
+    printf("  -D, --debug-app\tenable application debug messages\n");
     printf("  -u, --uuid UUID\ttarget specific device by its 40-digit device UUID\n");
     printf("  -h, --help\t\tprints usage information\n");
     printf("\n");
@@ -1058,6 +1076,9 @@ int main(int argc, char **argv)
         if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")) {
             iphone_set_debug_mask(DBGMASK_ALL);
             iphone_set_debug_level(1);
+            continue;
+        } else if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug-app")) {
+            debug_app = TRUE;
             continue;
         } else if (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--uuid")) {
             i++;
