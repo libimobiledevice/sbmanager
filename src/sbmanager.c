@@ -647,8 +647,12 @@ static void redraw_icons()
 
 static GList *insert_into_icon_list(GList *iconlist, SBItem *newitem, gfloat item_x, gfloat item_y)
 {
-    if (!newitem || !iconlist) {
+    if (!newitem) {
         return iconlist;
+    }
+    if (!iconlist) {
+        /* for empty lists just add the element */
+        return g_list_append(iconlist, newitem);
     }
     gint i;
     gint count = g_list_length(iconlist);
@@ -682,7 +686,7 @@ static GList *insert_into_icon_list(GList *iconlist, SBItem *newitem, gfloat ite
         }
     }
 
-    return g_list_insert(iconlist, selected_item, newpos);
+    return g_list_insert(iconlist, newitem, newpos);
 }
 
 static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpointer user_data)
