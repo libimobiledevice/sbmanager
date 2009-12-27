@@ -127,18 +127,14 @@ static void sbpage_free(GList *sbitems)
     }
 }
 
-static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sbc, gboolean skip_empty)
+static void get_icon_for_node(plist_t node, GList **list, sbservices_client_t sbc)
 {
     char *png = NULL;
     uint64_t pngsize = 0;
     SBItem *di = NULL;
     plist_t valuenode = NULL;
     if (plist_get_node_type(node) != PLIST_DICT) {
-        if (!skip_empty) {
-            di = g_new0(SBItem, 1);
-            *list = g_list_append(*list, di);
-            return;
-        }
+        return;
     }
     valuenode = plist_dict_get_item(node, "displayIdentifier");
     if (valuenode && (plist_get_node_type(valuenode) == PLIST_STRING)) {
@@ -287,7 +283,7 @@ static gboolean get_icons(gpointer data)
         num_dock_items = count;
         for (i = 0; i < count; i++) {
             plist_t node = plist_array_get_item(dock, i);
-            get_icon_for_node(node, &dockitems, sbc, TRUE);
+            get_icon_for_node(node, &dockitems, sbc);
         }
         if (total > 1) {
             /* get all icons for the other pages */
@@ -313,7 +309,7 @@ static gboolean get_icons(gpointer data)
                     for (i = 0; i < count; i++) {
                         plist_t node = plist_array_get_item(nrow,
                                                             i);
-                        get_icon_for_node(node, &page, sbc, FALSE);
+                        get_icon_for_node(node, &page, sbc);
                     }
                 }
                 if (page) {
@@ -821,15 +817,19 @@ static gboolean set_icons(gpointer data)
         GList *page = g_list_nth_data(sbpages, i);
         if (page) {
             guint j;
+            count = g_list_length(page);
+            if (count <= 0) {
+                continue;
+            }
             plist_t ppage = plist_new_array();
             plist_t row = NULL;
-            for (j = 0; j < g_list_length(page); j++) {
+            for (j = 0; j < 16; j++) {
                 SBItem *item = g_list_nth_data(page, j);
                 if ((j % 4) == 0) {
                     row = plist_new_array();
                     plist_array_append_item(ppage, row);
                 }
-                if (item->node) {
+                if (item && item->node) {
                     plist_t valuenode = plist_dict_get_item(item->node,
                                                             "displayIdentifier");
                     if (!valuenode) {
