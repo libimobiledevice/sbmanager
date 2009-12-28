@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <libiphone/sbservices.h>
 #include <plist/plist.h>
 #include <time.h>
+#include <sys/time.h>
 #include <glib.h>
 
 #include <gtk/gtk.h>
@@ -66,6 +67,9 @@ const ClutterActorBox dock_area = { 0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH
 
 const ClutterActorBox sb_area = { 0.0, 16.0, STAGE_WIDTH, STAGE_HEIGHT - DOCK_HEIGHT - 16.0 };
 
+const ClutterActorBox left_trigger = { -30.0, 16.0, -8.0, STAGE_HEIGHT - DOCK_HEIGHT - 16.0 };
+const ClutterActorBox right_trigger = { STAGE_WIDTH + 8.0, 16.0, STAGE_WIDTH + 30.0, STAGE_HEIGHT - DOCK_HEIGHT - 16.0 };
+
 ClutterActor *stage = NULL;
 ClutterActor *the_dock = NULL;
 ClutterActor *the_sb = NULL;
@@ -89,6 +93,7 @@ GList *sbpages = NULL;
 guint num_dock_items = 0;
 
 int current_page = 0;
+struct timeval last_page_switch;
 
 static void dock_align_icons(gboolean animated);
 static void sb_align_icons(guint page_num, gboolean animated);
@@ -104,6 +109,29 @@ static void debug_printf(const char *format, ...)
         va_start (args, format);
         vprintf(format, args);
         va_end (args);
+    }
+}
+
+static gboolean elapsed_ms(struct timeval *tv, guint ms)
+{
+    struct timeval now;
+    guint64 v1,v2;
+
+    if (!tv) return FALSE;
+
+    gettimeofday(&now, NULL);
+
+    v1 = now.tv_sec*1000000 + now.tv_usec;
+    v2 = tv->tv_sec*1000000 + tv->tv_usec;
+
+    if (v1 < v2) {
+        return TRUE;
+    }
+
+    if ((v1 - v2)/1000 > ms) {
+        return TRUE;
+    } else {
+        return FALSE;
     }
 }
 
@@ -713,6 +741,24 @@ static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpo
     gfloat center_y;
     actor_get_abs_center(icon, &center_x, &center_y);
 
+    if (clutter_actor_box_contains(&left_trigger, center_x-30, center_y)) {
+        if (current_page > 0) {
+            if (elapsed_ms(&last_page_switch, 1000)) {
+                page_indicator_clicked(NULL, NULL, GUINT_TO_POINTER(current_page-1));
+                gettimeofday(&last_page_switch, NULL);
+            }
+            return TRUE;
+        }
+    } else if (clutter_actor_box_contains(&right_trigger, center_x+30, center_y)) {
+        if (current_page < (gint)(g_list_length(sbpages)-1)) {
+            if (elapsed_ms(&last_page_switch, 1000)) {
+                page_indicator_clicked(NULL, NULL, GUINT_TO_POINTER(current_page+1));
+                gettimeofday(&last_page_switch, NULL);
+            }
+            return TRUE;
+        }
+    }
+
     if (selected_item->is_dock_item) {
         dockitems = g_list_remove(dockitems, selected_item);
         if (center_y >= dock_area.y1) {
@@ -1068,6 +1114,8 @@ int main(int argc, char **argv)
         printf("Error: out of memory!\n");
         return -1;
     }
+
+    gettimeofday(&last_page_switch, NULL);
 
     app->uuid = NULL;
 
