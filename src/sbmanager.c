@@ -855,7 +855,7 @@ static gboolean set_icons(gpointer data)
         return result;
     }
 
-    printf("About to uploaded new iconstate...\n");
+    printf("About to upload new iconstate...\n");
 
     guint count = g_list_length(dockitems);
     pdockitems = plist_new_array();
