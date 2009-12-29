@@ -230,13 +230,33 @@ static void page_indicator_group_align()
     clutter_actor_set_x(page_indicator_group, (STAGE_WIDTH - xpos) / 2.0);
 }
 
-static gboolean page_indicator_clicked(ClutterActor *actor, ClutterEvent *event, gpointer data)
+static void sbpages_set_current_page(int pageindex)
 {
-    current_page = GPOINTER_TO_UINT(data);
+    gint count = clutter_group_get_n_children(CLUTTER_GROUP(page_indicator_group));
+
+    if ((pageindex < 0) || (pageindex >= count))
+        return;
+
+    current_page = pageindex;
 
     page_indicator_group_align();
 
     clutter_actor_animate(the_sb, CLUTTER_EASE_IN_OUT_CUBIC, 400, "x", (gfloat) (-(current_page * STAGE_WIDTH)), NULL);
+}
+
+static void sbpages_show_next_page()
+{
+    sbpages_set_current_page(current_page+1);
+}
+
+static void sbpages_show_previous_page()
+{
+    sbpages_set_current_page(current_page-1);
+}
+
+static gboolean page_indicator_clicked(ClutterActor *actor, ClutterEvent *event, gpointer data)
+{
+    sbpages_set_current_page(GPOINTER_TO_UINT(data));
 
     return TRUE;
 }
@@ -744,7 +764,7 @@ static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpo
     if (clutter_actor_box_contains(&left_trigger, center_x-30, center_y)) {
         if (current_page > 0) {
             if (elapsed_ms(&last_page_switch, 1000)) {
-                page_indicator_clicked(NULL, NULL, GUINT_TO_POINTER(current_page-1));
+                sbpages_show_previous_page();
                 gettimeofday(&last_page_switch, NULL);
             }
             return TRUE;
@@ -752,7 +772,7 @@ static gboolean stage_motion(ClutterActor *actor, ClutterMotionEvent *event, gpo
     } else if (clutter_actor_box_contains(&right_trigger, center_x+30, center_y)) {
         if (current_page < (gint)(g_list_length(sbpages)-1)) {
             if (elapsed_ms(&last_page_switch, 1000)) {
-                page_indicator_clicked(NULL, NULL, GUINT_TO_POINTER(current_page+1));
+                sbpages_show_next_page();
                 gettimeofday(&last_page_switch, NULL);
             }
             return TRUE;
@@ -1087,6 +1107,26 @@ static gboolean get_device_info(SBManagerApp *app)
     return res;
 }
 
+static gboolean stage_key_press(ClutterActor *actor, ClutterEvent *event, gpointer user_data)
+{
+    if (!user_data || (event->type != CLUTTER_KEY_PRESS)) {
+        return FALSE;
+    }
+
+    guint symbol = clutter_event_get_key_symbol(event);
+    switch(symbol) {
+        case CLUTTER_Right:
+        sbpages_show_next_page();
+        break;
+        case CLUTTER_Left:
+        sbpages_show_previous_page();
+        break;
+        default:
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static void print_usage(int argc, char **argv)
 {
     char *name = NULL;
@@ -1261,6 +1301,7 @@ int main(int argc, char **argv)
     clutter_timeline_start(timeline);
 
     g_signal_connect(stage, "motion-event", G_CALLBACK(stage_motion), app);
+    g_signal_connect(stage, "key-press-event", G_CALLBACK(stage_key_press), app);
 
     g_signal_connect(G_OBJECT(app->window), "map-event", G_CALLBACK(form_map), app);
 
