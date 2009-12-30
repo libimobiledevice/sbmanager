@@ -48,7 +48,6 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_OUTPUT([
 Makefile
-data/data.h
 data/Makefile
 src/Makefile
 ])

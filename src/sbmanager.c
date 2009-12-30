@@ -35,8 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <clutter-gtk/clutter-gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-#include "../data/data.h"
-
 #define STAGE_WIDTH 320
 #define STAGE_HEIGHT 480
 #define DOCK_HEIGHT 90
@@ -1234,7 +1232,7 @@ int main(int argc, char **argv)
     GError *err = NULL;
     actor = clutter_texture_new();
     clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
-    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), BGPIC, &err);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), SBMGR_DATA "/background.png", &err);
     if (err) {
         g_error_free(err);
         err = NULL;
@@ -1266,9 +1264,9 @@ int main(int argc, char **argv)
     /* page indicator (dummy), will be cloned when the pages are created */
     page_indicator = clutter_texture_new();
     clutter_texture_set_load_async(CLUTTER_TEXTURE(page_indicator), TRUE);
-    clutter_texture_set_from_file(CLUTTER_TEXTURE(page_indicator), PAGE_DOT, &err);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(page_indicator), SBMGR_DATA "/dot.png", &err);
     if (err) {
-        fprintf(stderr, "Could not load texture " PAGE_DOT ": %s\n", err->message);
+        fprintf(stderr, "Could not load texture " SBMGR_DATA "/dot.png" ": %s\n", err->message);
         g_error_free(err);
         err = NULL;
     }
