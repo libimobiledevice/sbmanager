@@ -10,6 +10,7 @@ This project has the following features:
 * Manage icons using drag and drop and upload changes back to the device.
 * Smooth hardware accelerated animations using the Clutter library.
 * Show the device's battery level and current clock.
+* Supports "five icon dock" extension.
 
 Source Code Repository:
 	http://cgit.pims.selfip.net/sbmanager.git/
