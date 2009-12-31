@@ -136,6 +136,16 @@ static gboolean elapsed_ms(struct timeval *tv, guint ms)
     }
 }
 
+static char *sbitem_get_display_name(SBItem *item)
+{
+    char *strval = NULL;
+    plist_t node = plist_dict_get_item(item->node, "displayName");
+    if (node && plist_get_node_type(node) == PLIST_STRING) {
+        plist_get_string_val(node, &strval);
+    }
+    return strval;
+}
+
 static void sbitem_free(SBItem *a)
 {
     if (a) {
