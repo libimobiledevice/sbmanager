@@ -207,8 +207,6 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
         return iconlist;
     }
 
-    debug_printf("%s: count:%d, item_x:%.0f, item_y:%.0f\n", __func__, count, item_x, item_y);
-
     gfloat xpageoffset = PAGE_X_OFFSET(pageindex);
 
     gfloat spacing = 16;
@@ -229,15 +227,12 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
         oxpos += nrow*STAGE_WIDTH;
         gfloat ixpos = item_x + irow*STAGE_WIDTH;
 
-        debug_printf("%s: i:%d, nrow:%d, irow:%d, xpos:%.0f, ypos:%.0f, ixpos:%.0f\n", __func__, i, nrow, irow, xpos, ypos, ixpos);
-
         /* if required, add spacing */
         if (!move_left)
             oxpos += spacing;
 
         if (ixpos < oxpos + 60) {
             newpos = i;
-            debug_printf("%s: ixpos (%.0f) < oxpos+60 (%.0f):\n", __func__, ixpos, oxpos+60);
             break;
         }
 
@@ -578,7 +573,6 @@ static void gui_dock_align_icons(gboolean animated)
         }
 
         if (item != selected_item) {
-            debug_printf("%s: moving \"%s\" to (x:%.0f,y:%.0f)\n", __func__, sbitem_get_display_name(item), xpos, ypos);
             if (animated) {
                 clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
             } else {
@@ -632,7 +626,6 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
         }
 
         if (item != selected_item) {
-            debug_printf("%s: moving \"%s\" to (x:%.0f,y:%.0f)\n", __func__, sbitem_get_display_name(item), xpos, ypos);
             if (animated) {
                 clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
             } else {
@@ -810,8 +803,6 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
     gfloat center_x;
     gfloat center_y;
     clutter_actor_get_abs_center(icon, &center_x, &center_y);
-
-    debug_printf("%s: center_x:%.0f, center_y:%.0f\n", __func__, center_x, center_y);
 
     if (clutter_actor_box_contains(&left_trigger, center_x-30, center_y)) {
         if (current_page > 0) {
