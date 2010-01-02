@@ -1026,9 +1026,9 @@ static void gui_show_icons()
                 clutter_actor_show(actor);
                 clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                 clutter_container_add_actor(CLUTTER_CONTAINER(the_dock), grp);
-                gui_dock_align_icons(FALSE);
             }
         }
+        gui_dock_align_icons(FALSE);
     }
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
     if (sbpages) {
@@ -1056,9 +1056,9 @@ static void gui_show_icons()
                     clutter_actor_show(actor);
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                     clutter_container_add_actor(CLUTTER_CONTAINER(the_sb), grp);
-                    gui_page_align_icons(j, FALSE);
                 }
             }
+            gui_page_align_icons(j, FALSE);
         }
     }
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
