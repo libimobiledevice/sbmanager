@@ -196,7 +196,11 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
     if (!newitem) {
         return iconlist;
     }
+    
+    debug_printf("%s: count items %d\n", __func__, g_list_length(iconlist));
+    
     if (!iconlist) {
+        debug_printf("%s: prepending item\n", __func__);
         /* for empty lists just add the element */
         return g_list_append(iconlist, newitem);
     }
@@ -669,8 +673,9 @@ static void gui_page_indicator_group_align()
 
 static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterEvent *event, gpointer data);
 
-static void gui_page_indicator_group_add(int page_index)
+static void gui_page_indicator_group_add(GList *page, int page_index)
 {
+    debug_printf("%s: adding page indicator for page %d\n", __func__, page_index);
     if (page_indicator) {
         ClutterActor *actor = clutter_clone_new(page_indicator);
         clutter_actor_unparent(actor);
@@ -681,6 +686,34 @@ static void gui_page_indicator_group_add(int page_index)
         clutter_container_add_actor(CLUTTER_CONTAINER(page_indicator_group), actor);
         gui_page_indicator_group_align();
     }
+}
+
+static void gui_page_indicator_group_remove(GList *page, int page_index)
+{
+    debug_printf("%s: removing page indicator for page %d\n", __func__, page_index);
+    if (page_indicator) {
+        ClutterActor *actor = clutter_group_get_nth_child(CLUTTER_GROUP(page_indicator_group), page_index);
+        /* afaik, this also removes it from the container */
+        clutter_container_remove_actor(CLUTTER_CONTAINER(page_indicator_group), actor);
+        gui_page_indicator_group_align();
+    }
+}
+
+static void gui_pages_remove_empty()
+{
+    gint count = g_list_length(sbpages);
+    gint i;
+    GList *page = NULL;
+
+    for (i = 0; i < count; i++) {
+        page = g_list_nth_data(sbpages, i);
+        debug_printf("%s: checking page %d itemcount %d\n", __func__, i, g_list_length(page));
+        if (g_list_length(page) == 0) {
+            debug_printf("%s: removing page %d\n", __func__, i);
+            gui_page_indicator_group_remove(page, i);
+        }
+    }
+    sbpages = g_list_remove_all(sbpages, NULL);
 }
 
 static void gui_set_current_page(int pageindex)
@@ -810,7 +843,6 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
                 gui_show_previous_page();
                 gettimeofday(&last_page_switch, NULL);
             }
-            return TRUE;
         }
     } else if (clutter_actor_box_contains(&right_trigger, center_x+30, center_y)) {
         if (current_page < (gint)(g_list_length(sbpages)-1)) {
@@ -818,7 +850,6 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
                 gui_show_next_page();
                 gettimeofday(&last_page_switch, NULL);
             }
-            return TRUE;
         }
     }
 
@@ -837,10 +868,17 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         }
     } else {
         int p = current_page;
+        int i;
+        GList *pageitems = NULL;
         debug_printf("%s: current_page %d\n", __func__, p);
-        GList *pageitems = g_list_nth_data(sbpages, p);
+        /* remove selected_item from all pages */
+        int count = g_list_length(sbpages);
+        for (i = 0; i < count; i++) {
+            pageitems = g_list_nth_data(sbpages, i);
+            pageitems = g_list_remove(pageitems, selected_item);
+        }
+        pageitems = g_list_nth_data(sbpages, p);
         sbpages = g_list_remove(sbpages, pageitems);
-        pageitems = g_list_remove(pageitems, selected_item);
         if (center_y >= dock_area.y1 && (g_list_length(dockitems) < num_dock_items)) {
             debug_printf("%s: regular icon is moving inside the dock!\n", __func__);
             selected_item->is_dock_item = TRUE;
@@ -932,6 +970,11 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
     }
     g_mutex_unlock(selected_mutex);
 
+    /* add pages and page indicators as needed */
+    GList *page = NULL;
+    gui_page_indicator_group_add(page, g_list_length(sbpages));
+    sbpages = g_list_append(sbpages, page);
+
     return TRUE;
 }
 
@@ -981,6 +1024,9 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
     start_y = 0.0;
 
     g_mutex_unlock(selected_mutex);
+
+    /* remove empty pages and page indicators as needed */
+    gui_pages_remove_empty();
 
     return TRUE;
 }
@@ -1187,7 +1233,7 @@ static void gui_set_iconstate(sbservices_client_t sbc, plist_t iconstate)
 
                 if (page) {
                         sbpages = g_list_append(sbpages, page);
-                        gui_page_indicator_group_add(p - 1);
+                        gui_page_indicator_group_add(page, p - 1);
                 }
             }
         }
