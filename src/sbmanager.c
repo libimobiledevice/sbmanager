@@ -191,7 +191,7 @@ static void clutter_actor_get_abs_center(ClutterActor *actor, gfloat *center_x, 
     *center_y += clutter_actor_get_y(actor);
 }
 
-static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat item_x, gfloat item_y, int pageindex)
+static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat item_x, gfloat item_y, int pageindex, int icons_per_row)
 {
     if (!newitem) {
         return iconlist;
@@ -211,7 +211,12 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
 
     gfloat xpageoffset = PAGE_X_OFFSET(pageindex);
 
-    gfloat xpos = 16 + xpageoffset;
+    gfloat spacing = 16;
+    if (icons_per_row > 4) {
+        spacing = 3;
+    }
+
+    gfloat xpos = spacing + xpageoffset;
     gfloat ypos = 16;
     gfloat oxpos = xpos;
 
@@ -228,7 +233,7 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
 
         /* if required, add spacing */
         if (!move_left)
-            oxpos += 16;
+            oxpos += spacing;
 
         if (ixpos < oxpos + 60) {
             newpos = i;
@@ -236,13 +241,14 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
             break;
         }
 
-        if (((i + 1) % 4) == 0) {
-            xpos = 16.0 + xpageoffset;
+        if (((i + 1) % icons_per_row) == 0) {
+            xpos = spacing + xpageoffset;
             if (ypos + 88.0 < sb_area.y2 - sb_area.y1) {
                 ypos += 88.0;
             }
         } else {
-            xpos += 76;
+            xpos += 60;
+            xpos += spacing;
         }
     }
 
@@ -831,7 +837,7 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
             debug_printf("%s: icon from dock moving inside the dock!\n", __func__);
             selected_item->is_dock_item = TRUE;
             dockitems =
-                iconlist_insert_item_at(dockitems, selected_item, (center_x - dock_area.x1), (center_y - dock_area.y1), 0);
+                iconlist_insert_item_at(dockitems, selected_item, (center_x - dock_area.x1), (center_y - dock_area.y1), 0, num_dock_items);
             gui_dock_align_icons(TRUE);
         } else {
             debug_printf("%s: icon from dock moving outside the dock!\n", __func__);
@@ -850,7 +856,7 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         } else {
             debug_printf("%s: regular icon is moving!\n", __func__);
             pageitems =
-                iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + PAGE_X_OFFSET(current_page), (center_y - sb_area.y1), p);
+                iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + PAGE_X_OFFSET(current_page), (center_y - sb_area.y1), p, 4);
         }
         sbpages = g_list_insert(sbpages, pageitems, p);
         gui_dock_align_icons(TRUE);
