@@ -190,7 +190,7 @@ static void clutter_actor_get_abs_center(ClutterActor *actor, gfloat *center_x, 
     *center_y += clutter_actor_get_y(actor);
 }
 
-static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat item_x, gfloat item_y)
+static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat item_x, gfloat item_y, int pageindex)
 {
     if (!newitem) {
         return iconlist;
@@ -208,32 +208,40 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
 
     debug_printf("%s: count:%d, item_x:%.0f, item_y:%.0f\n", __func__, count, item_x, item_y);
 
+    gfloat xpageoffset = (pageindex * STAGE_WIDTH);
+
+    gfloat xpos = 16 + xpageoffset;
+    gfloat ypos = 16;
+    gfloat oxpos = xpos;
+
     for (i = 0; i < count; i++) {
-        SBItem *item = g_list_nth_data(iconlist, i);
-        ClutterActor *icon = clutter_actor_get_parent(item->texture);
-        gfloat xpos = clutter_actor_get_x(icon);
-        gfloat ypos = clutter_actor_get_y(icon);
+        oxpos = xpos;
 
         gint nrow = (ypos - 16) / 88;
         gint irow = (item_y - 16) / 88;
 
-        xpos += nrow*STAGE_WIDTH;
+        oxpos += nrow*STAGE_WIDTH;
         gfloat ixpos = item_x + irow*STAGE_WIDTH;
 
         debug_printf("%s: i:%d, nrow:%d, irow:%d, xpos:%.0f, ypos:%.0f, ixpos:%.0f\n", __func__, i, nrow, irow, xpos, ypos, ixpos);
 
-        if (move_left) {
-            if (ixpos < xpos + 40) {
-                newpos = i;
-                debug_printf("%s: ixpos (%.0f) < xpos + 40 (%.0f):\n", __func__, ixpos, xpos + 40);
-                break;
+        /* if required, add spacing */
+        if (!move_left)
+            oxpos += 16;
+
+        if (ixpos < oxpos + 60) {
+            newpos = i;
+            debug_printf("%s: ixpos (%.0f) < oxpos+60 (%.0f):\n", __func__, ixpos, oxpos+60);
+            break;
+        }
+
+        if (((i + 1) % 4) == 0) {
+            xpos = 16.0 + xpageoffset;
+            if (ypos + 88.0 < sb_area.y2 - sb_area.y1) {
+                ypos += 88.0;
             }
         } else {
-            if (ixpos < xpos - 10) {
-                newpos = i;
-                debug_printf("%s: ixpos (%.0f) < xpos - 10 (%.0f):\n", __func__, ixpos, xpos - 10);
-                break;
-            }
+            xpos += 76;
         }
     }
 
@@ -822,7 +830,7 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
             debug_printf("%s: icon from dock moving inside the dock!\n", __func__);
             selected_item->is_dock_item = TRUE;
             dockitems =
-                iconlist_insert_item_at(dockitems, selected_item, (center_x - dock_area.x1), (center_y - dock_area.y1));
+                iconlist_insert_item_at(dockitems, selected_item, (center_x - dock_area.x1), (center_y - dock_area.y1), 0);
             gui_dock_align_icons(TRUE);
         } else {
             debug_printf("%s: icon from dock moving outside the dock!\n", __func__);
@@ -830,7 +838,9 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
             gui_page_align_icons(current_page, TRUE);
         }
     } else {
-        GList *pageitems = g_list_nth_data(sbpages, current_page);
+        int p = current_page;
+        debug_printf("%s: current_page %d\n", __func__, p);
+        GList *pageitems = g_list_nth_data(sbpages, p);
         sbpages = g_list_remove(sbpages, pageitems);
         pageitems = g_list_remove(pageitems, selected_item);
         if (center_y >= dock_area.y1 && (g_list_length(dockitems) < num_dock_items)) {
@@ -839,9 +849,9 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         } else {
             debug_printf("%s: regular icon is moving!\n", __func__);
             pageitems =
-                iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + (current_page * STAGE_WIDTH), (center_y - sb_area.y1));
+                iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + (current_page * STAGE_WIDTH), (center_y - sb_area.y1), p);
         }
-        sbpages = g_list_insert(sbpages, pageitems, current_page);
+        sbpages = g_list_insert(sbpages, pageitems, p);
         gui_dock_align_icons(TRUE);
         gui_page_align_icons(current_page, TRUE);
     }
