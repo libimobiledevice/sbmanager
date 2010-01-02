@@ -41,6 +41,7 @@
 #define STAGE_WIDTH 320
 #define STAGE_HEIGHT 480
 #define DOCK_HEIGHT 90
+#define PAGE_X_OFFSET(i) (i*STAGE_WIDTH)
 
 const char CLOCK_FONT[] = "FreeSans Bold 12px";
 ClutterColor clock_text_color = { 255, 255, 255, 210 };
@@ -208,7 +209,7 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
 
     debug_printf("%s: count:%d, item_x:%.0f, item_y:%.0f\n", __func__, count, item_x, item_y);
 
-    gfloat xpageoffset = (pageindex * STAGE_WIDTH);
+    gfloat xpageoffset = PAGE_X_OFFSET(pageindex);
 
     gfloat xpos = 16 + xpageoffset;
     gfloat ypos = 16;
@@ -605,7 +606,7 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
     gint count = g_list_length(pageitems);
 
     gfloat ypos = 16.0;
-    gfloat xpos = 16.0 + (page_num * STAGE_WIDTH);
+    gfloat xpos = 16.0 + PAGE_X_OFFSET(page_num);
     gint i = 0;
 
     /* set positions */
@@ -634,7 +635,7 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
         }
 
         if (((i + 1) % 4) == 0) {
-            xpos = 16.0 + (page_num * STAGE_WIDTH);
+            xpos = 16.0 + PAGE_X_OFFSET(page_num);
             if (ypos + 88.0 < sb_area.y2 - sb_area.y1) {
                 ypos += 88.0;
             }
@@ -694,7 +695,7 @@ static void gui_set_current_page(int pageindex)
 
     gui_page_indicator_group_align();
 
-    clutter_actor_animate(the_sb, CLUTTER_EASE_IN_OUT_CUBIC, 400, "x", (gfloat) (-(current_page * STAGE_WIDTH)), NULL);
+    clutter_actor_animate(the_sb, CLUTTER_EASE_IN_OUT_CUBIC, 400, "x", (gfloat) (-PAGE_X_OFFSET(current_page)), NULL);
 }
 
 static void gui_show_next_page()
@@ -849,7 +850,7 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         } else {
             debug_printf("%s: regular icon is moving!\n", __func__);
             pageitems =
-                iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + (current_page * STAGE_WIDTH), (center_y - sb_area.y1), p);
+                iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + PAGE_X_OFFSET(current_page), (center_y - sb_area.y1), p);
         }
         sbpages = g_list_insert(sbpages, pageitems, p);
         gui_dock_align_icons(TRUE);
@@ -917,7 +918,7 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
             diffx = dock_area.x1;
             diffy = dock_area.y1;
         } else {
-            diffx = sb_area.x1 - (current_page * STAGE_WIDTH);
+            diffx = sb_area.x1 - PAGE_X_OFFSET(current_page);
             diffy = sb_area.y1;
         }
         clutter_actor_reparent(sc, stage);
@@ -972,7 +973,7 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
             clutter_actor_reparent(sc, the_sb);
             clutter_actor_set_position(sc,
                                        clutter_actor_get_x(sc) +
-                                       (current_page * STAGE_WIDTH) - sb_area.x1, clutter_actor_get_y(sc) - sb_area.y1);
+                                       PAGE_X_OFFSET(current_page) - sb_area.x1, clutter_actor_get_y(sc) - sb_area.y1);
         }
     }
 
