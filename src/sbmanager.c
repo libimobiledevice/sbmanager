@@ -879,7 +879,9 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         int count = g_list_length(sbpages);
         for (i = 0; i < count; i++) {
             pageitems = g_list_nth_data(sbpages, i);
+            sbpages = g_list_remove(sbpages, pageitems);
             pageitems = g_list_remove(pageitems, selected_item);
+            sbpages = g_list_insert(sbpages, pageitems, i);
         }
         pageitems = g_list_nth_data(sbpages, p);
         sbpages = g_list_remove(sbpages, pageitems);
