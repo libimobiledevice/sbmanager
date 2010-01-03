@@ -935,6 +935,11 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
         return FALSE;
     }
 
+    /* discard double clicks */
+    if (event->click_count > 1) {
+        return FALSE;
+    }
+
     SBItem *item = (SBItem*)user_data;
 
     char *strval = sbitem_get_display_name(item);
@@ -986,6 +991,11 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
 static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
     if (!user_data) {
+        return FALSE;
+    }
+
+    /* discard double clicks */
+    if (event->click_count > 1) {
         return FALSE;
     }
 
