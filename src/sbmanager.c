@@ -723,6 +723,9 @@ static void gui_set_current_page(int pageindex)
     if ((pageindex < 0) || (pageindex >= count))
         return;
 
+    /* make sure the page has correct aligned icons */
+    gui_page_align_icons(pageindex, FALSE);
+
     current_page = pageindex;
 
     gui_page_indicator_group_align();
@@ -732,15 +735,11 @@ static void gui_set_current_page(int pageindex)
 
 static void gui_show_next_page()
 {
-    /* make sure the page has correct aligned icons */
-    gui_page_align_icons(current_page+1, FALSE);
     gui_set_current_page(current_page+1);
 }
 
 static void gui_show_previous_page()
 {
-    /* make sure the page has correct aligned icons */
-    gui_page_align_icons(current_page-1, FALSE);
     gui_set_current_page(current_page-1);
 }
 
