@@ -1,8 +1,8 @@
 /**
  * sbmanager -- Manage iPhone/iPod Touch SpringBoard icons from your computer!
  *
- * Copyright (C) 2009 Nikias Bassen <nikias@gmx.li>
- * Copyright (C) 2009 Martin Szulecki <opensuse@sukimashita.com>
+ * Copyright (C) 2009-2010 Nikias Bassen <nikias@gmx.li>
+ * Copyright (C) 2009-2010 Martin Szulecki <opensuse@sukimashita.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
