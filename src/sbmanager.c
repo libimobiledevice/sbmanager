@@ -200,7 +200,7 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
     debug_printf("%s: count items %d\n", __func__, g_list_length(iconlist));
     
     if (!iconlist) {
-        debug_printf("%s: prepending item\n", __func__);
+        debug_printf("%s: appending item\n", __func__);
         /* for empty lists just add the element */
         return g_list_append(iconlist, newitem);
     }
