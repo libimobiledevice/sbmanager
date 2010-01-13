@@ -282,14 +282,14 @@ static sbservices_client_t sbs_new(char *uuid)
     sbservices_client_t sbc = NULL;
     iphone_device_t phone = NULL;
     lockdownd_client_t client = NULL;
-    int port = 0;
+    uint16_t port = 0;
 
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {
         fprintf(stderr, "No iPhone found, is it plugged in?\n");
         return sbc;
     }
 
-    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
         fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
         goto leave_cleanup;
     }
@@ -422,7 +422,7 @@ static guint battery_init(SBManagerApp *app)
         goto leave_cleanup;
     }
 
-    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
         fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
         goto leave_cleanup;
     }
@@ -471,7 +471,7 @@ static gboolean battery_update_cb(gpointer data)
         goto leave_cleanup;
     }
 
-    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
         fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
         goto leave_cleanup;
     }
@@ -508,7 +508,7 @@ static gboolean get_device_info(SBManagerApp *app)
         goto leave_cleanup;
     }
 
-    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new(phone, &client)) {
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
         fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
         goto leave_cleanup;
     }
@@ -1448,7 +1448,6 @@ int main(int argc, char **argv)
     /* parse cmdline args */
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")) {
-            iphone_set_debug_mask(DBGMASK_ALL);
             iphone_set_debug_level(1);
             continue;
         } else if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug-app")) {
