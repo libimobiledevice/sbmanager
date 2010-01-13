@@ -15,6 +15,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: ../nautilus/nautilus-sbmanager.c:71
+msgid "Manage _SpringBoard"
+msgstr "_SpringBoard bearbeiten"
+
+#: ../nautilus/nautilus-sbmanager.c:72
+msgid "Launch SBManager to manage the SpringBoard of this device"
+msgstr "Startet SBManager mit dem Sie das SpringBoard dieses Gerätes bearbeiten können"
+
 #: ../src/sbmanager.c:1336
 msgid "Upload changes to device"
 msgstr "Änderungen auf das Gerät übertragen"
