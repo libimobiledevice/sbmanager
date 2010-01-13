@@ -22,6 +22,9 @@
  * USA
  */
 
+#ifdef HAVE_CONFIG_H
+ #include <config.h> /* for GETTEXT_PACKAGE */
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +35,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <glib.h>
+#include <glib/gi18n-lib.h>
 
 #include <gtk/gtk.h>
 #include <clutter/clutter.h>
@@ -1330,7 +1334,7 @@ static void gui_init(SBManagerApp* app)
     gtk_container_add(GTK_CONTAINER(app->window), vbox);
     gtk_widget_show(vbox);
 
-    GtkWidget *button = gtk_button_new_with_label("Upload changes to device");
+    GtkWidget *button = gtk_button_new_with_label(_("Upload changes to device"));
     gtk_box_pack_end(GTK_BOX(vbox), button, FALSE, FALSE, 0);
     g_signal_connect(button, "clicked", G_CALLBACK(button_clicked_cb), app);
     gtk_widget_show(button);

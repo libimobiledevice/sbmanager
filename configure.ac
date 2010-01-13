@@ -44,11 +44,20 @@ AC_CHECK_FUNCS([strcasecmp strdup strerror strndup])
 AS_COMPILER_FLAGS(GLOBAL_CFLAGS, "-Wall -Wextra -Wmissing-declarations -Wredundant-decls -Wshadow -Wpointer-arith  -Wwrite-strings -Wswitch-default -Wno-unused-parameter -Werror")
 AC_SUBST(GLOBAL_CFLAGS)
 
+# i18n
+
+GETTEXT_PACKAGE=sbmanager
+AC_SUBST([GETTEXT_PACKAGE])
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE], "$GETTEXT_PACKAGE", [Gettext package])
+AM_GLIB_GNU_GETTEXT
+IT_PROG_INTLTOOL([0.35.0])
+
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_OUTPUT([
 Makefile
 data/Makefile
 src/Makefile
+po/Makefile.in
 ])
 

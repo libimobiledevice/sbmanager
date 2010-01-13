@@ -1,0 +1,3 @@
+# List of source files containing translatable strings.
+# Please keep this list in alphabetic order.
+src/sbmanager.c
