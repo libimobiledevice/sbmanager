@@ -41,6 +41,7 @@
 #define STAGE_WIDTH 320
 #define STAGE_HEIGHT 480
 #define DOCK_HEIGHT 90
+#define MAX_PAGE_ITEMS 16
 #define PAGE_X_OFFSET(i) (i*STAGE_WIDTH)
 
 const char CLOCK_FONT[] = "FreeSans Bold 12px";
@@ -98,6 +99,9 @@ guint num_dock_items = 0;
 
 int current_page = 0;
 struct timeval last_page_switch;
+
+static void gui_page_indicator_group_add(GList *page, int page_index);
+static void gui_page_align_icons(guint page_num, gboolean animated);
 
 /* debug */
 gboolean debug_app = FALSE;
@@ -253,7 +257,40 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
 
     debug_printf("%s: newpos:%d\n", __func__, newpos);
 
-    return g_list_insert(iconlist, newitem, newpos);
+    /* do we have a full page? */
+    if ((count >= MAX_PAGE_ITEMS) && (icons_per_row == 4)) {
+        debug_printf("%s: full page detected\n", __func__);
+        gint page_count = g_list_length(sbpages);
+
+        GList *next_page = NULL;
+
+        /* add page if required */
+        if ((pageindex + 1) == page_count) {
+            debug_printf("%s: need to add new page %d\n", __func__, page_count);
+            gui_page_indicator_group_add(next_page, page_count);
+            sbpages = g_list_append(sbpages, next_page);
+        } else {
+            next_page = g_list_nth_data(sbpages, pageindex);    
+        }
+
+        /* remove overlapping item from current page */
+        SBItem *last_item = g_list_nth_data(iconlist, MAX_PAGE_ITEMS-1);
+        iconlist = g_list_remove(iconlist, last_item);
+        ClutterActor *actor = clutter_actor_get_parent(last_item->texture);
+        clutter_actor_set_position(actor, 16.0 + PAGE_X_OFFSET(pageindex + 1), 16.0);
+
+        /* detach next page */
+        sbpages = g_list_remove(sbpages, next_page);
+
+        /* insert item as first item */
+        debug_printf("%s: inserting %s at page %d\n", __func__, sbitem_get_display_name(last_item), pageindex + 1);
+        next_page = iconlist_insert_item_at(next_page, last_item, 16, 16, pageindex + 1, icons_per_row);
+
+        /* reattach next page */
+        sbpages = g_list_insert(sbpages, next_page, pageindex);
+    }
+
+    return g_list_insert(iconlist, newitem, newpos >= MAX_PAGE_ITEMS ? 15:newpos);
 }
 
 /* sbservices interface */
@@ -890,11 +927,11 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         } else {
             debug_printf("%s: regular icon is moving!\n", __func__);
             pageitems =
-                iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + PAGE_X_OFFSET(current_page), (center_y - sb_area.y1), p, 4);
+                iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + PAGE_X_OFFSET(p), (center_y - sb_area.y1), p, 4);
         }
         sbpages = g_list_insert(sbpages, pageitems, p);
         gui_dock_align_icons(TRUE);
-        gui_page_align_icons(current_page, TRUE);
+        gui_page_align_icons(p, TRUE);
     }
 
     return TRUE;
