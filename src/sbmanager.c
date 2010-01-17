@@ -302,7 +302,11 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
                 thepage_count = g_list_length(thepage);
             }
             if (prevpage) {
-                thepage = g_list_prepend(thepage, g_list_nth_data(prevpage, g_list_length(prevpage)-1));
+                SBItem *prev_page_item = g_list_nth_data(prevpage, MAX_PAGE_ITEMS-1);
+                /* animate this item to fix drawing error */
+                actor = clutter_actor_get_parent(prev_page_item->texture);
+                clutter_actor_animate(actor, CLUTTER_LINEAR, 100, "x", 16 + PAGE_X_OFFSET(i + 1), "y", 16.0, NULL);
+                thepage = g_list_prepend(thepage, prev_page_item);
             } else {
                 thepage = g_list_prepend(thepage, last_item);
             }
