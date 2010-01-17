@@ -696,6 +696,7 @@ static void gui_page_indicator_group_align()
     for (i = 0; i < count; i++) {
         ClutterActor *dot = clutter_group_get_nth_child(CLUTTER_GROUP(page_indicator_group), i);
         clutter_actor_set_position(dot, xpos, 0.0);
+        clutter_actor_set_name(dot, g_strdup_printf("%d", i));
         if (i == current_page) {
             clutter_actor_set_opacity(dot, 200);
         } else {
@@ -707,7 +708,7 @@ static void gui_page_indicator_group_align()
     clutter_actor_set_x(page_indicator_group, (STAGE_WIDTH - xpos) / 2.0);
 }
 
-static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterEvent *event, gpointer data);
+static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer data);
 
 static void gui_page_indicator_group_add(GList *page, int page_index)
 {
@@ -718,7 +719,7 @@ static void gui_page_indicator_group_add(GList *page, int page_index)
         clutter_actor_set_reactive(actor, TRUE);
         g_signal_connect(actor,
                                 "button-press-event",
-                                G_CALLBACK(page_indicator_clicked_cb), GUINT_TO_POINTER(page_index));
+                                G_CALLBACK(page_indicator_clicked_cb), NULL);
         clutter_container_add_actor(CLUTTER_CONTAINER(page_indicator_group), actor);
         gui_page_indicator_group_align();
     }
@@ -730,7 +731,7 @@ static void gui_page_indicator_group_remove(GList *page, int page_index)
     if (page_indicator) {
         ClutterActor *actor = clutter_group_get_nth_child(CLUTTER_GROUP(page_indicator_group), page_index);
         /* afaik, this also removes it from the container */
-        clutter_container_remove_actor(CLUTTER_CONTAINER(page_indicator_group), actor);
+        clutter_actor_destroy(actor);
         gui_page_indicator_group_align();
     }
 }
@@ -752,7 +753,7 @@ static void gui_pages_remove_empty()
     sbpages = g_list_remove_all(sbpages, NULL);
 }
 
-static void gui_set_current_page(int pageindex)
+static void gui_set_current_page(int pageindex, gboolean animated)
 {
     gint count = clutter_group_get_n_children(CLUTTER_GROUP(page_indicator_group));
 
@@ -766,17 +767,21 @@ static void gui_set_current_page(int pageindex)
 
     gui_page_indicator_group_align();
 
-    clutter_actor_animate(the_sb, CLUTTER_EASE_IN_OUT_CUBIC, 400, "x", (gfloat) (-PAGE_X_OFFSET(current_page)), NULL);
+    if (animated) {
+        clutter_actor_animate(the_sb, CLUTTER_EASE_IN_OUT_CUBIC, 400, "x", (gfloat) (-PAGE_X_OFFSET(current_page)), NULL);
+    } else {
+        clutter_actor_set_x(the_sb, (gfloat)(-PAGE_X_OFFSET(current_page)));
+    }
 }
 
 static void gui_show_next_page()
 {
-    gui_set_current_page(current_page+1);
+    gui_set_current_page(current_page+1, TRUE);
 }
 
 static void gui_show_previous_page()
 {
-    gui_set_current_page(current_page-1);
+    gui_set_current_page(current_page-1, TRUE);
 }
 
 static plist_t gui_get_iconstate()
@@ -939,9 +944,15 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
     return TRUE;
 }
 
-static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterEvent *event, gpointer data)
+static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer data)
 {
-    gui_set_current_page(GPOINTER_TO_UINT(data));
+    if (event->click_count > 1) {
+        return FALSE;
+    }
+    const gchar *index_str = clutter_actor_get_name(actor);
+    int pageindex = strtol(index_str, NULL, 10);
+    debug_printf("page indicator for page %d has been clicked\n", pageindex);
+    gui_set_current_page(pageindex, TRUE);
     return TRUE;
 }
 
@@ -1041,6 +1052,13 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
     SBItem *item = (SBItem*)user_data;
     char *strval = sbitem_get_display_name(item);
 
+    /* remove empty pages and page indicators as needed */
+    gui_pages_remove_empty();
+    int count = g_list_length(sbpages);
+    if (current_page >= count) {
+        gui_set_current_page(count-1, FALSE);
+    }
+
     g_mutex_lock(selected_mutex);
     debug_printf("%s: %s mouse released\n", __func__, strval);
 
@@ -1078,9 +1096,6 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
     start_y = 0.0;
 
     g_mutex_unlock(selected_mutex);
-
-    /* remove empty pages and page indicators as needed */
-    gui_pages_remove_empty();
 
     return TRUE;
 }
