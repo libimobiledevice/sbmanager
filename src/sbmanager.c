@@ -46,7 +46,7 @@
 #define STAGE_HEIGHT 480
 #define DOCK_HEIGHT 90
 #define MAX_PAGE_ITEMS 16
-#define PAGE_X_OFFSET(i) (i*STAGE_WIDTH)
+#define PAGE_X_OFFSET(i) ((gfloat)(i)*(gfloat)(STAGE_WIDTH))
 
 const char CLOCK_FONT[] = "FreeSans Bold 12px";
 ClutterColor clock_text_color = { 255, 255, 255, 210 };
@@ -265,36 +265,50 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
     /* do we have a full page? */
     if ((count >= MAX_PAGE_ITEMS) && (icons_per_row == 4)) {
         debug_printf("%s: full page detected\n", __func__);
-        gint page_count = g_list_length(sbpages);
-
-        GList *next_page = NULL;
-
-        /* add page if required */
-        if ((pageindex + 1) == page_count) {
-            debug_printf("%s: need to add new page %d\n", __func__, page_count);
-            gui_page_indicator_group_add(next_page, page_count);
-            sbpages = g_list_append(sbpages, next_page);
-        } else {
-            next_page = g_list_nth_data(sbpages, pageindex);    
-        }
-
         /* remove overlapping item from current page */
         SBItem *last_item = g_list_nth_data(iconlist, MAX_PAGE_ITEMS-1);
         iconlist = g_list_remove(iconlist, last_item);
+        /* animate it to new position */
         ClutterActor *actor = clutter_actor_get_parent(last_item->texture);
-        clutter_actor_set_position(actor, 16.0 + PAGE_X_OFFSET(pageindex + 1), 16.0);
-
-        /* detach next page */
-        sbpages = g_list_remove(sbpages, next_page);
-
-        /* insert item as first item */
-        debug_printf("%s: inserting %s at page %d\n", __func__, sbitem_get_display_name(last_item), pageindex + 1);
-        next_page = iconlist_insert_item_at(next_page, last_item, 16, 16, pageindex + 1, icons_per_row);
-
-        /* reattach next page */
-        sbpages = g_list_insert(sbpages, next_page, pageindex);
+        clutter_actor_animate(actor, CLUTTER_EASE_OUT_QUAD, 250, "x", 16.0 + PAGE_X_OFFSET(pageindex + 1), "y", 16.0, NULL);
+        /* first, we need to get the pages that we have to manipulate */
+        gint page_count = g_list_length(sbpages);
+        gint last_index = pageindex;
+        for (i = pageindex; i < page_count; i++) {
+            GList *thepage = g_list_nth_data(sbpages, i);
+            if (g_list_length(thepage) < 16) {
+                last_index = i;
+                break;
+            }
+        }
+        if (g_list_length(g_list_nth_data(sbpages, last_index)) >= MAX_PAGE_ITEMS) {
+            /* it's the last page that is full, so we need to add a new page */
+            debug_printf("last page is full, appending page\n");
+            sbpages = g_list_append(sbpages, NULL);
+            last_index++;
+        }
+        debug_printf("will alter pages %d to %d (%d pages)\n", pageindex, last_index, (last_index - pageindex) + 1);
+        /* now manipulate the lists in reverse order */
+        for (i = last_index; i >= pageindex; i--) {
+            GList *thepage = g_list_nth_data(sbpages, i);
+            sbpages = g_list_remove(sbpages, thepage);
+            GList *prevpage = NULL;
+            if (i > pageindex) {
+                prevpage = g_list_nth_data(sbpages, i-1);
+            }
+            gint thepage_count = g_list_length(thepage);
+            while (thepage_count >= MAX_PAGE_ITEMS) {
+                thepage = g_list_remove(thepage, g_list_nth_data(thepage, thepage_count-1));
+                thepage_count = g_list_length(thepage);
+            }
+            if (prevpage) {
+                thepage = g_list_prepend(thepage, g_list_nth_data(prevpage, g_list_length(prevpage)-1));
+            } else {
+                thepage = g_list_prepend(thepage, last_item);
+            }
+            sbpages = g_list_insert(sbpages, thepage, i);
+        }
     }
-
     return g_list_insert(iconlist, newitem, newpos >= MAX_PAGE_ITEMS ? 15:newpos);
 }
 
@@ -900,7 +914,9 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
             pageitems = g_list_remove(pageitems, selected_item);
             sbpages = g_list_insert(sbpages, pageitems, i);
         }
+	/* get current page */
         pageitems = g_list_nth_data(sbpages, p);
+	/* remove current page from pages list as we will alter it */
         sbpages = g_list_remove(sbpages, pageitems);
         if (center_y >= dock_area.y1 && (g_list_length(dockitems) < num_dock_items)) {
             debug_printf("%s: regular icon is moving inside the dock!\n", __func__);
@@ -910,6 +926,7 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
             pageitems =
                 iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + PAGE_X_OFFSET(p), (center_y - sb_area.y1), p, 4);
         }
+	/* insert back current page */
         sbpages = g_list_insert(sbpages, pageitems, p);
         gui_dock_align_icons(TRUE);
         gui_page_align_icons(p, TRUE);
