@@ -61,6 +61,7 @@ typedef struct {
     GtkWidget *window;
     char *uuid;
     plist_t battery;
+    guint battery_interval;
     char *device_name;
     char *device_type;
 } SBManagerApp;
@@ -450,38 +451,6 @@ static void clock_update_cb(ClutterTimeline *timeline, gint msecs, SBManagerApp 
     clock_set_time(clock_label, time(NULL));
 }
 
-/* battery */
-static guint battery_init(SBManagerApp *app)
-{
-    guint interval = 60;
-    iphone_device_t phone = NULL;
-    lockdownd_client_t client = NULL;
-    plist_t info_plist = NULL;
-
-    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
-        fprintf(stderr, "No iPhone found, is it plugged in?\n");
-        goto leave_cleanup;
-    }
-
-    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
-        fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
-        goto leave_cleanup;
-    }
-
-    lockdownd_get_value(client, "com.apple.mobile.iTunes", "BatteryPollInterval", &info_plist);
-    plist_get_uint_val(info_plist, (uint64_t*)&interval);
-    plist_free(info_plist);
-
-  leave_cleanup:
-    if (client) {
-        lockdownd_client_free(client);
-    }
-    iphone_device_free(phone);
-
-    /* Let's default to the default */
-    return interval;
-}
-
 static guint battery_get_current_capacity(SBManagerApp *app)
 {
     uint64_t current_capacity = 0;
@@ -522,7 +491,6 @@ static gboolean battery_update_cb(gpointer data)
     capacity = battery_get_current_capacity(app);
 
     clutter_actor_set_size(battery_level, (guint) (((double) (capacity) / 100.0) * 15), 6);
-    clutter_actor_set_position(battery_level, 298, 6);
 
     /* stop polling if we are fully charged */
     if (capacity == 100)
@@ -539,6 +507,8 @@ static gboolean battery_update_cb(gpointer data)
 
 static gboolean get_device_info(SBManagerApp *app)
 {
+    uint64_t interval = 60;
+    plist_t info_plist = NULL;
     iphone_device_t phone = NULL;
     lockdownd_client_t client = NULL;
     plist_t node;
@@ -580,6 +550,13 @@ static gboolean get_device_info(SBManagerApp *app)
     }
 
     res = TRUE;
+
+    lockdownd_get_value(client, "com.apple.mobile.iTunes", "BatteryPollInterval", &info_plist);
+    plist_get_uint_val(info_plist, &interval);
+    app->battery_interval = (guint)interval;
+    plist_free(info_plist);
+
+    lockdownd_get_value(client, "com.apple.mobile.battery", NULL, &app->battery);
 
   leave_cleanup:
     if (client) {
@@ -1441,16 +1418,18 @@ static void gui_init(SBManagerApp* app)
     clock_set_time(clock_label, time(NULL));
     clutter_actor_show(clock_label);
 
-    /* Load BatteryPollInterval and register battery state read timeout */
-    g_timeout_add_seconds(battery_init(app), (GSourceFunc) battery_update_cb, app);
-
     /* battery capacity */
     battery_level = clutter_rectangle_new_with_color(&battery_color);
-    battery_update_cb(app);
+    guint capacity = battery_get_current_capacity(app);
+    clutter_actor_set_position(battery_level, 298, 6);
+    clutter_actor_set_size(battery_level, (guint) (((double) (capacity) / 100.0) * 15), 6);
     clutter_group_add(CLUTTER_GROUP(stage), battery_level);
 
+    /* Register battery state read timeout */
+    clutter_threads_add_timeout(app->battery_interval * 1000, (GSourceFunc)battery_update_cb, app);
+
     /* Load icons in an idle loop */
-    g_idle_add((GSourceFunc) gui_pages_init_cb, app);
+    clutter_threads_add_idle((GSourceFunc)gui_pages_init_cb, app);
 
     /* Stop the application when the window is closed */
     g_signal_connect(app->window, "hide", G_CALLBACK(gtk_main_quit), app);
@@ -1516,12 +1495,15 @@ int main(int argc, char **argv)
         return 0;
     }
 
+    if (!g_thread_supported())
+        g_thread_init(NULL);
+
+    /* initialize clutter threading environment */
+    clutter_threads_init();
+
     if (gtk_clutter_init(&argc, &argv) != CLUTTER_INIT_SUCCESS) {
         g_error("Unable to initialize GtkClutter");
     }
-
-    if (!g_thread_supported())
-        g_thread_init(NULL);
 
     /* Create the window and some child widgets */
     gui_init(app);
