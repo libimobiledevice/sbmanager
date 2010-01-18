@@ -94,5 +94,5 @@ msgstr "Programm beenden"
 
 #: ../src/sbmanager.c:1646
 #, c-format
-msgid "Unknown error occured"
+msgid "Unknown error occurred"
 msgstr "Ein unbekannter Fehler ist aufgetreten"

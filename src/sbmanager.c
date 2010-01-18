@@ -1667,7 +1667,7 @@ int main(int argc, char **argv)
             g_printerr("%s", error->message);
             g_error_free(error);
         } else {
-            g_printerr(_("Unknown error occured"));
+            g_printerr(_("Unknown error occurred"));
         }
         return -1;
     }
