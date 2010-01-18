@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sbmanager 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-13 19:14+0100\n"
-"PO-Revision-Date: 2010-01-13 19:14+0100\n"
+"POT-Creation-Date: 2010-01-18 04:30+0100\n"
+"PO-Revision-Date: 2010-01-18 04:30+0100\n"
 "Last-Translator: Nikias Bassen <nikias@gmx.li>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -21,8 +21,30 @@ msgstr "_SpringBoard bearbeiten"
 
 #: ../nautilus/nautilus-sbmanager.c:72
 msgid "Launch SBManager to manage the SpringBoard of this device"
-msgstr "Startet SBManager mit dem Sie das SpringBoard dieses Gerätes bearbeiten können"
+msgstr ""
+"Startet SBManager mit dem Sie das SpringBoard dieses Gerätes bearbeiten "
+"können"
 
-#: ../src/sbmanager.c:1336
+#: ../src/sbmanager.c:1367
+msgid "Manage iPhone/iPod Touch SpringBoard from the computer"
+msgstr "iPhone/iPod Touch SpringBoard vom Computer aus bearbeiten"
+
+#: ../src/sbmanager.c:1369
+msgid "Project Site"
+msgstr "Projektseite"
+
+#: ../src/sbmanager.c:1410
+msgid "Reload icons from device"
+msgstr "Symbole erneut vom Gerät laden"
+
+#: ../src/sbmanager.c:1414
 msgid "Upload changes to device"
 msgstr "Änderungen auf das Gerät übertragen"
+
+#: ../src/sbmanager.c:1418
+msgid "Get info about this cool program"
+msgstr "Informationen über dieses krasse Programm"
+
+#: ../src/sbmanager.c:1426
+msgid "Quit this program"
+msgstr "Programm beenden"
