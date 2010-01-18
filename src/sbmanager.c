@@ -353,14 +353,16 @@ static gboolean sbs_save_icon(sbservices_client_t sbc, char *display_identifier,
     return res;
 }
 
-static sbservices_client_t sbs_new(char *uuid)
+static void lockdown_update_device_info(lockdownd_client_t client, SBManagerApp *app);
+
+static sbservices_client_t sbs_new(SBManagerApp *app)
 {
     sbservices_client_t sbc = NULL;
     iphone_device_t phone = NULL;
     lockdownd_client_t client = NULL;
     uint16_t port = 0;
 
-    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
         g_printerr(_("No device found, is it plugged in?"));
         return sbc;
     }
@@ -369,6 +371,12 @@ static sbservices_client_t sbs_new(char *uuid)
         g_printerr(_("Could not connect to lockdownd!"));
         goto leave_cleanup;
     }
+
+    lockdown_update_device_info(client, app);
+    gchar *wndtitle = g_strdup_printf("%s - SBManager", app->device_name);
+    gtk_window_set_title(GTK_WINDOW(main_window), wndtitle);
+    g_free(wndtitle);
+    clutter_text_set_text(CLUTTER_TEXT(type_label), app->device_type);
 
     if ((lockdownd_start_service(client, "com.apple.springboardservices", &port) != LOCKDOWN_E_SUCCESS) || !port) {
         g_printerr(_("Could not start com.apple.springboardservices service! Remind that this feature is only supported in OS 3.1 and later!"));
@@ -538,27 +546,23 @@ static gboolean battery_update_cb(gpointer data)
     return res;
 }
 
-static gboolean get_device_info(SBManagerApp *app, GError **error)
+static void lockdown_update_device_info(lockdownd_client_t client, SBManagerApp *app)
 {
-    uint64_t interval = 60;
-    plist_t info_plist = NULL;
-    iphone_device_t phone = NULL;
-    lockdownd_client_t client = NULL;
     plist_t node;
-    gboolean res = FALSE;
-
-    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
-        *error = g_error_new(G_IO_ERROR, -1, _("No device found, is it plugged in?"));
-        goto leave_cleanup;
+    if (!client || !app) {
+        return;
     }
 
-    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
-        *error = g_error_new(G_IO_ERROR, -1, _("Could not connect to lockdownd!"));
-        goto leave_cleanup;
+    if (app->device_name) {
+        free(app->device_name);
+	app->device_name = NULL;
     }
-
     lockdownd_get_device_name(client, &app->device_name);
 
+    if (app->device_type) {
+        free(app->device_type);
+	app->device_type = NULL;
+    }
     lockdownd_get_value(client, NULL, "ProductType", &node);
     if (node) {
         char *devtype = NULL;
@@ -581,7 +585,27 @@ static gboolean get_device_info(SBManagerApp *app, GError **error)
             }
         }
     }
+}
 
+static gboolean get_device_info(SBManagerApp *app, GError **error)
+{
+    uint64_t interval = 60;
+    plist_t info_plist = NULL;
+    iphone_device_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    gboolean res = FALSE;
+
+    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
+        *error = g_error_new(G_IO_ERROR, -1, _("No device found, is it plugged in?"));
+        goto leave_cleanup;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
+        *error = g_error_new(G_IO_ERROR, -1, _("Could not connect to lockdownd!"));
+        goto leave_cleanup;
+    }
+
+    lockdown_update_device_info(client, app);
     res = TRUE;
 
     lockdownd_get_value(client, "com.apple.mobile.iTunes", "BatteryPollInterval", &info_plist);
@@ -1313,7 +1337,7 @@ static gboolean gui_pages_init_cb(gpointer data)
     plist_t iconstate = NULL;
 
     /* connect to sbservices */
-    sbc = sbs_new(app->uuid);
+    sbc = sbs_new(app);
     if (sbc) {
         /* Load icon data */
         iconstate = sbs_get_iconstate(sbc);
@@ -1341,7 +1365,7 @@ static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
 
     plist_t iconstate = gui_get_iconstate();
 
-    sbservices_client_t sbc = sbs_new(app->uuid);
+    sbservices_client_t sbc = sbs_new(app);
     if (sbc) {
         sbs_set_iconstate(sbc, iconstate);
         sbs_free(sbc);
