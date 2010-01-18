@@ -57,8 +57,9 @@ ClutterColor dock_item_text_color = { 255, 255, 255, 255 };
 ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };  /* Black */
 ClutterColor battery_color = { 0xff, 0xff, 0xff, 0x9f };
 
+GtkWidget *main_window;
+
 typedef struct {
-    GtkWidget *window;
     GtkWidget *statusbar;
     char *uuid;
     plist_t battery;
@@ -360,22 +361,21 @@ static sbservices_client_t sbs_new(char *uuid)
     uint16_t port = 0;
 
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {
-        fprintf(stderr, "No iPhone found, is it plugged in?\n");
+        g_printerr(_("No device found, is it plugged in?"));
         return sbc;
     }
 
     if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
-        fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+        g_printerr(_("Could not connect to lockdownd!"));
         goto leave_cleanup;
     }
 
     if ((lockdownd_start_service(client, "com.apple.springboardservices", &port) != LOCKDOWN_E_SUCCESS) || !port) {
-        fprintf(stderr,
-                "Could not start com.apple.springboardservices service! Remind that this feature is only supported in OS 3.1 and later!\n");
+        g_printerr(_("Could not start com.apple.springboardservices service! Remind that this feature is only supported in OS 3.1 and later!"));
         goto leave_cleanup;
     }
     if (sbservices_client_new(phone, port, &sbc) != SBSERVICES_E_SUCCESS) {
-        fprintf(stderr, "Could not connect to springboardservices!\n");
+        g_printerr(_("Could not connect to springboardservices!"));
         goto leave_cleanup;
     }
 
@@ -404,11 +404,11 @@ static plist_t sbs_get_iconstate(sbservices_client_t sbc)
 
     if (sbc) {
         if (sbservices_get_icon_state(sbc, &iconstate) != SBSERVICES_E_SUCCESS || !iconstate) {
-            fprintf(stderr, "ERROR: Could not get icon state!\n");
+            g_printerr(_("Could not get icon state!"));
             goto leave_cleanup;
         }
         if (plist_get_node_type(iconstate) != PLIST_ARRAY) {
-            fprintf(stderr, "ERROR: icon state is not an array as expected!\n");
+            g_printerr(_("icon state is not an array as expected!"));
             goto leave_cleanup;
         }
         res = iconstate;
@@ -431,7 +431,7 @@ static gboolean sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate)
 
     if (sbc) {
         if (sbservices_set_icon_state(sbc, iconstate) != SBSERVICES_E_SUCCESS) {
-            fprintf(stderr, "ERROR: Could not set new icon state!\n");
+            g_printerr(_("Could not set new icon state!"));
             goto leave_cleanup;
         }
 
@@ -510,12 +510,12 @@ static gboolean battery_update_cb(gpointer data)
     gboolean res = TRUE;
 
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
-        fprintf(stderr, "No iPhone found, is it plugged in?\n");
+        g_printerr(_("No device found, is it plugged in?"));
         goto leave_cleanup;
     }
 
     if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
-        fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+        g_printerr(_("Could not connect to lockdownd!"));
         goto leave_cleanup;
     }
 
@@ -538,7 +538,7 @@ static gboolean battery_update_cb(gpointer data)
     return res;
 }
 
-static gboolean get_device_info(SBManagerApp *app)
+static gboolean get_device_info(SBManagerApp *app, GError **error)
 {
     uint64_t interval = 60;
     plist_t info_plist = NULL;
@@ -548,12 +548,12 @@ static gboolean get_device_info(SBManagerApp *app)
     gboolean res = FALSE;
 
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
-        fprintf(stderr, "No iPhone found, is it plugged in?\n");
+        *error = g_error_new(G_IO_ERROR, -1, _("No device found, is it plugged in?"));
         goto leave_cleanup;
     }
 
     if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
-        fprintf(stderr, "Could not connect to lockdownd. Exiting.\n");
+        *error = g_error_new(G_IO_ERROR, -1, _("Could not connect to lockdownd!"));
         goto leave_cleanup;
     }
 
@@ -1355,7 +1355,6 @@ static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
 
 static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
-    SBManagerApp *app = (SBManagerApp *)user_data;
     const gchar *authors[] = {
 	"Nikias Bassen <nikias@gmx.li>",
 	"Martin Szulecki <opensuse@sukimashita.com>",
@@ -1368,7 +1367,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
     const gchar *website = "http://cgit.sukimashita.com/sbmanager.git";
     const gchar *website_label = _("Project Site");
 
-    gtk_show_about_dialog(GTK_WINDOW(app->window),
+    gtk_show_about_dialog(GTK_WINDOW(main_window),
             "authors", authors,
             "copyright", copyright,
             "program-name", program_name,
@@ -1386,20 +1385,29 @@ static gboolean quit_button_clicked_cb(GtkButton *button, gpointer user_data)
     return TRUE;
 }
 
+static void gui_error_dialog(const gchar *string)
+{
+    GtkWidget *dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(main_window), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "<b>%s</b>", _("Error"));
+    gtk_window_set_title(GTK_WINDOW(dialog), "SBManager");
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", string);
+    g_signal_connect_swapped (dialog, "response", G_CALLBACK(gtk_widget_destroy), dialog);
+    gtk_widget_show(dialog);
+}
+
 static void gui_init(SBManagerApp* app)
 {
     ClutterTimeline *timeline;
     ClutterActor *actor;
 
-    app->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_resizable(GTK_WINDOW(app->window), FALSE);
+    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
 
     gchar *wndtitle = g_strdup_printf("%s - SBManager", app->device_name);
-    gtk_window_set_title(GTK_WINDOW(app->window), wndtitle);
+    gtk_window_set_title(GTK_WINDOW(main_window), wndtitle);
     g_free(wndtitle);
 
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
-    gtk_container_add(GTK_CONTAINER(app->window), vbox);
+    gtk_container_add(GTK_CONTAINER(main_window), vbox);
     gtk_widget_show(vbox);
 
     /* create a toolbar */
@@ -1431,7 +1439,7 @@ static void gui_init(SBManagerApp* app)
     /* set up signal handlers */
     g_signal_connect(btn_reload, "clicked", G_CALLBACK(reload_button_clicked_cb), app);
     g_signal_connect(btn_apply, "clicked", G_CALLBACK(apply_button_clicked_cb), app);
-    g_signal_connect(btn_info, "clicked", G_CALLBACK(info_button_clicked_cb), app);
+    g_signal_connect(btn_info, "clicked", G_CALLBACK(info_button_clicked_cb), NULL);
     g_signal_connect(btn_quit, "clicked", G_CALLBACK(quit_button_clicked_cb), NULL);
 
     /* Create the clutter widget */
@@ -1529,14 +1537,16 @@ static void gui_init(SBManagerApp* app)
     clutter_timeline_start(timeline);
 
     /* attach to window signals */
-    g_signal_connect(G_OBJECT(app->window), "map-event", G_CALLBACK(win_map_cb), app);
-    g_signal_connect(G_OBJECT(app->window), "focus-in-event", G_CALLBACK(win_focus_change_cb), timeline);
-    g_signal_connect(G_OBJECT(app->window), "focus-out-event", G_CALLBACK(win_focus_change_cb), timeline);
+    g_signal_connect(G_OBJECT(main_window), "map-event", G_CALLBACK(win_map_cb), app);
+    g_signal_connect(G_OBJECT(main_window), "focus-in-event", G_CALLBACK(win_focus_change_cb), timeline);
+    g_signal_connect(G_OBJECT(main_window), "focus-out-event", G_CALLBACK(win_focus_change_cb), timeline);
 
     selected_mutex = g_mutex_new();
 
     /* Show the window. This also sets the stage's bounding box. */
-    gtk_widget_show_all(GTK_WIDGET(app->window));
+    gtk_widget_show_all(GTK_WIDGET(main_window));
+
+    g_set_printerr_handler((GPrintFunc)gui_error_dialog);
 
     /* Position and update the clock */
     clock_set_time(clock_label, time(NULL));
@@ -1556,10 +1566,19 @@ static void gui_init(SBManagerApp* app)
     clutter_threads_add_idle((GSourceFunc)gui_pages_init_cb, app);
 
     /* Stop the application when the window is closed */
-    g_signal_connect(app->window, "hide", G_CALLBACK(gtk_main_quit), app);
+    g_signal_connect(main_window, "hide", G_CALLBACK(gtk_main_quit), app);
 }
 
 /* main */
+static void pre_gui_error_dialog(const gchar *string)
+{
+    GtkWidget *dialog = gtk_message_dialog_new_with_markup (NULL, 0, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "<b>%s</b>", _("Error"));
+    gtk_window_set_title(GTK_WINDOW(dialog), "SBManager");
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", string);
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy(dialog);
+}
+
 static void print_usage(int argc, char **argv)
 {
     char *name = NULL;
@@ -1614,9 +1633,19 @@ int main(int argc, char **argv)
         }
     }
 
-    if (!get_device_info(app)) {
-        g_error("Could not read information from device.");
-        return 0;
+    gtk_init(&argc, &argv);
+
+    g_set_printerr_handler((GPrintFunc)pre_gui_error_dialog);
+
+    GError *error = NULL;
+    if (!get_device_info(app, &error)) {
+        if (error) {
+            g_printerr("%s", error->message);
+            g_error_free(error);
+        } else {
+            g_printerr(_("Unknown error occured"));
+        }
+        return -1;
     }
 
     if (!g_thread_supported())
