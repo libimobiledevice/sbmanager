@@ -59,6 +59,7 @@ ClutterColor battery_color = { 0xff, 0xff, 0xff, 0x9f };
 
 typedef struct {
     GtkWidget *window;
+    GtkWidget *statusbar;
     char *uuid;
     plist_t battery;
     guint battery_interval;
@@ -156,23 +157,37 @@ static char *sbitem_get_display_name(SBItem *item)
     return strval;
 }
 
-static void sbitem_free(SBItem *a)
+static void sbitem_free(SBItem *a, gpointer data)
 {
     if (a) {
         if (a->node) {
             plist_free(a->node);
         }
-        if (a->texture) {
-            free(a->texture);
+        if (a->texture && CLUTTER_IS_ACTOR(a->texture)) {
+	    ClutterActor *parent = clutter_actor_get_parent(a->texture);
+	    if (parent) {
+		clutter_actor_destroy(parent);
+		a->texture = NULL;
+		a->label = NULL;
+	    } else {
+		clutter_actor_destroy(a->texture);
+		a->texture = NULL;
+	    }
         }
+	if (a->label && CLUTTER_IS_ACTOR(a->label)) {
+            clutter_actor_destroy(a->label);
+	    a->label = NULL;
+	}
+	free(a);
     }
 }
 
-static void sbpage_free(GList *sbitems)
+static void sbpage_free(GList *sbitems, gpointer data)
 {
     if (sbitems) {
-        g_list_foreach(sbitems, (GFunc) (sbitem_free), NULL);
+       	g_list_foreach(sbitems, (GFunc) (sbitem_free), NULL);
         g_list_free(sbitems);
+	clutter_group_remove_all(CLUTTER_GROUP(page_indicator_group));
     }
 }
 
@@ -184,7 +199,7 @@ static void pages_free()
         sbpages = NULL;
     }
     if (dockitems) {
-        sbpage_free(dockitems);
+        sbpage_free(dockitems, NULL);
         dockitems = NULL;
     }
 }
@@ -956,24 +971,6 @@ static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEven
     return TRUE;
 }
 
-static gboolean button_clicked_cb(GtkButton *button, gpointer user_data)
-{
-    SBManagerApp *app = (SBManagerApp *)user_data;
-
-    plist_t iconstate = gui_get_iconstate();
-
-    sbservices_client_t sbc = sbs_new(app->uuid);
-    if (sbc) {
-        sbs_set_iconstate(sbc, iconstate);
-        sbs_free(sbc);
-    }
-
-    if (iconstate)
-        plist_free(iconstate);
-
-    return TRUE;
-}
-
 static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
     if (!user_data) {
@@ -1331,6 +1328,64 @@ static gboolean gui_pages_init_cb(gpointer data)
     return FALSE;
 }
 
+static gboolean reload_button_clicked_cb(GtkButton *button, gpointer user_data)
+{
+    SBManagerApp *app = (SBManagerApp *)user_data;
+    clutter_threads_add_idle((GSourceFunc)gui_pages_init_cb, app);
+    return TRUE;
+}
+
+static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
+{
+    SBManagerApp *app = (SBManagerApp *)user_data;
+
+    plist_t iconstate = gui_get_iconstate();
+
+    sbservices_client_t sbc = sbs_new(app->uuid);
+    if (sbc) {
+        sbs_set_iconstate(sbc, iconstate);
+        sbs_free(sbc);
+    }
+
+    if (iconstate)
+        plist_free(iconstate);
+
+    return TRUE;
+}
+
+static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
+{
+    SBManagerApp *app = (SBManagerApp *)user_data;
+    const gchar *authors[] = {
+	"Nikias Bassen <nikias@gmx.li>",
+	"Martin Szulecki <opensuse@sukimashita.com>",
+	NULL
+    };
+    const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki; All Rights Reserved.";
+    const gchar *program_name = "SBManager";
+    const gchar *version = "1.0";
+    const gchar *comments = _("Manage iPhone/iPod Touch SpringBoard from the computer");
+    const gchar *website = "http://cgit.sukimashita.com/sbmanager.git";
+    const gchar *website_label = _("Project Site");
+
+    gtk_show_about_dialog(GTK_WINDOW(app->window),
+            "authors", authors,
+            "copyright", copyright,
+            "program-name", program_name,
+            "version", version,
+            "comments", comments,
+            "website", website,
+            "website-label", website_label,
+            NULL);
+    return TRUE;
+}
+
+static gboolean quit_button_clicked_cb(GtkButton *button, gpointer user_data)
+{
+    gtk_main_quit();
+    return TRUE;
+}
+
 static void gui_init(SBManagerApp* app)
 {
     ClutterTimeline *timeline;
@@ -1347,15 +1402,48 @@ static void gui_init(SBManagerApp* app)
     gtk_container_add(GTK_CONTAINER(app->window), vbox);
     gtk_widget_show(vbox);
 
-    GtkWidget *button = gtk_button_new_with_label(_("Upload changes to device"));
-    gtk_box_pack_end(GTK_BOX(vbox), button, FALSE, FALSE, 0);
-    g_signal_connect(button, "clicked", G_CALLBACK(button_clicked_cb), app);
-    gtk_widget_show(button);
+    /* create a toolbar */
+    GtkWidget *toolbar = gtk_toolbar_new();
+    gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
+
+    GtkToolItem *btn_reload = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
+    gtk_tool_item_set_tooltip_text(btn_reload, _("Reload icons from device"));
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_reload, -1);
+
+    GtkToolItem *btn_apply = gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
+    gtk_tool_item_set_tooltip_text(btn_apply, _("Upload changes to device"));
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_apply, -1);
+
+    GtkToolItem *btn_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
+    gtk_tool_item_set_tooltip_text(btn_info, _("Get info about this cool program"));
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_info, -1);
+
+    GtkToolItem *spacer = gtk_tool_item_new();
+    gtk_tool_item_set_expand(spacer, TRUE);
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), spacer, -1);
+
+    GtkToolItem *btn_quit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
+    gtk_tool_item_set_tooltip_text(btn_quit, _("Quit this program"));
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_quit, -1);
+
+    gtk_widget_show(toolbar);
+
+    /* set up signal handlers */
+    g_signal_connect(btn_reload, "clicked", G_CALLBACK(reload_button_clicked_cb), app);
+    g_signal_connect(btn_apply, "clicked", G_CALLBACK(apply_button_clicked_cb), app);
+    g_signal_connect(btn_info, "clicked", G_CALLBACK(info_button_clicked_cb), app);
+    g_signal_connect(btn_quit, "clicked", G_CALLBACK(quit_button_clicked_cb), NULL);
 
     /* Create the clutter widget */
     GtkWidget *clutter_widget = gtk_clutter_embed_new();
     gtk_box_pack_start(GTK_BOX(vbox), clutter_widget, TRUE, TRUE, 0);
     gtk_widget_show(clutter_widget);
+
+    /* create a statusbar */
+    app->statusbar = gtk_statusbar_new();
+    gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(app->statusbar), FALSE);
+    gtk_box_pack_start(GTK_BOX(vbox), app->statusbar, FALSE, FALSE, 0);
+    gtk_widget_show(app->statusbar);
 
     /* Set the size of the widget, because we should not set the size of its
      * stage when using GtkClutterEmbed.
