@@ -42,6 +42,8 @@
 #include <clutter-gtk/clutter-gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+#define PROGNAME "SBManager"
+
 #define STAGE_WIDTH 320
 #define STAGE_HEIGHT 480
 #define DOCK_HEIGHT 90
@@ -359,10 +361,16 @@ static gboolean sbs_save_icon(sbservices_client_t sbc, char *display_identifier,
 
 static gboolean update_device_info_cb(gpointer data)
 {
+    if (!data)
+        return FALSE;
     SBManagerApp *app = (SBManagerApp*)data;
-    gchar *wndtitle = g_strdup_printf("%s - SBManager", app->device_name);
-    gtk_window_set_title(GTK_WINDOW(main_window), wndtitle);
-    g_free(wndtitle);
+    if (app->device_name) {
+        gchar *wndtitle = g_strdup_printf("%s - " PROGNAME, app->device_name);
+        gtk_window_set_title(GTK_WINDOW(main_window), wndtitle);
+        g_free(wndtitle);
+    } else {
+        gtk_window_set_title(GTK_WINDOW(main_window), PROGNAME);
+    }
     clutter_text_set_text(CLUTTER_TEXT(type_label), app->device_type);
     return FALSE;
 }
@@ -1375,7 +1383,7 @@ static gboolean reload_button_clicked_cb(GtkButton *button, gpointer user_data)
     return TRUE;
 }
 
-static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
+static gboolean set_icon_state_cb(gpointer user_data)
 {
     SBManagerApp *app = (SBManagerApp *)user_data;
 
@@ -1390,6 +1398,15 @@ static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
     if (iconstate)
         plist_free(iconstate);
 
+    return FALSE;
+}
+
+static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
+{
+    SBManagerApp *app = (SBManagerApp *)user_data;
+
+    clutter_threads_add_idle((GSourceFunc)set_icon_state_cb, app);
+
     return TRUE;
 }
 
@@ -1401,7 +1418,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
 	NULL
     };
     const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki; All Rights Reserved.";
-    const gchar *program_name = "SBManager";
+    const gchar *program_name = PROGNAME;
     const gchar *version = "1.0";
     const gchar *comments = _("Manage iPhone/iPod Touch SpringBoard from the computer");
     const gchar *website = "http://cgit.sukimashita.com/sbmanager.git";
@@ -1437,7 +1454,7 @@ static gboolean quit_button_clicked_cb(GtkButton *button, gpointer user_data)
 static void gui_error_dialog(const gchar *string)
 {
     GtkWidget *dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(main_window), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "<b>%s</b>", _("Error"));
-    gtk_window_set_title(GTK_WINDOW(dialog), "SBManager");
+    gtk_window_set_title(GTK_WINDOW(dialog), PROGNAME);
     gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", string);
     g_signal_connect_swapped (dialog, "response", G_CALLBACK(gtk_widget_destroy), dialog);
     gtk_widget_show(dialog);
@@ -1477,6 +1494,15 @@ static void device_event_cb(const iphone_event_t *event, void *user_data)
             debug_printf("Device remove event: removing device %s\n", event->uuid);
             free(app->uuid);
             app->uuid = NULL;
+	    if (app->device_type) {
+		free(app->device_type);
+		app->device_type = NULL;
+	    }
+	    if (app->device_name) {
+		free(app->device_name);
+		app->device_name = NULL;
+	    }
+            clutter_threads_add_timeout(0, (GSourceFunc)(update_device_info_cb), app);
             pages_free();
         } else {
             debug_printf("Device remove event: ignoring device %s\n", event->uuid);
@@ -1492,7 +1518,7 @@ static void gui_init(SBManagerApp* app)
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
 
-    gtk_window_set_title(GTK_WINDOW(main_window), "SBManager");
+    gtk_window_set_title(GTK_WINDOW(main_window), PROGNAME);
 
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
     gtk_container_add(GTK_CONTAINER(main_window), vbox);
