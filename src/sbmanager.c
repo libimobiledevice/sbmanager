@@ -42,8 +42,6 @@
 #include <clutter-gtk/clutter-gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-#define PROGNAME "SBManager"
-
 #define STAGE_WIDTH 320
 #define STAGE_HEIGHT 480
 #define DOCK_HEIGHT 90
@@ -365,11 +363,11 @@ static gboolean update_device_info_cb(gpointer data)
         return FALSE;
     SBManagerApp *app = (SBManagerApp*)data;
     if (app->device_name) {
-        gchar *wndtitle = g_strdup_printf("%s - " PROGNAME, app->device_name);
+        gchar *wndtitle = g_strdup_printf("%s - " PACKAGE_NAME, app->device_name);
         gtk_window_set_title(GTK_WINDOW(main_window), wndtitle);
         g_free(wndtitle);
     } else {
-        gtk_window_set_title(GTK_WINDOW(main_window), PROGNAME);
+        gtk_window_set_title(GTK_WINDOW(main_window), PACKAGE_NAME);
     }
     clutter_text_set_text(CLUTTER_TEXT(type_label), app->device_type);
     return FALSE;
@@ -1418,8 +1416,8 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
 	NULL
     };
     const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki; All Rights Reserved.";
-    const gchar *program_name = PROGNAME;
-    const gchar *version = "1.0";
+    const gchar *program_name = PACKAGE_NAME;
+    const gchar *version = PACKAGE_VERSION;
     const gchar *comments = _("Manage iPhone/iPod Touch SpringBoard from the computer");
     const gchar *website = "http://cgit.sukimashita.com/sbmanager.git";
     const gchar *website_label = _("Project Site");
@@ -1454,7 +1452,7 @@ static gboolean quit_button_clicked_cb(GtkButton *button, gpointer user_data)
 static void gui_error_dialog(const gchar *string)
 {
     GtkWidget *dialog = gtk_message_dialog_new_with_markup (GTK_WINDOW(main_window), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "<b>%s</b>", _("Error"));
-    gtk_window_set_title(GTK_WINDOW(dialog), PROGNAME);
+    gtk_window_set_title(GTK_WINDOW(dialog), PACKAGE_NAME);
     gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", string);
     g_signal_connect_swapped (dialog, "response", G_CALLBACK(gtk_widget_destroy), dialog);
     gtk_widget_show(dialog);
@@ -1518,7 +1516,7 @@ static void gui_init(SBManagerApp* app)
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
 
-    gtk_window_set_title(GTK_WINDOW(main_window), PROGNAME);
+    gtk_window_set_title(GTK_WINDOW(main_window), PACKAGE_NAME);
 
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
     gtk_container_add(GTK_CONTAINER(main_window), vbox);
