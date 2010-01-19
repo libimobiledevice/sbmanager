@@ -94,6 +94,8 @@ ClutterActor *page_indicator_group = NULL;
 GMutex *selected_mutex = NULL;
 SBItem *selected_item = NULL;
 
+GMutex *libiphone_mutex = NULL;
+
 gfloat start_x = 0.0;
 gfloat start_y = 0.0;
 
@@ -103,6 +105,8 @@ GList *dockitems = NULL;
 GList *sbpages = NULL;
 
 guint num_dock_items = 0;
+
+char *match_uuid = NULL;
 
 int current_page = 0;
 struct timeval last_page_switch;
@@ -353,6 +357,16 @@ static gboolean sbs_save_icon(sbservices_client_t sbc, char *display_identifier,
     return res;
 }
 
+static gboolean update_device_info_cb(gpointer data)
+{
+    SBManagerApp *app = (SBManagerApp*)data;
+    gchar *wndtitle = g_strdup_printf("%s - SBManager", app->device_name);
+    gtk_window_set_title(GTK_WINDOW(main_window), wndtitle);
+    g_free(wndtitle);
+    clutter_text_set_text(CLUTTER_TEXT(type_label), app->device_type);
+    return FALSE;
+}
+
 static void lockdown_update_device_info(lockdownd_client_t client, SBManagerApp *app);
 
 static sbservices_client_t sbs_new(SBManagerApp *app)
@@ -362,8 +376,10 @@ static sbservices_client_t sbs_new(SBManagerApp *app)
     lockdownd_client_t client = NULL;
     uint16_t port = 0;
 
+    g_mutex_lock(libiphone_mutex);
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
         g_printerr(_("No device found, is it plugged in?"));
+        g_mutex_unlock(libiphone_mutex);
         return sbc;
     }
 
@@ -373,10 +389,7 @@ static sbservices_client_t sbs_new(SBManagerApp *app)
     }
 
     lockdown_update_device_info(client, app);
-    gchar *wndtitle = g_strdup_printf("%s - SBManager", app->device_name);
-    gtk_window_set_title(GTK_WINDOW(main_window), wndtitle);
-    g_free(wndtitle);
-    clutter_text_set_text(CLUTTER_TEXT(type_label), app->device_type);
+    clutter_threads_add_timeout(0, (GSourceFunc)(update_device_info_cb), app);
 
     if ((lockdownd_start_service(client, "com.apple.springboardservices", &port) != LOCKDOWN_E_SUCCESS) || !port) {
         g_printerr(_("Could not start com.apple.springboardservices service! Remind that this feature is only supported in OS 3.1 and later!"));
@@ -392,6 +405,7 @@ static sbservices_client_t sbs_new(SBManagerApp *app)
         lockdownd_client_free(client);
     }
     iphone_device_free(phone);
+    g_mutex_unlock(libiphone_mutex);
 
     return sbc;
 }
@@ -517,6 +531,7 @@ static gboolean battery_update_cb(gpointer data)
     guint capacity = 0;
     gboolean res = TRUE;
 
+    g_mutex_lock(libiphone_mutex);
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, app->uuid)) {
         g_printerr(_("No device found, is it plugged in?"));
         goto leave_cleanup;
@@ -542,6 +557,7 @@ static gboolean battery_update_cb(gpointer data)
         lockdownd_client_free(client);
     }
     iphone_device_free(phone);
+    g_mutex_unlock(libiphone_mutex);
 
     return res;
 }
@@ -1405,9 +1421,16 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
     return TRUE;
 }
 
+static void quit_program_cb(GtkWidget *widget, gpointer user_data)
+{
+    /* cleanup */
+    iphone_event_unsubscribe();
+    gtk_main_quit();
+}
+
 static gboolean quit_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
-    gtk_main_quit();
+    quit_program_cb(GTK_WIDGET(button), user_data);
     return TRUE;
 }
 
@@ -1420,6 +1443,47 @@ static void gui_error_dialog(const gchar *string)
     gtk_widget_show(dialog);
 }
 
+static void device_event_cb(const iphone_event_t *event, void *user_data)
+{
+    SBManagerApp *app = (SBManagerApp*)user_data;
+    if (event->event == IPHONE_DEVICE_ADD) {
+        if (!app->uuid && (!match_uuid || !strcasecmp(match_uuid, event->uuid))) {
+            debug_printf("Device add event: adding device %s\n", event->uuid);
+            app->uuid = g_strdup(event->uuid);
+            GError *error = NULL;
+            if (get_device_info(app, &error)) {
+                /* Get current battery information */
+                guint capacity = battery_get_current_capacity(app);
+                clutter_actor_set_size(battery_level, (guint) (((double) (capacity) / 100.0) * 15), 6);
+                /* Register battery state read timeout */
+                clutter_threads_add_timeout(app->battery_interval * 1000, (GSourceFunc)battery_update_cb, app);
+                /* Update device info */
+                clutter_threads_add_idle((GSourceFunc)update_device_info_cb, app);
+                /* Load icons in an idle loop */
+                clutter_threads_add_idle((GSourceFunc)gui_pages_init_cb, app);
+            } else {
+                if (error) {
+                    g_printerr("%s", error->message);
+                    g_error_free(error);
+                } else {
+                    g_printerr(_("Unknown error occurred"));
+                }
+            }
+        } else {
+            debug_printf("Device add event: ignoring device %s\n", event->uuid);
+        }
+    } else if (event->event == IPHONE_DEVICE_REMOVE) {
+        if (app->uuid && !strcasecmp(app->uuid, event->uuid)) {
+            debug_printf("Device remove event: removing device %s\n", event->uuid);
+            free(app->uuid);
+            app->uuid = NULL;
+            pages_free();
+        } else {
+            debug_printf("Device remove event: ignoring device %s\n", event->uuid);
+        }
+    }
+}
+
 static void gui_init(SBManagerApp* app)
 {
     ClutterTimeline *timeline;
@@ -1428,9 +1492,7 @@ static void gui_init(SBManagerApp* app)
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
 
-    gchar *wndtitle = g_strdup_printf("%s - SBManager", app->device_name);
-    gtk_window_set_title(GTK_WINDOW(main_window), wndtitle);
-    g_free(wndtitle);
+    gtk_window_set_title(GTK_WINDOW(main_window), "SBManager");
 
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
     gtk_container_add(GTK_CONTAINER(main_window), vbox);
@@ -1510,7 +1572,7 @@ static void gui_init(SBManagerApp* app)
     }
 
     /* Create device type widget */
-    type_label = clutter_text_new_full(CLOCK_FONT, app->device_type, &clock_text_color);
+    type_label = clutter_text_new_full(CLOCK_FONT, NULL, &clock_text_color);
     clutter_group_add(CLUTTER_GROUP(stage), type_label);
     clutter_actor_set_position(type_label, 3.0, 2.0);
 
@@ -1580,31 +1642,17 @@ static void gui_init(SBManagerApp* app)
 
     /* battery capacity */
     battery_level = clutter_rectangle_new_with_color(&battery_color);
-    guint capacity = battery_get_current_capacity(app);
-    clutter_actor_set_position(battery_level, 298, 6);
-    clutter_actor_set_size(battery_level, (guint) (((double) (capacity) / 100.0) * 15), 6);
     clutter_group_add(CLUTTER_GROUP(stage), battery_level);
-
-    /* Register battery state read timeout */
-    clutter_threads_add_timeout(app->battery_interval * 1000, (GSourceFunc)battery_update_cb, app);
-
-    /* Load icons in an idle loop */
-    clutter_threads_add_idle((GSourceFunc)gui_pages_init_cb, app);
+    clutter_actor_set_position(battery_level, 298, 6);
 
     /* Stop the application when the window is closed */
-    g_signal_connect(main_window, "hide", G_CALLBACK(gtk_main_quit), app);
+    g_signal_connect(main_window, "hide", G_CALLBACK(quit_program_cb), app);
+
+    /* get notified when plug in/out events occur */
+    iphone_event_subscribe(device_event_cb, app);
 }
 
 /* main */
-static void pre_gui_error_dialog(const gchar *string)
-{
-    GtkWidget *dialog = gtk_message_dialog_new_with_markup (NULL, 0, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "<b>%s</b>", _("Error"));
-    gtk_window_set_title(GTK_WINDOW(dialog), "SBManager");
-    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", string);
-    gtk_dialog_run (GTK_DIALOG (dialog));
-    gtk_widget_destroy(dialog);
-}
-
 static void print_usage(int argc, char **argv)
 {
     char *name = NULL;
@@ -1648,7 +1696,7 @@ int main(int argc, char **argv)
                 print_usage(argc, argv);
                 return 0;
             }
-            app->uuid = g_strndup(argv[i], 40);
+            match_uuid = g_strndup(argv[i], 40);
             continue;
         } else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
             print_usage(argc, argv);
@@ -1659,23 +1707,10 @@ int main(int argc, char **argv)
         }
     }
 
-    gtk_init(&argc, &argv);
-
-    g_set_printerr_handler((GPrintFunc)pre_gui_error_dialog);
-
-    GError *error = NULL;
-    if (!get_device_info(app, &error)) {
-        if (error) {
-            g_printerr("%s", error->message);
-            g_error_free(error);
-        } else {
-            g_printerr(_("Unknown error occurred"));
-        }
-        return -1;
-    }
-
     if (!g_thread_supported())
         g_thread_init(NULL);
+
+    libiphone_mutex = g_mutex_new();
 
     /* initialize clutter threading environment */
     clutter_threads_init();
