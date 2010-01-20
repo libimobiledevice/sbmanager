@@ -89,6 +89,7 @@ ClutterActor *clock_label = NULL;
 ClutterActor *battery_level = NULL;
 ClutterActor *page_indicator = NULL;
 ClutterActor *page_indicator_group = NULL;
+ClutterActor *fade_rectangle = NULL;
 
 GMutex *selected_mutex = NULL;
 SBItem *selected_item = NULL;
@@ -392,6 +393,34 @@ static void clock_update_cb(ClutterTimeline *timeline, gint msecs, SBManagerApp 
 }
 
 /* gui */
+static void gui_fade_init()
+{
+    ClutterColor fade_color = { 0x00, 0x00, 0x00, 0xff };
+    debug_printf("%s: enter\n", __func__);
+    fade_rectangle = clutter_rectangle_new_with_color(&fade_color);
+    clutter_container_add_actor (CLUTTER_CONTAINER (stage), fade_rectangle);
+    clutter_actor_set_position(fade_rectangle, 0, 0);
+    clutter_actor_set_size(fade_rectangle, STAGE_WIDTH, STAGE_HEIGHT);
+    clutter_actor_set_opacity(fade_rectangle, 0);
+    debug_printf("%s: leave\n", __func__);
+}
+
+static void gui_fade_stop()
+{
+    debug_printf("%s: enter\n", __func__);
+    clutter_actor_raise_top(fade_rectangle);
+    clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 1000, "opacity", 0, NULL);
+    debug_printf("%s: leave\n", __func__);
+}
+
+static void gui_fade_start()
+{
+    debug_printf("%s: enter\n", __func__);
+    clutter_actor_raise_top(fade_rectangle);
+    clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 250, "opacity", 200, NULL);
+    debug_printf("%s: leave\n", __func__);
+}
+
 static void gui_dock_align_icons(gboolean animated)
 {
     if (!dockitems)
@@ -1139,11 +1168,13 @@ static void gui_set_iconstate(plist_t iconstate)
 static void gui_disable_controls()
 {
     gtk_widget_set_sensitive(toolbar, FALSE);
+    gui_fade_start();
 }
 
 static void gui_enable_controls()
 {
     gtk_widget_set_sensitive(toolbar, TRUE);
+    gui_fade_stop();
 }
 
 static gboolean wait_icon_load_finished(gpointer data)
@@ -1481,6 +1512,8 @@ static void gui_init(SBManagerApp* app)
     the_dock = clutter_group_new();
     clutter_group_add(CLUTTER_GROUP(stage), the_dock);
     clutter_actor_set_position(the_dock, dock_area.x1, dock_area.y1);
+
+    gui_fade_init();
 
     /* Show the stage */
     clutter_actor_show(stage);
