@@ -396,29 +396,23 @@ static void clock_update_cb(ClutterTimeline *timeline, gint msecs, SBManagerApp 
 static void gui_fade_init()
 {
     ClutterColor fade_color = { 0x00, 0x00, 0x00, 0xff };
-    debug_printf("%s: enter\n", __func__);
     fade_rectangle = clutter_rectangle_new_with_color(&fade_color);
     clutter_container_add_actor (CLUTTER_CONTAINER (stage), fade_rectangle);
     clutter_actor_set_position(fade_rectangle, 0, 0);
     clutter_actor_set_size(fade_rectangle, STAGE_WIDTH, STAGE_HEIGHT);
     clutter_actor_set_opacity(fade_rectangle, 0);
-    debug_printf("%s: leave\n", __func__);
 }
 
 static void gui_fade_stop()
 {
-    debug_printf("%s: enter\n", __func__);
     clutter_actor_raise_top(fade_rectangle);
-    clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 1000, "opacity", 0, NULL);
-    debug_printf("%s: leave\n", __func__);
+    clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 500, "opacity", 0, NULL);
 }
 
 static void gui_fade_start()
 {
-    debug_printf("%s: enter\n", __func__);
     clutter_actor_raise_top(fade_rectangle);
-    clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 250, "opacity", 200, NULL);
-    debug_printf("%s: leave\n", __func__);
+    clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 500, "opacity", 180, NULL);
 }
 
 static void gui_dock_align_icons(gboolean animated)
