@@ -103,6 +103,7 @@ GList *sbpages = NULL;
 guint num_dock_items = 0;
 
 char *match_uuid = NULL;
+sbservices_client_t sbc = NULL;
 
 int current_page = 0;
 struct timeval last_page_switch;
@@ -152,6 +153,17 @@ static char *sbitem_get_display_name(SBItem *item)
 {
     char *strval = NULL;
     plist_t node = plist_dict_get_item(item->node, "displayName");
+    if (node && plist_get_node_type(node) == PLIST_STRING) {
+        plist_get_string_val(node, &strval);
+    }
+    return strval;
+}
+
+
+static char *sbitem_get_display_identifier(SBItem *item)
+{
+    char *strval = NULL;
+    plist_t node = plist_dict_get_item(item->node, "displayIdentifier");
     if (node && plist_get_node_type(node) == PLIST_STRING) {
         plist_get_string_val(node, &strval);
     }
@@ -904,7 +916,7 @@ static void gui_show_icons()
         debug_printf("%s: showing dock icons\n", __func__);
         for (i = 0; i < g_list_length(dockitems); i++) {
             SBItem *item = (SBItem*)g_list_nth_data(dockitems, i);
-            if (item && item->texture && item->node) {
+            if (item && item->texture && !CLUTTER_ACTOR_IS_VISIBLE(item->texture) && item->node) {
                 item->is_dock_item = TRUE;
                 ClutterActor *grp = clutter_group_new();
                 ClutterActor *actor = item->texture;
@@ -934,7 +946,7 @@ static void gui_show_icons()
             debug_printf("%s: showing page icons for page %d\n", __func__, j);
             for (i = 0; i < g_list_length(cpage); i++) {
                 SBItem *item = (SBItem*)g_list_nth_data(cpage, i);
-                if (item && item->texture && item->node) {
+                if (item && item->texture && !CLUTTER_ACTOR_IS_VISIBLE(item->texture) && item->node) {
                     item->is_dock_item = FALSE;
                     ClutterActor *grp = clutter_group_new();
                     ClutterActor *actor = item->texture;
@@ -958,53 +970,81 @@ static void gui_show_icons()
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
 }
 
-static SBItem *gui_load_icon(sbservices_client_t sbc, plist_t icon_info)
+static char *sbitem_get_icon_filename(SBItem *item)
+{
+    char *value = sbitem_get_display_identifier(item);
+    if (!value)
+        return NULL;
+
+    return g_strdup_printf("/tmp/%s.png", value);
+}
+
+static gboolean sbitem_texture_new(gpointer data)
+{
+    SBItem *item = (SBItem *)data;
+    char *icon_filename = sbitem_get_icon_filename(item);
+    GError *err = NULL;
+
+    /* create and load texture */
+    ClutterActor *actor = clutter_texture_new();
+    clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), icon_filename, &err);
+
+    /* create item */
+    item->texture = actor;
+
+    char *txtval = sbitem_get_display_name(item);
+    if (txtval) {
+        item->label = clutter_text_new_with_text(ITEM_FONT, txtval);
+    }
+    if (err) {
+        fprintf(stderr, "ERROR: %s\n", err->message);
+        g_error_free(err);
+    }
+
+    /* FIXME: Optimize! Do not traverse whole iconlist, just this icon */
+    gui_show_icons();
+
+    return FALSE;
+}
+
+static gpointer sbitem_thread_load_texture(gpointer data)
+{
+    SBItem *item = (SBItem *)data;
+    char *icon_filename = sbitem_get_icon_filename(item);
+    char *display_identifier = sbitem_get_display_identifier(item);
+    GError *err = NULL;
+
+    debug_printf("%s: loading icon texture for '%s'\n", __func__, display_identifier);
+
+    if (device_sbs_save_icon(sbc, display_identifier, icon_filename, &err)) {
+        /* load texture in the clutter main loop */
+        clutter_threads_add_idle((GSourceFunc)sbitem_texture_new, item);
+    } else {
+        fprintf(stderr, "ERROR: %s\n", err->message);
+        g_error_free(err);
+    }
+    g_free(icon_filename);
+
+    return NULL;
+}
+
+static SBItem *sbitem_new(plist_t icon_info)
 {
     SBItem *di = NULL;
-    plist_t valuenode = NULL;
+
     if (plist_get_node_type(icon_info) != PLIST_DICT) {
         return di;
     }
-    valuenode = plist_dict_get_item(icon_info, "displayIdentifier");
-    if (valuenode && (plist_get_node_type(valuenode) == PLIST_STRING)) {
-        char *value = NULL;
-        char *icon_filename = NULL;
-        GError *error = NULL;
-        plist_get_string_val(valuenode, &value);
-        debug_printf("%s: retrieving icon for '%s'\n", __func__, value);
-        icon_filename = g_strdup_printf("/tmp/%s.png", value);
-        if (device_sbs_save_icon(sbc, value, icon_filename, &error)) {
-            GError *err = NULL;
 
-            /* create and load texture */
-            ClutterActor *actor = clutter_texture_new();
-            clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
-            clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), icon_filename, &err);
+    di = g_new0(SBItem, 1);
+    di->node = plist_copy(icon_info);
+    di->texture = NULL;
 
-            /* create item */
-            if (actor) {
-                di = g_new0(SBItem, 1);
-                di->node = plist_copy(icon_info);
-                di->texture = actor;
-
-                char *txtval = sbitem_get_display_name(di);
-                if (txtval)
-                    di->label = clutter_text_new_with_text(ITEM_FONT, txtval);
-            }
-            if (err) {
-                fprintf(stderr, "ERROR: %s\n", err->message);
-                g_error_free(err);
-            }
-        } else {
-            fprintf(stderr, "ERROR: could not get icon for '%s'\n", value);
-        }
-        g_free(icon_filename);
-        free(value);
-    }
     return di;
 }
 
-static guint gui_load_icon_row(sbservices_client_t sbc, plist_t items, GList **row)
+static guint gui_load_icon_row(plist_t items, GList **row)
 {
     int i;
     int count;
@@ -1013,15 +1053,19 @@ static guint gui_load_icon_row(sbservices_client_t sbc, plist_t items, GList **r
     count = plist_array_get_size(items);
     for (i = 0; i < count; i++) {
         plist_t icon_info = plist_array_get_item(items, i);
-        item = gui_load_icon(sbc, icon_info);
-        if (item != NULL)
+        item = sbitem_new(icon_info);
+        if (item != NULL) {
+            /* load texture of icon in a new thread */
+            g_thread_create(sbitem_thread_load_texture, item, FALSE, NULL);
+
             *row = g_list_append(*row, item);
+        }
     }
 
     return count;
 }
 
-static void gui_set_iconstate(sbservices_client_t sbc, plist_t iconstate)
+static void gui_set_iconstate(plist_t iconstate)
 {
     int total;
 
@@ -1046,7 +1090,7 @@ static void gui_set_iconstate(sbservices_client_t sbc, plist_t iconstate)
 
         /* load dock icons */
         debug_printf("%s: processing dock\n", __func__);
-        num_dock_items = gui_load_icon_row(sbc, dock, &dockitems);
+        num_dock_items = gui_load_icon_row(dock, &dockitems);
 
         if (total > 1) {
             /* get all page icons */
@@ -1069,7 +1113,7 @@ static void gui_set_iconstate(sbservices_client_t sbc, plist_t iconstate)
                             fprintf(stderr, "ERROR: error getting page row icon array!\n");
                             return;
                         }
-                        gui_load_icon_row(sbc, nrow, &page);
+                        gui_load_icon_row(nrow, &page);
                 }
 
                 if (page) {
@@ -1084,20 +1128,19 @@ static void gui_set_iconstate(sbservices_client_t sbc, plist_t iconstate)
 static gboolean gui_pages_init_cb(gpointer data)
 {
     SBManagerApp *app = (SBManagerApp *)data;
-    sbservices_client_t sbc = NULL;
     GError *error = NULL;
     plist_t iconstate = NULL;
 
     /* connect to sbservices */
-    sbc = device_sbs_new(app->uuid, &error);
+    if (!sbc)
+        sbc = device_sbs_new(app->uuid, &error);
+
     if (sbc) {
         /* Load icon data */
         if (device_sbs_get_iconstate(sbc, &iconstate, &error)) {
-            gui_set_iconstate(sbc, iconstate);
-            gui_show_icons();
+            gui_set_iconstate(iconstate);
             plist_free(iconstate);
         }
-        device_sbs_free(sbc);
     }
     return FALSE;
 }
@@ -1116,7 +1159,8 @@ static gboolean set_icon_state_cb(gpointer user_data)
     plist_t iconstate = gui_get_iconstate();
     if (iconstate) {
         GError *error = NULL;
-        sbservices_client_t sbc = device_sbs_new(app->uuid, &error);
+        if (!sbc)
+            sbc = device_sbs_new(app->uuid, &error);
         if (sbc) {
             device_sbs_set_iconstate(sbc, iconstate, &error);
             device_sbs_free(sbc);
@@ -1166,6 +1210,9 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
 static void quit_program_cb(GtkWidget *widget, gpointer user_data)
 {
     /* cleanup */
+    if (sbc)
+        device_sbs_free(sbc);
+
     iphone_event_unsubscribe();
     gtk_main_quit();
 }
