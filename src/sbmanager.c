@@ -1131,6 +1131,8 @@ static gboolean gui_pages_init_cb(gpointer data)
     GError *error = NULL;
     plist_t iconstate = NULL;
 
+    pages_free();
+
     /* connect to sbservices */
     if (!sbc)
         sbc = device_sbs_new(app->uuid, &error);
