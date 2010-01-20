@@ -60,6 +60,7 @@ ClutterColor battery_color = { 0xff, 0xff, 0xff, 0x9f };
 
 GtkWidget *main_window;
 GtkWidget *statusbar;
+GtkWidget *toolbar;
 
 typedef struct {
     char *uuid;
@@ -91,6 +92,10 @@ ClutterActor *page_indicator_group = NULL;
 
 GMutex *selected_mutex = NULL;
 SBItem *selected_item = NULL;
+
+GMutex *icon_loader_mutex = NULL;
+static int icons_loaded = 0;
+static int total_icons = 0;
 
 gfloat start_x = 0.0;
 gfloat start_y = 0.0;
@@ -454,11 +459,11 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
     for (i = 0; i < count; i++) {
         SBItem *item = g_list_nth_data(pageitems, i);
         if (!item) {
-            printf("%s: item is null for i=%d\n", __func__, i);
+            debug_printf("%s: item is null for i=%d\n", __func__, i);
             continue;
         }
         if (!item->texture) {
-            printf("%s(%d,%d): i=%d item->texture is null\n", __func__, page_num, animated, i);
+            debug_printf("%s(%d,%d): i=%d item->texture is null\n", __func__, page_num, animated, i);
             continue;
         }
         ClutterActor *icon = clutter_actor_get_parent(item->texture);
@@ -1005,6 +1010,10 @@ static gboolean sbitem_texture_new(gpointer data)
     /* FIXME: Optimize! Do not traverse whole iconlist, just this icon */
     gui_show_icons();
 
+    g_mutex_lock(icon_loader_mutex);
+    icons_loaded++;
+    g_mutex_unlock(icon_loader_mutex);
+
     return FALSE;
 }
 
@@ -1048,6 +1057,7 @@ static guint gui_load_icon_row(plist_t items, GList **row)
 {
     int i;
     int count;
+    int icon_count = 0;
     SBItem *item = NULL;
 
     count = plist_array_get_size(items);
@@ -1059,10 +1069,11 @@ static guint gui_load_icon_row(plist_t items, GList **row)
             g_thread_create(sbitem_thread_load_texture, item, FALSE, NULL);
 
             *row = g_list_append(*row, item);
+	    icon_count++;
         }
     }
 
-    return count;
+    return icon_count;
 }
 
 static void gui_set_iconstate(plist_t iconstate)
@@ -1091,7 +1102,7 @@ static void gui_set_iconstate(plist_t iconstate)
         /* load dock icons */
         debug_printf("%s: processing dock\n", __func__);
         num_dock_items = gui_load_icon_row(dock, &dockitems);
-
+        total_icons += num_dock_items;
         if (total > 1) {
             /* get all page icons */
             int p, r, rows;
@@ -1113,7 +1124,7 @@ static void gui_set_iconstate(plist_t iconstate)
                             fprintf(stderr, "ERROR: error getting page row icon array!\n");
                             return;
                         }
-                        gui_load_icon_row(nrow, &page);
+                        total_icons += gui_load_icon_row(nrow, &page);
                 }
 
                 if (page) {
@@ -1125,11 +1136,38 @@ static void gui_set_iconstate(plist_t iconstate)
     }
 }
 
+static void gui_disable_controls()
+{
+    gtk_widget_set_sensitive(toolbar, FALSE);
+}
+
+static void gui_enable_controls()
+{
+    gtk_widget_set_sensitive(toolbar, TRUE);
+}
+
+static gboolean wait_icon_load_finished(gpointer data)
+{
+    gboolean res = TRUE;
+    g_mutex_lock(icon_loader_mutex);
+    debug_printf("%d of %d icons loaded (%d%%)\n", icons_loaded, total_icons, (int)(100*((double)icons_loaded/(double)total_icons)));
+    if (icons_loaded >= total_icons) {
+	gui_enable_controls();
+        res = FALSE;
+    }
+    g_mutex_unlock(icon_loader_mutex);
+    return res;
+}
+
 static gboolean gui_pages_init_cb(gpointer data)
 {
     SBManagerApp *app = (SBManagerApp *)data;
     GError *error = NULL;
     plist_t iconstate = NULL;
+
+    gui_disable_controls();
+    icons_loaded = 0;
+    total_icons = 0;
 
     pages_free();
 
@@ -1144,6 +1182,9 @@ static gboolean gui_pages_init_cb(gpointer data)
             plist_free(iconstate);
         }
     }
+
+    clutter_threads_add_timeout(500, (GSourceFunc)wait_icon_load_finished, NULL);
+
     return FALSE;
 }
 
@@ -1329,7 +1370,7 @@ static void gui_init(SBManagerApp* app)
     gtk_widget_show(vbox);
 
     /* create a toolbar */
-    GtkWidget *toolbar = gtk_toolbar_new();
+    toolbar = gtk_toolbar_new();
     gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
 
     GtkToolItem *btn_reload = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
@@ -1539,6 +1580,8 @@ int main(int argc, char **argv)
 
     if (!g_thread_supported())
         g_thread_init(NULL);
+
+    icon_loader_mutex = g_mutex_new();
 
     /* initialize device communication environment */
     device_init();
