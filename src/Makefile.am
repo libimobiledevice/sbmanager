@@ -22,8 +22,11 @@ AM_LDFLAGS =			\
 
 bin_PROGRAMS = sbmanager
 
-sbmanager_SOURCES = device.c device.h \
-		sbmanager.c
+sbmanager_SOURCES = device.c \
+					device.h \
+					sbitem.c \
+					sbitem.h \
+					sbmanager.c
 sbmanager_CFLAGS = $(AM_CFLAGS)
 sbmanager_LDFLAGS = $(AM_LDFLAGS)
 

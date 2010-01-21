@@ -42,6 +42,7 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "device.h"
+#include "sbitem.h"
 
 #define STAGE_WIDTH 320
 #define STAGE_HEIGHT 480
@@ -67,13 +68,6 @@ typedef struct {
     char *uuid;
     device_info_t device_info;
 } SBManagerApp;
-
-typedef struct {
-    plist_t node;
-    ClutterActor *texture;
-    ClutterActor *label;
-    gboolean is_dock_item;
-} SBItem;
 
 const ClutterActorBox dock_area = { 0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH, STAGE_HEIGHT };
 
@@ -158,56 +152,10 @@ static gboolean elapsed_ms(struct timeval *tv, guint ms)
     }
 }
 
-static char *sbitem_get_display_name(SBItem *item)
-{
-    char *strval = NULL;
-    plist_t node = plist_dict_get_item(item->node, "displayName");
-    if (node && plist_get_node_type(node) == PLIST_STRING) {
-        plist_get_string_val(node, &strval);
-    }
-    return strval;
-}
-
-
-static char *sbitem_get_display_identifier(SBItem *item)
-{
-    char *strval = NULL;
-    plist_t node = plist_dict_get_item(item->node, "displayIdentifier");
-    if (node && plist_get_node_type(node) == PLIST_STRING) {
-        plist_get_string_val(node, &strval);
-    }
-    return strval;
-}
-
-static void sbitem_free(SBItem *a, gpointer data)
-{
-    if (a) {
-        if (a->node) {
-            plist_free(a->node);
-        }
-        if (a->texture && CLUTTER_IS_ACTOR(a->texture)) {
-	    ClutterActor *parent = clutter_actor_get_parent(a->texture);
-	    if (parent) {
-		clutter_actor_destroy(parent);
-		a->texture = NULL;
-		a->label = NULL;
-	    } else {
-		clutter_actor_destroy(a->texture);
-		a->texture = NULL;
-	    }
-        }
-	if (a->label && CLUTTER_IS_ACTOR(a->label)) {
-            clutter_actor_destroy(a->label);
-	    a->label = NULL;
-	}
-	free(a);
-    }
-}
-
 static void sbpage_free(GList *sbitems, gpointer data)
 {
     if (sbitems) {
-       	g_list_foreach(sbitems, (GFunc) (sbitem_free), NULL);
+        g_list_foreach(sbitems, (GFunc) (g_func_sbitem_free), NULL);
         g_list_free(sbitems);
 	clutter_group_remove_all(CLUTTER_GROUP(page_indicator_group));
     }
@@ -1054,15 +1002,6 @@ static void gui_show_icons()
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
 }
 
-static char *sbitem_get_icon_filename(SBItem *item)
-{
-    char *value = sbitem_get_display_identifier(item);
-    if (!value)
-        return NULL;
-
-    return g_strdup_printf("/tmp/%s.png", value);
-}
-
 static gboolean sbitem_texture_new(gpointer data)
 {
     SBItem *item = (SBItem *)data;
@@ -1115,21 +1054,6 @@ static gpointer sbitem_thread_load_texture(gpointer data)
     g_free(icon_filename);
 
     return NULL;
-}
-
-static SBItem *sbitem_new(plist_t icon_info)
-{
-    SBItem *di = NULL;
-
-    if (plist_get_node_type(icon_info) != PLIST_DICT) {
-        return di;
-    }
-
-    di = g_new0(SBItem, 1);
-    di->node = plist_copy(icon_info);
-    di->texture = NULL;
-
-    return di;
 }
 
 static guint gui_load_icon_row(plist_t items, GList **row)
