@@ -489,6 +489,9 @@ static void gui_dock_align_icons(gboolean animated)
     /* set positions */
     for (i = 0; i < count; i++) {
         SBItem *item = g_list_nth_data(dockitems, i);
+	if (!item || !item->texture) {
+	    continue;
+	}
         ClutterActor *icon = clutter_actor_get_parent(item->texture);
         if (!icon) {
             continue;
