@@ -157,7 +157,7 @@ static void sbpage_free(GList *sbitems, gpointer data)
     if (sbitems) {
         g_list_foreach(sbitems, (GFunc) (g_func_sbitem_free), NULL);
         g_list_free(sbitems);
-	clutter_group_remove_all(CLUTTER_GROUP(page_indicator_group));
+        clutter_group_remove_all(CLUTTER_GROUP(page_indicator_group));
     }
 }
 
@@ -389,7 +389,7 @@ static void gui_spinner_init()
     int i;
     for (i = 0; i < 12; i++) {
         ClutterActor *actor = clutter_clone_new(spinner_element);
-       	clutter_group_add(CLUTTER_GROUP(spinner), actor);
+        clutter_group_add(CLUTTER_GROUP(spinner), actor);
         clutter_actor_set_position(actor, 15.0, 0.0);
         clutter_actor_set_opacity(actor, (guint8)(((gfloat)(i)/12.0)*255));
         clutter_actor_set_rotation(actor, CLUTTER_Z_AXIS, i*30, 1.0, 15.0, 0);
@@ -437,9 +437,9 @@ static void gui_dock_align_icons(gboolean animated)
     /* set positions */
     for (i = 0; i < count; i++) {
         SBItem *item = g_list_nth_data(dockitems, i);
-	if (!item || !item->texture) {
-	    continue;
-	}
+        if (!item || !item->texture) {
+            continue;
+        }
         ClutterActor *icon = clutter_actor_get_parent(item->texture);
         if (!icon) {
             continue;
@@ -756,9 +756,9 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
             pageitems = g_list_remove(pageitems, selected_item);
             sbpages = g_list_insert(sbpages, pageitems, i);
         }
-	/* get current page */
+        /* get current page */
         pageitems = g_list_nth_data(sbpages, p);
-	/* remove current page from pages list as we will alter it */
+        /* remove current page from pages list as we will alter it */
         sbpages = g_list_remove(sbpages, pageitems);
         if (center_y >= dock_area.y1 && (g_list_length(dockitems) < num_dock_items)) {
             debug_printf("%s: regular icon is moving inside the dock!\n", __func__);
@@ -768,7 +768,7 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
             pageitems =
                 iconlist_insert_item_at(pageitems, selected_item, (center_x - sb_area.x1) + PAGE_X_OFFSET(p), (center_y - sb_area.y1), p, 4);
         }
-	/* insert back current page */
+        /* insert back current page */
         sbpages = g_list_insert(sbpages, pageitems, p);
         gui_dock_align_icons(TRUE);
         gui_page_align_icons(p, TRUE);
@@ -1072,7 +1072,7 @@ static guint gui_load_icon_row(plist_t items, GList **row)
             g_thread_create(sbitem_thread_load_texture, item, FALSE, NULL);
 
             *row = g_list_append(*row, item);
-	    icon_count++;
+            icon_count++;
         }
     }
 
@@ -1159,7 +1159,7 @@ static gboolean wait_icon_load_finished(gpointer data)
     g_mutex_lock(icon_loader_mutex);
     debug_printf("%d of %d icons loaded (%d%%)\n", icons_loaded, total_icons, (int)(100*((double)icons_loaded/(double)total_icons)));
     if (icons_loaded >= total_icons) {
-	gui_enable_controls();
+        gui_enable_controls();
         res = FALSE;
     }
     g_mutex_unlock(icon_loader_mutex);
@@ -1232,9 +1232,9 @@ static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
 static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
     const gchar *authors[] = {
-	"Nikias Bassen <nikias@gmx.li>",
-	"Martin Szulecki <opensuse@sukimashita.com>",
-	NULL
+        "Nikias Bassen <nikias@gmx.li>",
+        "Martin Szulecki <opensuse@sukimashita.com>",
+        NULL
     };
     const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki; All Rights Reserved.";
     const gchar *program_name = PACKAGE_NAME;
@@ -1252,7 +1252,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
             "comments", comments,
             "website", website,
             "website-label", website_label,
-	    "translator-credits", translators,
+            "translator-credits", translators,
             NULL);
     return TRUE;
 }
