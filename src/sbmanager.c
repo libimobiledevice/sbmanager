@@ -1488,6 +1488,7 @@ static void gui_init(SBManagerApp* app)
     GtkWidget *clutter_widget = gtk_clutter_embed_new();
     gtk_box_pack_start(GTK_BOX(vbox), clutter_widget, TRUE, TRUE, 0);
     gtk_widget_show(clutter_widget);
+    gtk_widget_grab_focus(clutter_widget);
 
     /* create a statusbar */
     statusbar = gtk_statusbar_new();
