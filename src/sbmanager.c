@@ -57,6 +57,7 @@ ClutterColor item_text_color = { 255, 255, 255, 210 };
 ClutterColor dock_item_text_color = { 255, 255, 255, 255 };
 ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };  /* Black */
 ClutterColor battery_color = { 0xff, 0xff, 0xff, 0x9f };
+ClutterColor spinner_color = { 0xff, 0xff, 0xff, 0xf0 };
 
 GtkWidget *main_window;
 GtkWidget *statusbar;
@@ -90,6 +91,8 @@ ClutterActor *battery_level = NULL;
 ClutterActor *page_indicator = NULL;
 ClutterActor *page_indicator_group = NULL;
 ClutterActor *fade_rectangle = NULL;
+ClutterActor *spinner = NULL;
+ClutterTimeline *spinner_timeline = NULL;
 
 GMutex *selected_mutex = NULL;
 SBItem *selected_item = NULL;
@@ -407,12 +410,62 @@ static void gui_fade_stop()
 {
     clutter_actor_raise_top(fade_rectangle);
     clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 500, "opacity", 0, NULL);
+    clutter_actor_set_reactive(fade_rectangle, FALSE);
 }
 
 static void gui_fade_start()
 {
+    clutter_actor_set_reactive(fade_rectangle, TRUE);
     clutter_actor_raise_top(fade_rectangle);
     clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 500, "opacity", 180, NULL);
+}
+
+static gboolean spinner_spin_cb(gpointer data)
+{
+    int i;
+    for (i = 0; i < 12; i++) {
+        ClutterActor *actor = clutter_group_get_nth_child(CLUTTER_GROUP(spinner), i);
+        clutter_actor_set_opacity(actor, clutter_actor_get_opacity(actor)-30);
+    }
+    return TRUE;
+}
+
+static void gui_spinner_init()
+{
+    ClutterActor *spinner_element = clutter_rectangle_new_with_color(&spinner_color);
+    clutter_actor_set_size(spinner_element, 2.0, 8.0);
+    clutter_actor_hide(spinner_element);
+    clutter_group_add(CLUTTER_GROUP(stage), spinner_element);
+
+    spinner = clutter_group_new();
+    int i;
+    for (i = 0; i < 12; i++) {
+        ClutterActor *actor = clutter_clone_new(spinner_element);
+       	clutter_group_add(CLUTTER_GROUP(spinner), actor);
+        clutter_actor_set_position(actor, 15.0, 0.0);
+        clutter_actor_set_opacity(actor, (guint8)(((gfloat)(i)/12.0)*255));
+        clutter_actor_set_rotation(actor, CLUTTER_Z_AXIS, i*30, 1.0, 15.0, 0);
+        clutter_actor_show(actor);
+    }
+    clutter_actor_hide(spinner);
+    clutter_group_add(CLUTTER_GROUP(stage), spinner);
+    clutter_actor_set_position(spinner, (STAGE_WIDTH-32.0)/2, (STAGE_HEIGHT-64.0)/2);
+    spinner_timeline = clutter_timeline_new(100);
+    clutter_timeline_set_loop(spinner_timeline, TRUE);
+    g_signal_connect(spinner_timeline, "completed", G_CALLBACK(spinner_spin_cb), NULL);
+}
+
+static void gui_spinner_start()
+{
+    clutter_actor_show(spinner);
+    clutter_actor_raise_top(spinner);
+    clutter_timeline_start(spinner_timeline);
+}
+
+static void gui_spinner_stop()
+{
+    clutter_timeline_stop(spinner_timeline);
+    clutter_actor_hide(spinner);
 }
 
 static void gui_dock_align_icons(gboolean animated)
@@ -1163,11 +1216,13 @@ static void gui_disable_controls()
 {
     gtk_widget_set_sensitive(toolbar, FALSE);
     gui_fade_start();
+    gui_spinner_start();
 }
 
 static void gui_enable_controls()
 {
     gtk_widget_set_sensitive(toolbar, TRUE);
+    gui_spinner_stop();
     gui_fade_stop();
 }
 
@@ -1508,6 +1563,7 @@ static void gui_init(SBManagerApp* app)
     clutter_actor_set_position(the_dock, dock_area.x1, dock_area.y1);
 
     gui_fade_init();
+    gui_spinner_init();
 
     /* Show the stage */
     clutter_actor_show(stage);
