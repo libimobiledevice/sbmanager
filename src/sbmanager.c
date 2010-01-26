@@ -41,6 +41,7 @@
 #include <clutter-gtk/clutter-gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+#include "utility.h"
 #include "device.h"
 #include "sbitem.h"
 
@@ -114,44 +115,7 @@ struct timeval last_page_switch;
 static void gui_page_indicator_group_add(GList *page, int page_index);
 static void gui_page_align_icons(guint page_num, gboolean animated);
 
-/* debug */
-gboolean debug_app = FALSE;
-static void debug_printf(const char *format, ...);
-
-static void debug_printf(const char *format, ...)
-{
-    if (debug_app) {
-        va_list args;
-        va_start (args, format);
-        vprintf(format, args);
-        va_end (args);
-    }
-}
-
 /* helper */
-static gboolean elapsed_ms(struct timeval *tv, guint ms)
-{
-    struct timeval now;
-    guint64 v1,v2;
-
-    if (!tv) return FALSE;
-
-    gettimeofday(&now, NULL);
-
-    v1 = now.tv_sec*1000000 + now.tv_usec;
-    v2 = tv->tv_sec*1000000 + tv->tv_usec;
-
-    if (v1 < v2) {
-        return TRUE;
-    }
-
-    if ((v1 - v2)/1000 > ms) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
 static void sbpage_free(GList *sbitems, gpointer data)
 {
     if (sbitems) {
@@ -1234,6 +1198,7 @@ static gboolean set_icon_state_cb(gpointer user_data)
         if (sbc) {
             device_sbs_set_iconstate(sbc, iconstate, &error);
             device_sbs_free(sbc);
+            sbc = NULL;
             plist_free(iconstate);
         }
 
@@ -1596,7 +1561,7 @@ int main(int argc, char **argv)
             iphone_set_debug_level(1);
             continue;
         } else if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug-app")) {
-            debug_app = TRUE;
+            set_debug(TRUE);
             continue;
         } else if (!strcmp(argv[i], "-u") || !strcmp(argv[i], "--uuid")) {
             i++;

@@ -24,6 +24,8 @@ bin_PROGRAMS = sbmanager
 
 sbmanager_SOURCES = device.c \
 					device.h \
+					utility.c \
+					utility.h \
 					sbitem.c \
 					sbitem.h \
 					sbmanager.c
