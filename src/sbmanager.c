@@ -1182,12 +1182,24 @@ static gboolean gui_pages_init_cb(gpointer data)
     if (!sbc)
         sbc = device_sbs_new(app->uuid, &error);
 
+    if (error) {
+        g_printerr("%s", error->message);
+        g_error_free(error);
+        error = NULL;
+    }
+
     if (sbc) {
         /* Load icon data */
         if (device_sbs_get_iconstate(sbc, &iconstate, &error)) {
             gui_set_iconstate(iconstate);
             plist_free(iconstate);
         }
+    }
+
+    if (error) {
+        g_printerr("%s", error->message);
+        g_error_free(error);
+        error = NULL;
     }
 
     clutter_threads_add_timeout(500, (GSourceFunc)wait_icon_load_finished, NULL);
@@ -1209,12 +1221,26 @@ static gboolean set_icon_state_cb(gpointer user_data)
     plist_t iconstate = gui_get_iconstate();
     if (iconstate) {
         GError *error = NULL;
+
         if (!sbc)
             sbc = device_sbs_new(app->uuid, &error);
+
+        if (error) {
+            g_printerr("%s", error->message);
+            g_error_free(error);
+            error = NULL;
+        }
+
         if (sbc) {
             device_sbs_set_iconstate(sbc, iconstate, &error);
             device_sbs_free(sbc);
             plist_free(iconstate);
+        }
+
+        if (error) {
+            g_printerr("%s", error->message);
+            g_error_free(error);
+            error = NULL;
         }
     }
     return FALSE;
