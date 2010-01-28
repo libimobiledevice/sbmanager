@@ -19,4 +19,4 @@ libnautilus_sbmanager_la_SOURCES = \
 	nautilus-sbmgr.c
 
 libnautilus_sbmanager_la_LDFLAGS = -module -avoid-version
-libnautilus_sbmanager_la_LIBADD  = $(libglib2_LIBS) $(libgtk_LIBS) $(libnautilusextension_LIBS)
+libnautilus_sbmanager_la_LIBADD  = $(libglib2_LIBS) $(libgtk_LIBS) $(libnautilusextension_LIBS) ../src/libsbmanager.la

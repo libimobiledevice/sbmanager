@@ -26,7 +26,10 @@
 
 #include "nautilus-sbmanager.h"
 
+#include "../src/sbmgr.h"
+
 #include <libnautilus-extension/nautilus-menu-provider.h>
+#include <libnautilus-extension/nautilus-property-page-provider.h>
 
 #include <glib.h>
 #include <glib/gi18n-lib.h>
@@ -44,6 +47,8 @@ static void nautilus_sbmanager_instance_init (NautilusSBManager      *cvs);
 static void nautilus_sbmanager_class_init    (NautilusSBManagerClass *class);
 
 static GType sbmanager_type = 0;
+
+static gboolean loading = FALSE;
 
 static void launch_sbmanager (NautilusMenuItem *item)
 {
@@ -125,19 +130,126 @@ nautilus_launch_sbmanager_menu_provider_iface_init (NautilusMenuProviderIface *i
 	iface->get_file_items = nautilus_launch_sbmanager_get_file_items;
 }
 
+static void nautilus_sbmgr_load_finished(gboolean success)
+{
+	loading = FALSE;
+}
+
+static gboolean nautilus_sbmgr_expose_cb(GtkWidget *widget, GdkEventExpose *event, gpointer user_data)
+{
+	printf("%s\n", __func__);
+//	if (event->in) {
+	if (loading == FALSE) {
+		loading = TRUE;
+		sbmgr_load((const char*)g_object_get_data(G_OBJECT (widget), "NautilusSBManager::uuid"), NULL, nautilus_sbmgr_load_finished);
+	} else {
+		printf("already loading\n");
+	}
+/*	} else {
+		printf("%s: unfocus\n", __func__);
+	}*/
+	return TRUE;
+}
+
+static gboolean nautilus_sbmgr_hide_cb(GtkWidget *widget, gpointer user_data)
+{
+	sbmgr_finalize();
+	return TRUE;
+}
+
+static GtkWidget *nautilus_sbmgr_new(const char *uuid)
+{
+	GtkWidget *sbmgr_widget = sbmgr_new();
+
+	if (!sbmgr_widget) {
+		return NULL;
+	}
+
+	GtkWidget *sbmgr_container = gtk_alignment_new(0.5, 0.0, 0.0, 0.0);
+	gtk_alignment_set_padding(GTK_ALIGNMENT(sbmgr_container), 10, 10, 10, 10);
+	gtk_container_add(GTK_CONTAINER(sbmgr_container), sbmgr_widget);
+	gtk_widget_show_all(sbmgr_container);
+
+	g_object_set_data (G_OBJECT (sbmgr_container),
+			   "NautilusSBManager::uuid",
+			   (gpointer)g_strdup(uuid));
+
+	g_signal_connect (G_OBJECT (sbmgr_container),
+			  "expose-event",
+			  G_CALLBACK(nautilus_sbmgr_expose_cb),
+			  NULL);
+
+	g_signal_connect (G_OBJECT (sbmgr_container),
+			  "destroy-event",
+			  G_CALLBACK(nautilus_sbmgr_hide_cb),
+			  NULL);
+
+	return sbmgr_container;
+}
+
+static NautilusPropertyPage *sbmanager_property_page_new(NautilusPropertyPageProvider *provider, const char *uuid)
+{
+	NautilusPropertyPage *ret;
+	GtkWidget *page;
+
+	page = nautilus_sbmgr_new(uuid);
+
+	ret = nautilus_property_page_new ("sbmanager-page", gtk_label_new("SpringBoard"), page);
+
+	return ret;
+}
+
+GList *nautilus_sbmanager_property_page (NautilusPropertyPageProvider *provider, GList *files)
+{
+	GList *pages;
+	NautilusPropertyPage *page;
+	gchar *uri;
+	gchar *uri_scheme;
+
+	if (g_list_length (files) != 1
+	    || ((nautilus_file_info_get_file_type (files->data) != G_FILE_TYPE_SHORTCUT)
+	     && (nautilus_file_info_get_file_type (files->data) != G_FILE_TYPE_MOUNTABLE))) {
+		return NULL;
+	}
+
+	pages = NULL;
+	uri = nautilus_file_info_get_activation_uri (files->data);
+	uri_scheme = g_uri_parse_scheme (uri);
+	if ((strcmp(uri_scheme, "afc") == 0) && g_find_program_in_path("sbmanager")) {
+		gchar *uuid = g_strndup(uri + 6, 40);
+		page = sbmanager_property_page_new(provider, uuid);
+		g_free(uuid);
+		pages = g_list_append(pages, page);
+	}
+	g_free(uri_scheme);
+	g_free (uri);
+
+	return pages;
+}
+
+static void
+nautilus_sbmanager_property_page_provider_iface_init (NautilusPropertyPageProviderIface *iface)
+{
+	printf("%s\n", __func__);
+	iface->get_pages = nautilus_sbmanager_property_page;
+}
+
 static void 
 nautilus_sbmanager_instance_init (NautilusSBManager *cvs)
 {
+	printf("%s\n", __func__);
 }
 
 static void
 nautilus_sbmanager_class_init (NautilusSBManagerClass *class)
 {
+	printf("%s\n", __func__);
 }
 
 static void
 nautilus_sbmanager_class_finalize (NautilusSBManagerClass *class)
 {
+	printf("%s\n", __func__);
 }
 
 GType
@@ -168,6 +280,12 @@ nautilus_sbmanager_register_type (GTypeModule *module)
 		NULL
 	};
 
+	static const GInterfaceInfo property_page_iface_info = {
+		(GInterfaceInitFunc) nautilus_sbmanager_property_page_provider_iface_init,
+		NULL,
+		NULL
+	};
+
 	sbmanager_type = g_type_module_register_type (module,
 						     G_TYPE_OBJECT,
 						     "NautilusSBManager",
@@ -177,4 +295,9 @@ nautilus_sbmanager_register_type (GTypeModule *module)
 				     sbmanager_type,
 				     NAUTILUS_TYPE_MENU_PROVIDER,
 				     &menu_provider_iface_info);
+
+	g_type_module_add_interface (module,
+				     sbmanager_type,
+				     NAUTILUS_TYPE_PROPERTY_PAGE_PROVIDER,
+				     &property_page_iface_info);
 }
