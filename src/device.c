@@ -54,6 +54,8 @@ sbservices_client_t device_sbs_new(const char *uuid, GError **error)
     lockdownd_client_t client = NULL;
     uint16_t port = 0;
 
+    printf("%s: %s\n", __func__, uuid);
+
     g_mutex_lock(libiphone_mutex);
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {
         if (error)
@@ -208,9 +210,13 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
     lockdownd_client_t client = NULL;
     gboolean res = FALSE;
 
+    printf("%s: %s\n", __func__, uuid);
+
     if (!device_info) {
 	return res;
     }
+
+    printf("%s\n", __func__);
 
     g_mutex_lock(libiphone_mutex);
     if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {

@@ -1,6 +1,6 @@
 /**
- * device.h
- * Device communication functions (header file)
+ * gui.h
+ * GUI definitions.
  *
  * Copyright (C) 2009-2010 Nikias Bassen <nikias@gmx.li>
  * Copyright (C) 2009-2010 Martin Szulecki <opensuse@sukimashita.com>
@@ -22,29 +22,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 
  * USA
  */
-#ifndef DEVICE_H
-#define DEVICE_H
-#include <glib.h>
-#include <libiphone/sbservices.h>
 
-struct device_info_int {
+#ifndef GUI_H
+#define GUI_H
+
+#include <gtk/gtk.h>
+#include <plist/plist.h>
+#include "sbmgr.h"
+
+typedef struct {
     char *uuid;
-    char *device_name;
-    char *device_type;
-    guint battery_capacity;
-    guint battery_poll_interval;
-};
-typedef struct device_info_int *device_info_t;
+    device_info_t device_info;
+} SBManagerData;
 
-void device_init();
-sbservices_client_t device_sbs_new(const char *uuid, GError **error);
-void device_sbs_free(sbservices_client_t sbc);
-gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, GError **error);
-gboolean device_sbs_save_icon(sbservices_client_t sbc, char *display_identifier, char *filename, GError **error);
-gboolean device_sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate, GError **error);
+GtkWidget *gui_init();
+void gui_deinit();
+void gui_pages_load(const char *uuid, device_info_cb_t info_callback, finished_cb_t finshed_callback);
+void gui_pages_free();
 
-device_info_t device_info_new();
-void device_info_free(device_info_t device_info);
-gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **error);
+plist_t gui_get_iconstate();
+
 
 #endif
