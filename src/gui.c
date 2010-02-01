@@ -1283,7 +1283,7 @@ GtkWidget *gui_init()
     }
 
     /* Create device type widget */
-    type_label = clutter_text_new_full(CLOCK_FONT, NULL, &clock_text_color);
+    type_label = clutter_text_new_full(CLOCK_FONT, "", &clock_text_color);
     clutter_group_add(CLUTTER_GROUP(stage), type_label);
     clutter_actor_set_position(type_label, 3.0, 2.0);
 
