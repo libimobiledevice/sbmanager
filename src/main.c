@@ -28,8 +28,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libiphone/libiphone.h>
-#include <libiphone/sbservices.h>
+#include <libimobiledevice/libimobiledevice.h>
+#include <libimobiledevice/sbservices.h>
 #include <plist/plist.h>
 #include <time.h>
 #include <sys/time.h>
@@ -130,7 +130,7 @@ static void quit_program_cb(GtkWidget *widget, gpointer user_data)
 {
     /* cleanup */
     sbmgr_finalize();
-    iphone_event_unsubscribe();
+    idevice_event_unsubscribe();
     gtk_main_quit();
 }
 
@@ -156,9 +156,9 @@ static gpointer device_add_cb(gpointer user_data)
     return NULL;
 }
 
-static void device_event_cb(const iphone_event_t *event, void *user_data)
+static void device_event_cb(const idevice_event_t *event, void *user_data)
 {
-    if (event->event == IPHONE_DEVICE_ADD) {
+    if (event->event == IDEVICE_DEVICE_ADD) {
         if (!current_uuid && (!match_uuid || !strcasecmp(match_uuid, event->uuid))) {
             debug_printf("Device add event: adding device %s\n", event->uuid);
             current_uuid = g_strdup(event->uuid);
@@ -166,7 +166,7 @@ static void device_event_cb(const iphone_event_t *event, void *user_data)
         } else {
             debug_printf("Device add event: ignoring device %s\n", event->uuid);
         }
-    } else if (event->event == IPHONE_DEVICE_REMOVE) {
+    } else if (event->event == IDEVICE_DEVICE_REMOVE) {
         if (current_uuid && !strcasecmp(current_uuid, event->uuid)) {
             debug_printf("Device remove event: removing device %s\n", event->uuid);
             free(current_uuid);
@@ -252,7 +252,7 @@ static void wnd_init()
     g_signal_connect(main_window, "hide", G_CALLBACK(quit_program_cb), NULL);
 
     /* get notified when plug in/out events occur */
-    iphone_event_subscribe(device_event_cb, NULL);
+    idevice_event_subscribe(device_event_cb, NULL);
 }
 
 /* main */
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
     /* parse cmdline args */
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")) {
-            iphone_set_debug_level(1);
+            idevice_set_debug_level(1);
             continue;
         } else if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "--debug-app")) {
             set_debug(TRUE);

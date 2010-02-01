@@ -32,35 +32,35 @@
 #include <glib.h>
 #include <glib/gi18n-lib.h>
 
-#include <libiphone/libiphone.h>
-#include <libiphone/lockdown.h>
-#include <libiphone/sbservices.h>
+#include <libimobiledevice/libimobiledevice.h>
+#include <libimobiledevice/lockdown.h>
+#include <libimobiledevice/sbservices.h>
 
 #include "device.h"
 
-static GMutex *libiphone_mutex = NULL;
+static GMutex *idevice_mutex = NULL;
 static GQuark device_domain = 0;
 
 void device_init()
 {
-    libiphone_mutex = g_mutex_new();
-    device_domain = g_quark_from_string("libiphone");
+    idevice_mutex = g_mutex_new();
+    device_domain = g_quark_from_string("libimobiledevice");
 }
 
 sbservices_client_t device_sbs_new(const char *uuid, GError **error)
 {
     sbservices_client_t sbc = NULL;
-    iphone_device_t phone = NULL;
+    idevice_t phone = NULL;
     lockdownd_client_t client = NULL;
     uint16_t port = 0;
 
     printf("%s: %s\n", __func__, uuid);
 
-    g_mutex_lock(libiphone_mutex);
-    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {
+    g_mutex_lock(idevice_mutex);
+    if (IDEVICE_E_SUCCESS != idevice_new(&phone, uuid)) {
         if (error)
             *error = g_error_new(device_domain, ENODEV, _("No device found, is it plugged in?"));
-        g_mutex_unlock(libiphone_mutex);
+        g_mutex_unlock(idevice_mutex);
         return sbc;
     }
 
@@ -85,8 +85,8 @@ sbservices_client_t device_sbs_new(const char *uuid, GError **error)
     if (client) {
         lockdownd_client_free(client);
     }
-    iphone_device_free(phone);
-    g_mutex_unlock(libiphone_mutex);
+    idevice_free(phone);
+    g_mutex_unlock(idevice_mutex);
 
     return sbc;
 }
@@ -206,7 +206,7 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
 {
     uint64_t interval = 60;
     plist_t node = NULL;
-    iphone_device_t phone = NULL;
+    idevice_t phone = NULL;
     lockdownd_client_t client = NULL;
     gboolean res = FALSE;
 
@@ -218,8 +218,8 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
 
     printf("%s\n", __func__);
 
-    g_mutex_lock(libiphone_mutex);
-    if (IPHONE_E_SUCCESS != iphone_device_new(&phone, uuid)) {
+    g_mutex_lock(idevice_mutex);
+    if (IDEVICE_E_SUCCESS != idevice_new(&phone, uuid)) {
         *error = g_error_new(device_domain, ENODEV, _("No device found, is it plugged in?"));
         goto leave_cleanup;
     }
@@ -290,8 +290,8 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
     if (client) {
         lockdownd_client_free(client);
     }
-    iphone_device_free(phone);
-    g_mutex_unlock(libiphone_mutex);
+    idevice_free(phone);
+    g_mutex_unlock(idevice_mutex);
 
     return res;
 }

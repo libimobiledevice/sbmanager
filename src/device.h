@@ -25,7 +25,7 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 #include <glib.h>
-#include <libiphone/sbservices.h>
+#include <libimobiledevice/sbservices.h>
 
 struct device_info_int {
     char *uuid;

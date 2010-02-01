@@ -15,10 +15,10 @@ AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
-PKG_CHECK_MODULES(libiphone, libiphone-1.0)
+PKG_CHECK_MODULES(libimobiledevice, libimobiledevice-1.0)
 PKG_CHECK_MODULES(libglib2, glib-2.0 >= 2.14.1)
 PKG_CHECK_MODULES(libgthread2, gthread-2.0 >= 2.14.1)
-PKG_CHECK_MODULES(libplist, libplist >= 0.15)
+PKG_CHECK_MODULES(libplist, libplist >= 1.0)
 PKG_CHECK_MODULES(libclutter, clutter-1.0 >= 1.0.6)
 PKG_CHECK_MODULES(libcluttergtk, clutter-gtk-0.10 >= 0.10)
 PKG_CHECK_MODULES(libgtk, gtk+-2.0 >= 2.16)

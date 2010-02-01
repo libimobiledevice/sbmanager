@@ -29,8 +29,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libiphone/libiphone.h>
-#include <libiphone/sbservices.h>
 #include <plist/plist.h>
 #include <time.h>
 #include <sys/time.h>
