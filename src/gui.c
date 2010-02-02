@@ -111,6 +111,8 @@ int current_page = 0;
 struct timeval last_page_switch;
 
 static int gui_deinitialized = 0;
+static int clutter_threads_initialized = 0;
+static int clutter_initialized = 0;
 
 static void gui_page_indicator_group_add(GList *page, int page_index);
 static void gui_page_align_icons(guint page_num, gboolean animated);
@@ -1244,13 +1246,21 @@ GtkWidget *gui_init()
     if (!g_thread_supported())
         g_thread_init(NULL);
 
-    icon_loader_mutex = g_mutex_new();
+    if (icon_loader_mutex == NULL)
+        icon_loader_mutex = g_mutex_new();
 
     /* initialize clutter threading environment */
-    clutter_threads_init();
+    if (!clutter_threads_initialized) {
+        clutter_threads_init();
+        clutter_threads_initialized = 1;
+    }
 
-    if (gtk_clutter_init(NULL, NULL) != CLUTTER_INIT_SUCCESS) {
-        g_error("Unable to initialize GtkClutter");
+    if (!clutter_initialized) {
+        if (gtk_clutter_init(NULL, NULL) != CLUTTER_INIT_SUCCESS) {
+            g_error("Unable to initialize GtkClutter");
+            return NULL;
+        }
+        clutter_initialized = 1;
     }
 
     gettimeofday(&last_page_switch, NULL);
@@ -1344,7 +1354,8 @@ GtkWidget *gui_init()
     /* and start it */
     clutter_timeline_start(clock_timeline);
 
-    selected_mutex = g_mutex_new();
+    if (selected_mutex == NULL)
+        selected_mutex = g_mutex_new();
 
     /* Position and update the clock */
     clock_set_time(clock_label, time(NULL));
