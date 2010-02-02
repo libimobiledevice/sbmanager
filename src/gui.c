@@ -110,6 +110,8 @@ static device_info_cb_t device_info_callback = NULL;
 int current_page = 0;
 struct timeval last_page_switch;
 
+static int gui_deinitialized = 0;
+
 static void gui_page_indicator_group_add(GList *page, int page_index);
 static void gui_page_align_icons(guint page_num, gboolean animated);
 
@@ -1161,6 +1163,10 @@ static gboolean update_battery_info_cb(gpointer user_data)
     GError *error = NULL;
     gboolean res = TRUE;
 
+    if (gui_deinitialized) {
+        return FALSE;
+    }
+
     if (device_get_info(uuid, &device_info, &error)) {
         clutter_actor_set_size(battery_level, (guint) (((double) (device_info->battery_capacity) / 100.0) * 15), 6);
         if (device_info->battery_capacity == 100) {
@@ -1356,4 +1362,5 @@ void gui_deinit()
 {
     clutter_timeline_stop(clock_timeline);
     device_info_free(device_info);
+    gui_deinitialized = 1;
 }
