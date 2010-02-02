@@ -137,23 +137,22 @@ static void nautilus_sbmgr_load_finished(gboolean success)
 
 static gboolean nautilus_sbmgr_expose_cb(GtkWidget *widget, GdkEventExpose *event, gpointer user_data)
 {
-	printf("%s\n", __func__);
-//	if (event->in) {
 	if (loading == FALSE) {
 		loading = TRUE;
 		sbmgr_load((const char*)g_object_get_data(G_OBJECT (widget), "NautilusSBManager::uuid"), NULL, nautilus_sbmgr_load_finished);
-	} else {
-		printf("already loading\n");
 	}
-/*	} else {
-		printf("%s: unfocus\n", __func__);
-	}*/
 	return TRUE;
 }
 
-static gboolean nautilus_sbmgr_hide_cb(GtkWidget *widget, gpointer user_data)
+static gboolean nautilus_sbmgr_unrealize_cb(GtkWidget *widget, gpointer user_data)
 {
 	sbmgr_finalize();
+
+	if (user_data) {
+		GtkWidget *sbmgr_widget = (GtkWidget*)user_data;
+		gtk_widget_destroy(sbmgr_widget);
+	}
+
 	return TRUE;
 }
 
@@ -180,9 +179,9 @@ static GtkWidget *nautilus_sbmgr_new(const char *uuid)
 			  NULL);
 
 	g_signal_connect (G_OBJECT (sbmgr_container),
-			  "destroy-event",
-			  G_CALLBACK(nautilus_sbmgr_hide_cb),
-			  NULL);
+			  "unrealize",
+			  G_CALLBACK(nautilus_sbmgr_unrealize_cb),
+			  sbmgr_widget);
 
 	return sbmgr_container;
 }
@@ -230,26 +229,22 @@ GList *nautilus_sbmanager_property_page (NautilusPropertyPageProvider *provider,
 static void
 nautilus_sbmanager_property_page_provider_iface_init (NautilusPropertyPageProviderIface *iface)
 {
-	printf("%s\n", __func__);
 	iface->get_pages = nautilus_sbmanager_property_page;
 }
 
 static void 
 nautilus_sbmanager_instance_init (NautilusSBManager *cvs)
 {
-	printf("%s\n", __func__);
 }
 
 static void
 nautilus_sbmanager_class_init (NautilusSBManagerClass *class)
 {
-	printf("%s\n", __func__);
 }
 
 static void
 nautilus_sbmanager_class_finalize (NautilusSBManagerClass *class)
 {
-	printf("%s\n", __func__);
 }
 
 GType
