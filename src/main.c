@@ -84,7 +84,7 @@ static gboolean reload_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
     gtk_widget_set_sensitive(btn_reload, FALSE);
     gtk_widget_set_sensitive(btn_apply, FALSE);
-    sbmgr_load(user_data, update_device_info_cb, finished_cb);
+    sbmgr_load(current_uuid, update_device_info_cb, finished_cb);
     return TRUE;
 }
 
@@ -92,7 +92,7 @@ static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
     gtk_widget_set_sensitive(btn_reload, FALSE);
     gtk_widget_set_sensitive(btn_apply, FALSE);
-    sbmgr_save(user_data);
+    sbmgr_save(current_uuid);
     gtk_widget_set_sensitive(btn_reload, TRUE);
     gtk_widget_set_sensitive(btn_apply, TRUE);
     return TRUE;
@@ -224,8 +224,8 @@ static void wnd_init()
     gtk_widget_show(toolbar);
 
     /* set up signal handlers */
-    g_signal_connect(btn_reload, "clicked", G_CALLBACK(reload_button_clicked_cb), match_uuid);
-    g_signal_connect(btn_apply, "clicked", G_CALLBACK(apply_button_clicked_cb), match_uuid);
+    g_signal_connect(btn_reload, "clicked", G_CALLBACK(reload_button_clicked_cb), NULL);
+    g_signal_connect(btn_apply, "clicked", G_CALLBACK(apply_button_clicked_cb), NULL);
     g_signal_connect(btn_info, "clicked", G_CALLBACK(info_button_clicked_cb), NULL);
     g_signal_connect(btn_quit, "clicked", G_CALLBACK(quit_button_clicked_cb), NULL);
 
