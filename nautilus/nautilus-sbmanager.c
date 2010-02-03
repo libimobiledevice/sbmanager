@@ -146,6 +146,7 @@ static gboolean nautilus_sbmgr_expose_cb(GtkWidget *widget, GdkEventExpose *even
 
 static gboolean nautilus_sbmgr_unrealize_cb(GtkWidget *widget, gpointer user_data)
 {
+	sbmgr_save((const char*)g_object_get_data(G_OBJECT (widget), "NautilusSBManager::uuid"));
 	sbmgr_finalize();
 
 	if (user_data) {
