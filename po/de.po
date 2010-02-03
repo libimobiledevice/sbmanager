@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sbmanager 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-18 18:43+0100\n"
+"POT-Creation-Date: 2010-02-03 21:27+0100\n"
 "PO-Revision-Date: 2010-01-18 04:30+0100\n"
 "Last-Translator: Nikias Bassen <nikias@gmx.li>\n"
 "Language-Team: \n"
@@ -15,27 +15,27 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../nautilus/nautilus-sbmanager.c:71
+#: ../nautilus/nautilus-sbmanager.c:76
 msgid "Manage _SpringBoard"
 msgstr "_SpringBoard bearbeiten"
 
-#: ../nautilus/nautilus-sbmanager.c:72
+#: ../nautilus/nautilus-sbmanager.c:77
 msgid "Launch SBManager to manage the SpringBoard of this device"
 msgstr ""
 "Startet SBManager mit dem Sie das SpringBoard dieses Gerätes bearbeiten "
 "können"
 
-#: ../src/sbmanager.c:364 ../src/sbmanager.c:513 ../src/sbmanager.c:551
+#: ../src/device.c:62 ../src/device.c:223
 #, c-format
 msgid "No device found, is it plugged in?"
 msgstr "Kein Gerät gefunden, habe Sie eines angeschlossen?"
 
-#: ../src/sbmanager.c:369 ../src/sbmanager.c:518 ../src/sbmanager.c:556
+#: ../src/device.c:69 ../src/device.c:228
 #, c-format
 msgid "Could not connect to lockdownd!"
 msgstr "Kann mich nicht mit lockdownd verbinden!"
 
-#: ../src/sbmanager.c:374
+#: ../src/device.c:75
 #, c-format
 msgid ""
 "Could not start com.apple.springboardservices service! Remind that this "
@@ -44,55 +44,60 @@ msgstr ""
 "Konnte com.apple.springboardservices nicht starten! Bedenken Sie,dass diese "
 "Funktionalität erst seit OS 3.1 verfügbar ist!"
 
-#: ../src/sbmanager.c:378
+#: ../src/device.c:80
 #, c-format
 msgid "Could not connect to springboardservices!"
 msgstr "Verbindung zu springboardservices auf dem Gerät nicht möglich!"
 
-#: ../src/sbmanager.c:407
+#: ../src/device.c:110
 #, c-format
 msgid "Could not get icon state!"
 msgstr "Konnte icon state nicht laden!"
 
-#: ../src/sbmanager.c:411
+#: ../src/device.c:115
 #, c-format
 msgid "icon state is not an array as expected!"
 msgstr "icon state ist unerwarteterweise kein Array!"
 
-#: ../src/sbmanager.c:434
+#: ../src/device.c:143
+#, c-format
+msgid "Could not get icon png data for '%s'"
+msgstr "Konnte icon png-Daten für '%s' nicht laden!"
+
+#: ../src/device.c:160
 #, c-format
 msgid "Could not set new icon state!"
 msgstr "Konnte neuen icon state nicht setzen!"
 
-#: ../src/sbmanager.c:1366
-msgid "Manage iPhone/iPod Touch SpringBoard from the computer"
-msgstr "iPhone/iPod Touch SpringBoard vom Computer aus bearbeiten"
-
-#: ../src/sbmanager.c:1368
-msgid "Project Site"
-msgstr "Projektseite"
-
-#: ../src/sbmanager.c:1390 ../src/sbmanager.c:1575
-msgid "Error"
-msgstr "Fehler"
-
-#: ../src/sbmanager.c:1418
-msgid "Reload icons from device"
-msgstr "Symbole erneut vom Gerät laden"
-
-#: ../src/sbmanager.c:1422
-msgid "Upload changes to device"
-msgstr "Änderungen auf das Gerät übertragen"
-
-#: ../src/sbmanager.c:1426
-msgid "Get info about this cool program"
-msgstr "Informationen über dieses krasse Programm"
-
-#: ../src/sbmanager.c:1434
-msgid "Quit this program"
-msgstr "Programm beenden"
-
-#: ../src/sbmanager.c:1646
+#: ../src/gui.c:1218
 #, c-format
 msgid "Unknown error occurred"
 msgstr "Ein unbekannter Fehler ist aufgetreten"
+
+#: ../src/main.c:111
+msgid "Manage iPhone/iPod Touch SpringBoard from the computer"
+msgstr "iPhone/iPod Touch SpringBoard vom Computer aus bearbeiten"
+
+#: ../src/main.c:113
+msgid "Project Site"
+msgstr "Projektseite"
+
+#: ../src/main.c:145
+msgid "Error"
+msgstr "Fehler"
+
+#: ../src/main.c:203
+msgid "Reload icons from device"
+msgstr "Symbole erneut vom Gerät laden"
+
+#: ../src/main.c:207
+msgid "Upload changes to device"
+msgstr "Änderungen auf das Gerät übertragen"
+
+#: ../src/main.c:211
+msgid "Get info about this cool program"
+msgstr "Informationen über dieses krasse Programm"
+
+#: ../src/main.c:219
+msgid "Quit this program"
+msgstr "Programm beenden"
