@@ -1,6 +1,5 @@
 # List of source files containing translatable strings.
 # Please keep this list in alphabetic order.
-nautilus/nautilus-sbmanager.c
 src/device.c
 src/gui.c
 src/iconstate.c
