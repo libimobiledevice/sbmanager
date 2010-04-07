@@ -23,7 +23,6 @@ PKG_CHECK_MODULES(libclutter, clutter-1.0 >= 1.0.6)
 PKG_CHECK_MODULES(libcluttergtk, clutter-gtk-0.10 >= 0.10)
 PKG_CHECK_MODULES(libgtk, gtk+-2.0 >= 2.16)
 PKG_CHECK_MODULES(libgdkpixbuf, gdk-pixbuf-2.0 >= 2.16)
-PKG_CHECK_MODULES(libnautilusextension, libnautilus-extension >= 2.21.2)
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -45,11 +44,6 @@ AC_CHECK_FUNCS([strcasecmp strdup strerror strndup])
 AS_COMPILER_FLAGS(GLOBAL_CFLAGS, "-Wall -Wextra -Wmissing-declarations -Wredundant-decls -Wshadow -Wpointer-arith  -Wwrite-strings -Wswitch-default -Wno-unused-parameter -Werror")
 AC_SUBST(GLOBAL_CFLAGS)
 
-# Get nautilus extensions directory
-
-NAUTILUS_EXTENSION_DIR=`$PKG_CONFIG --variable=extensiondir libnautilus-extension`
-AC_SUBST(NAUTILUS_EXTENSION_DIR)
-
 # i18n
 
 GETTEXT_PACKAGE=sbmanager
@@ -65,6 +59,5 @@ Makefile
 data/Makefile
 src/Makefile
 po/Makefile.in
-nautilus/Makefile
 ])
 
