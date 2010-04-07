@@ -7,21 +7,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sbmanager 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-02-03 21:27+0100\n"
+"POT-Creation-Date: 2010-04-07 17:55+0200\n"
 "PO-Revision-Date: 2010-01-18 04:30+0100\n"
 "Last-Translator: Christophe Fergeau <cfergeau@gmail.com>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: ../nautilus/nautilus-sbmanager.c:76
-msgid "Manage _SpringBoard"
-msgstr "Gérer le _SpringBoard"
-
-#: ../nautilus/nautilus-sbmanager.c:77
-msgid "Launch SBManager to manage the SpringBoard of this device"
-msgstr "Démarrer SBManager pour gérer le SpringBoard de cet appareil"
 
 #: ../src/device.c:62 ../src/device.c:223
 #, c-format
@@ -100,3 +92,9 @@ msgstr "À propos de cet incroyable programme"
 #: ../src/main.c:219
 msgid "Quit this program"
 msgstr "Quitter le programme"
+
+#~ msgid "Manage _SpringBoard"
+#~ msgstr "Gérer le _SpringBoard"
+
+#~ msgid "Launch SBManager to manage the SpringBoard of this device"
+#~ msgstr "Démarrer SBManager pour gérer le SpringBoard de cet appareil"
