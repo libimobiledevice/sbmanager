@@ -57,6 +57,7 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 AC_OUTPUT([
 Makefile
 data/Makefile
+data/sbmanager.desktop.in
 src/Makefile
 po/Makefile.in
 ])

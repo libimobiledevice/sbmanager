@@ -1,5 +1,6 @@
 # List of source files containing translatable strings.
 # Please keep this list in alphabetic order.
+data/sbmanager.desktop.in.in
 src/device.c
 src/gui.c
 src/iconstate.c

@@ -4,4 +4,14 @@ PIX = background.png dot.png
 
 pixmap_DATA = $(PIX)
 
-EXTRA_DIST = $(pixmap_DATA)
+desktopdir = $(datadir)/applications
+desktop_in_files = sbmanager.desktop.in
+desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
+@INTLTOOL_DESKTOP_RULE@
+
+EXTRA_DIST = \
+	$(pixmap_DATA)	\
+	$(desktop_in_files)
+
+CLEANFILES = \
+	$(desktop_in_files)
