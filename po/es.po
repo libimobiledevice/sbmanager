@@ -1,0 +1,107 @@
+# Spanish translation for sbmanager.
+# Copyright (C) 2010 Itxaka Serrano
+# This file is distributed under the same license as the sbmanager package.
+# Itxaka Serrano <itxakaserrano@gmail.com>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: sbmanager 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-05-24 11:53+0100\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Itxaka Serrano <itxakaserrano@gmail.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../data/sbmanager.desktop.in.in.h:1
+msgid "Manage SpringBoard icons on iPhone/iPod Touch devices"
+msgstr "Ejecuta SBManager para organizar el Springboard de este dispositivo"
+
+#: ../data/sbmanager.desktop.in.in.h:2
+msgid "SpringBoard Manager"
+msgstr ""
+
+#: ../src/device.c:62 ../src/device.c:223
+#, c-format
+msgid "No device found, is it plugged in?"
+msgstr "Ningun dispositivo encontrado, ¿Esta conectado?"
+
+#: ../src/device.c:69 ../src/device.c:228
+#, c-format
+msgid "Could not connect to lockdownd!"
+msgstr "No se puede conectar con lockdownd!"
+
+#: ../src/device.c:75
+#, c-format
+msgid ""
+"Could not start com.apple.springboardservices service! Remind that this "
+"feature is only supported in OS 3.1 and later!"
+msgstr ""
+"No se puede arrancar el servicio com.apple.springboardservices!Esta " 
+"caracteristica solo esta disponible con OS 3.1 y posteriores"
+
+#: ../src/device.c:80
+#, c-format
+msgid "Could not connect to springboardservices!"
+msgstr "¡No se puede conectar con springboardservices!"
+
+#: ../src/device.c:110
+#, c-format
+msgid "Could not get icon state!"
+msgstr "¡No es posible obtener el estado de los iconos!"
+
+#: ../src/device.c:115
+#, c-format
+msgid "icon state is not an array as expected!"
+msgstr "¡El estado del icono no es un array como se esperaba!"
+
+#: ../src/device.c:143
+#, c-format
+msgid "Could not get icon png data for '%s'"
+msgstr "¡No se puede obtener datos png del icono '%s'!"
+
+#: ../src/device.c:160
+#, c-format
+msgid "Could not set new icon state!"
+msgstr "¡No se puede establecer el nuevo estado de los iconos!"
+
+#: ../src/gui.c:1218
+#, c-format
+msgid "Unknown error occurred"
+msgstr "Error desconocido encontrado"
+
+#: ../src/main.c:111
+msgid "Manage iPhone/iPod Touch SpringBoard from the computer"
+msgstr "Maneja el Springboard de tu iPhone/iPod Touch desde tu ordenador"
+
+#: ../src/main.c:113
+msgid "Project Site"
+msgstr "Web del projecto"
+
+#: ../src/main.c:145
+msgid "Error"
+msgstr "Error"
+
+#: ../src/main.c:203
+msgid "Reload icons from device"
+msgstr "Recargar los iconos desde el dispositivo"
+
+#: ../src/main.c:207
+msgid "Upload changes to device"
+msgstr "Transferir los cambios al dispositivo"
+
+#: ../src/main.c:211
+msgid "Get info about this cool program"
+msgstr "Mas informacion sobre el programa"
+
+#: ../src/main.c:219
+msgid "Quit this program"
+msgstr "Salir del programa"
+
+#~ msgid "Manage _SpringBoard"
+#~ msgstr "Organizar el _SpringBoard"
+
+#~ msgid "Launch SBManager to manage the SpringBoard of this device"
+#~ msgstr "Ejecuta SBManager para organizar el Springboard de este dispositivo"
