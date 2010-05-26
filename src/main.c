@@ -111,7 +111,10 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
     const gchar *comments = _("Manage iPhone/iPod Touch SpringBoard from the computer");
     const gchar *website = "http://cgit.sukimashita.com/sbmanager.git";
     const gchar *website_label = _("Project Site");
-    const gchar *translators = "Français: Christophe Fergeau\n";
+    const gchar *translators =
+	"Español: Itxaka Serrano\n"
+	"Français: Christophe Fergeau\n"
+	;
 
     gtk_show_about_dialog(GTK_WINDOW(main_window),
             "authors", authors,
