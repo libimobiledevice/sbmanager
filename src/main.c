@@ -114,6 +114,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
     const gchar *translators =
 	"Español: Itxaka Serrano\n"
 	"Français: Christophe Fergeau\n"
+	"日本語: Koichi Akabe\n"
 	;
 
     gtk_show_about_dialog(GTK_WINDOW(main_window),

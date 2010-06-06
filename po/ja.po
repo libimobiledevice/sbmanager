@@ -1,0 +1,107 @@
+# Japanese translation for sbmanager.
+# Copyright (C) 2010 Koichi Akabe
+# This file is distributed under the same license as the sbmanager package.
+# Koichi Akabe <vbkaisetsu@gmail.com>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: sbmanager 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-05-24 11:53+0100\n"
+"PO-Revision-Date: 2010-06-05 21:31+0900\n"
+"Last-Translator: Koichi Akabe <vbkaisetsu@gmail.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../data/sbmanager.desktop.in.in.h:1
+msgid "Manage SpringBoard icons on iPhone/iPod Touch devices"
+msgstr "iPhone/iPod Touch の SpringBoard アイコンを管理します"
+
+#: ../data/sbmanager.desktop.in.in.h:2
+msgid "SpringBoard Manager"
+msgstr "SpringBoard マネージャ"
+
+#: ../src/device.c:62 ../src/device.c:223
+#, c-format
+msgid "No device found, is it plugged in?"
+msgstr "デバイスが見つかりませんでした。接続されていますか？"
+
+#: ../src/device.c:69 ../src/device.c:228
+#, c-format
+msgid "Could not connect to lockdownd!"
+msgstr "ロックダウンのための接続ができませんでした！"
+
+#: ../src/device.c:75
+#, c-format
+msgid ""
+"Could not start com.apple.springboardservices service! Remind that this "
+"feature is only supported in OS 3.1 and later!"
+msgstr ""
+"com.apple.springboardservices サービスを開始できませんでした！ この機能は OS "
+"3.1 以降のみサポートされています。"
+
+#: ../src/device.c:80
+#, c-format
+msgid "Could not connect to springboardservices!"
+msgstr "springboardservices に接続できませんでした！"
+
+#: ../src/device.c:110
+#, c-format
+msgid "Could not get icon state!"
+msgstr "アイコンの状態を取得できませんでした！"
+
+#: ../src/device.c:115
+#, c-format
+msgid "icon state is not an array as expected!"
+msgstr "アイコン状態が期待通りの配列ではありません！"
+
+#: ../src/device.c:143
+#, c-format
+msgid "Could not get icon png data for '%s'"
+msgstr "'%s' のアイコンPNGデータを取得できませんでした "
+
+#: ../src/device.c:160
+#, c-format
+msgid "Could not set new icon state!"
+msgstr "新しいアイコン状態を設定できませんでした！"
+
+#: ../src/gui.c:1218
+#, c-format
+msgid "Unknown error occurred"
+msgstr "不明なエラーが発生しました"
+
+#: ../src/main.c:111
+msgid "Manage iPhone/iPod Touch SpringBoard from the computer"
+msgstr "コンピュータから iPhone/iPod Touch の SpringBoard を管理します"
+
+#: ../src/main.c:113
+msgid "Project Site"
+msgstr "プロジェクトサイト"
+
+#: ../src/main.c:145
+msgid "Error"
+msgstr "エラー"
+
+#: ../src/main.c:203
+msgid "Reload icons from device"
+msgstr "デバイスからアイコンを再読込します"
+
+#: ../src/main.c:207
+msgid "Upload changes to device"
+msgstr "変更をデバイスにアップロードします"
+
+#: ../src/main.c:211
+msgid "Get info about this cool program"
+msgstr "このクールなプログラムの情報を表示します"
+
+#: ../src/main.c:219
+msgid "Quit this program"
+msgstr "プログラムを終了します"
+
+#~ msgid "Manage _SpringBoard"
+#~ msgstr "Organizar el _SpringBoard"
+
+#~ msgid "Launch SBManager to manage the SpringBoard of this device"
+#~ msgstr "Ejecuta SBManager para organizar el Springboard de este dispositivo"
