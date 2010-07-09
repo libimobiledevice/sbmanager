@@ -131,7 +131,7 @@ void sbmgr_save(const char *uuid)
         GError *error = NULL;
         sbservices_client_t sbc;
 
-        sbc = device_sbs_new(uuid, &error);
+        sbc = device_sbs_new(uuid, NULL, &error);
 
         if (error) {
             g_printerr("%s", error->message);

@@ -1136,6 +1136,7 @@ static void gui_set_wallpaper(const char *wp)
 static gboolean gui_pages_init_cb(gpointer user_data)
 {
     const char *uuid = (const char*)user_data;
+    uint32_t osversion = 0;
     GError *error = NULL;
     plist_t iconstate = NULL;
 
@@ -1147,7 +1148,7 @@ static gboolean gui_pages_init_cb(gpointer user_data)
 
     /* connect to sbservices */
     if (!sbc)
-        sbc = device_sbs_new(uuid, &error);
+        sbc = device_sbs_new(uuid, &osversion, &error);
 
     if (error) {
         g_printerr("%s", error->message);
@@ -1156,9 +1157,11 @@ static gboolean gui_pages_init_cb(gpointer user_data)
     }
 
     if (sbc) {
-        /* Load wallpaper if available */
-        if (device_sbs_save_wallpaper(sbc, "/tmp/wallpaper.png", &error)) {
-            gui_set_wallpaper("/tmp/wallpaper.png");
+        if (osversion >= 0x04000000) {
+            /* Load wallpaper if available */
+            if (device_sbs_save_wallpaper(sbc, "/tmp/wallpaper.png", &error)) {
+                gui_set_wallpaper("/tmp/wallpaper.png");
+            }
         }
 
         /* Load icon data */

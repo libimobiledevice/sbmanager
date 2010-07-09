@@ -47,7 +47,7 @@ void device_init()
     device_domain = g_quark_from_string("libimobiledevice");
 }
 
-sbservices_client_t device_sbs_new(const char *uuid, GError **error)
+sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError **error)
 {
     sbservices_client_t sbc = NULL;
     idevice_t phone = NULL;
@@ -68,6 +68,23 @@ sbservices_client_t device_sbs_new(const char *uuid, GError **error)
         if (error)
             *error = g_error_new(device_domain, EIO, _("Could not connect to lockdownd!"));
         goto leave_cleanup;
+    }
+
+    plist_t version = NULL;
+    if (osversion && lockdownd_get_value(client, NULL, "ProductVersion", &version) == LOCKDOWN_E_SUCCESS) {
+        if (plist_get_node_type(version) == PLIST_STRING) {
+            char *version_string = NULL;
+            plist_get_string_val(version, &version_string);
+            if (version_string) {
+                /* parse version */
+                int maj = 0;
+                int min = 0;
+                int rev = 0;
+                sscanf(version_string, "%d.%d.%d", &maj, &min, &rev);
+                free(version_string);
+                *osversion = ((maj & 0xFF) << 24) + ((min & 0xFF) << 16) + ((rev & 0xFF) << 8);
+            }
+        }
     }
 
     if ((lockdownd_start_service(client, "com.apple.springboardservices", &port) != LOCKDOWN_E_SUCCESS) || !port) {
