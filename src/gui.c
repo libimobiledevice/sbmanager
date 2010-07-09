@@ -951,6 +951,7 @@ static gboolean sbitem_texture_new(gpointer data)
     ClutterActor *actor = clutter_texture_new();
     clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
     clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), icon_filename, &err);
+    clutter_actor_set_size(actor, 59.0, 62.0);
 
     /* create item */
     item->texture = actor;
