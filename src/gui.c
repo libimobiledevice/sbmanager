@@ -72,6 +72,7 @@ const ClutterActorBox left_trigger = { -30.0, 16.0, -8.0, STAGE_HEIGHT - DOCK_HE
 const ClutterActorBox right_trigger = { STAGE_WIDTH + 8.0, 16.0, STAGE_WIDTH + 30.0, STAGE_HEIGHT - DOCK_HEIGHT - 16.0 };
 
 ClutterActor *stage = NULL;
+ClutterActor *wallpaper = NULL;
 ClutterActor *the_dock = NULL;
 ClutterActor *the_sb = NULL;
 ClutterActor *type_label = NULL;
@@ -137,6 +138,10 @@ static void pages_free()
     if (dockitems) {
         sbpage_free(dockitems, NULL);
         dockitems = NULL;
+    }
+    if (wallpaper) {
+        clutter_actor_destroy(wallpaper);
+        wallpaper = NULL;
     }
 }
 
@@ -1108,6 +1113,26 @@ static gboolean wait_icon_load_finished(gpointer user_data)
     return res;
 }
 
+static void gui_set_wallpaper(const char *wp)
+{
+    GError *err = NULL;
+    wallpaper = NULL;
+    ClutterActor *actor = clutter_texture_new();
+    clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), wp, &err);
+    if (err) {
+        g_error_free(err);
+        err = NULL;
+        return;
+    }
+    clutter_actor_set_size(actor, 320.0, 480.0);
+    clutter_actor_set_position(actor, 0, 0);
+    clutter_actor_show(actor);
+    clutter_group_add(CLUTTER_GROUP(stage), actor);
+    clutter_actor_lower_bottom(actor);
+    wallpaper = actor;
+}
+
 static gboolean gui_pages_init_cb(gpointer user_data)
 {
     const char *uuid = (const char*)user_data;
@@ -1131,6 +1156,11 @@ static gboolean gui_pages_init_cb(gpointer user_data)
     }
 
     if (sbc) {
+        /* Load wallpaper if available */
+        if (device_sbs_save_wallpaper(sbc, "/tmp/wallpaper.png", &error)) {
+            gui_set_wallpaper("/tmp/wallpaper.png");
+        }
+
         /* Load icon data */
         if (device_sbs_get_iconstate(sbc, &iconstate, &error)) {
             gui_set_iconstate(iconstate);

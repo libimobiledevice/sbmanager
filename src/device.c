@@ -169,6 +169,28 @@ gboolean device_sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate, GE
     return result;
 }
 
+gboolean device_sbs_save_wallpaper(sbservices_client_t sbc, const char *filename, GError **error)
+{
+    gboolean res = FALSE;
+    char *png = NULL;
+    uint64_t pngsize = 0;
+
+    if ((sbservices_get_home_screen_wallpaper_pngdata(sbc, &png, &pngsize) == SBSERVICES_E_SUCCESS) && (pngsize > 0)) {
+        /* save png icon to disk */
+        FILE *f = fopen(filename, "w");
+        fwrite(png, 1, pngsize, f);
+        fclose(f);
+        res = TRUE;
+    } else {
+        if (error)
+            *error = g_error_new(device_domain, EIO, _("Could not get wallpaper png data"));
+    }
+    if (png) {
+        free(png);
+    }
+    return res;
+}
+
 device_info_t device_info_new()
 {
     return g_new0(struct device_info_int, 1);
