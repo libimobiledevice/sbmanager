@@ -186,6 +186,7 @@ gboolean device_sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate, GE
     return result;
 }
 
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1
 gboolean device_sbs_save_wallpaper(sbservices_client_t sbc, const char *filename, GError **error)
 {
     gboolean res = FALSE;
@@ -207,6 +208,7 @@ gboolean device_sbs_save_wallpaper(sbservices_client_t sbc, const char *filename
     }
     return res;
 }
+#endif
 
 device_info_t device_info_new()
 {

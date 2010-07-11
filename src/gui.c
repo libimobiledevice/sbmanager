@@ -1113,6 +1113,7 @@ static gboolean wait_icon_load_finished(gpointer user_data)
     return res;
 }
 
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1
 static void gui_set_wallpaper(const char *wp)
 {
     GError *err = NULL;
@@ -1132,6 +1133,7 @@ static void gui_set_wallpaper(const char *wp)
     clutter_actor_lower_bottom(actor);
     wallpaper = actor;
 }
+#endif
 
 static gboolean gui_pages_init_cb(gpointer user_data)
 {
@@ -1157,13 +1159,14 @@ static gboolean gui_pages_init_cb(gpointer user_data)
     }
 
     if (sbc) {
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1
         if (osversion >= 0x04000000) {
             /* Load wallpaper if available */
             if (device_sbs_save_wallpaper(sbc, "/tmp/wallpaper.png", &error)) {
                 gui_set_wallpaper("/tmp/wallpaper.png");
             }
         }
-
+#endif
         /* Load icon data */
         if (device_sbs_get_iconstate(sbc, &iconstate, &error)) {
             gui_set_iconstate(iconstate);
