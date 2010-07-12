@@ -1,6 +1,6 @@
 pixmapdir = $(pkgdatadir)
 
-PIX = background.png dot.png
+PIX = background.png dot.png folder.png
 
 pixmap_DATA = $(PIX)
 
