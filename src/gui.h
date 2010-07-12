@@ -40,7 +40,7 @@ void gui_deinit();
 void gui_pages_load(const char *uuid, device_info_cb_t info_callback, finished_cb_t finshed_callback);
 void gui_pages_free();
 
-plist_t gui_get_iconstate();
+plist_t gui_get_iconstate(const char *format_version);
 
 
 #endif
