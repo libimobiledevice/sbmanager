@@ -103,6 +103,7 @@ GList *sbpages = NULL;
 guint num_dock_items = 0;
 
 sbservices_client_t sbc = NULL;
+uint32_t osversion = 0;
 device_info_t device_info = NULL;
 
 static finished_cb_t finished_callback = NULL;
@@ -561,32 +562,77 @@ static void gui_show_previous_page()
     gui_set_current_page(current_page-1, TRUE);
 }
 
-plist_t gui_get_iconstate()
+static plist_t sbitem_get_subitems(SBItem *item)
+{
+    plist_t result = plist_new_array();
+    if (item && item->subitems) {
+        guint i;
+        for (i = 0; i < g_list_length(item->subitems); i++) {
+            SBItem *subitem = g_list_nth_data(item->subitems, i);
+            plist_t node = plist_dict_get_item(subitem->node, "displayIdentifier");
+            if (!node) {
+                printf("could not get displayIdentifier\n");
+                continue;
+            }
+            plist_array_append_item(result, plist_copy(node));
+        }
+    }
+    return result;
+}
+
+static plist_t sbitem_to_plist(SBItem *item)
+{
+    plist_t result = plist_new_dict();
+    if (!item) {
+        return result;
+    }
+    plist_t node;
+    if (item->is_folder) {
+        node = plist_dict_get_item(item->node, "displayName");
+        if (!node) {
+            printf("could not get displayName for folder!\n");
+            return result;
+        }
+        plist_dict_insert_item(result, "displayName", plist_copy(node));
+        plist_t iconlists = plist_new_array();
+        plist_array_append_item(iconlists, sbitem_get_subitems(item));
+        plist_dict_insert_item(result, "iconLists", iconlists);
+    } else {
+        node = plist_dict_get_item(item->node, "displayIdentifier");
+        if (!node) {
+            printf("could not get displayIdentifier\n");
+            return result;
+        }
+        plist_dict_insert_item(result, "displayIdentifier", plist_copy(node));
+    }
+    return result;
+}
+
+plist_t gui_get_iconstate(const char *format_version)
 {
     plist_t iconstate = NULL;
     plist_t pdockarray = NULL;
     plist_t pdockitems = NULL;
     guint i;
 
+    int use_version = 1;
+    if (format_version && (strcmp(format_version, "2") == 0)) {
+        use_version = 2;
+    }
+
     guint count = g_list_length(dockitems);
     pdockitems = plist_new_array();
     for (i = 0; i < count; i++) {
         SBItem *item = g_list_nth_data(dockitems, i);
-        if (!item) {
-            continue;
+        if (item && item->node) {
+            plist_array_append_item(pdockitems, sbitem_to_plist(item));
         }
-        plist_t valuenode = plist_dict_get_item(item->node, "displayIdentifier");
-        if (!valuenode) {
-            printf("could not get displayIdentifier\n");
-            continue;
-        }
-
-        plist_t pitem = plist_new_dict();
-        plist_dict_insert_item(pitem, "displayIdentifier", plist_copy(valuenode));
-        plist_array_append_item(pdockitems, pitem);
     }
-    for (i = count; i < num_dock_items; i++) {
-        plist_array_append_item(pdockitems, plist_new_bool(0));
+
+    if (use_version == 1) {
+        for (i = count; i < num_dock_items; i++) {
+            plist_array_append_item(pdockitems, plist_new_bool(0));
+        }
     }
     pdockarray = plist_new_array();
     plist_array_append_item(pdockarray, pdockitems);
@@ -604,25 +650,23 @@ plist_t gui_get_iconstate()
             }
             plist_t ppage = plist_new_array();
             plist_t row = NULL;
+            if (use_version == 2) {
+                row = plist_new_array();
+                plist_array_append_item(ppage, row);
+            }
             for (j = 0; j < 16; j++) {
                 SBItem *item = g_list_nth_data(page, j);
-                if ((j % 4) == 0) {
-                    row = plist_new_array();
-                    plist_array_append_item(ppage, row);
+                if (use_version == 1) {
+                    if ((j % 4) == 0) {
+                        row = plist_new_array();
+                        plist_array_append_item(ppage, row);
+                    }
                 }
                 if (item && item->node) {
-                    plist_t valuenode = plist_dict_get_item(item->node,
-                                                            "displayIdentifier");
-                    if (!valuenode) {
-                        printf("could not get displayIdentifier\n");
-                        continue;
-                    }
-
-                    plist_t pitem = plist_new_dict();
-                    plist_dict_insert_item(pitem, "displayIdentifier", plist_copy(valuenode));
-                    plist_array_append_item(row, pitem);
+                    plist_array_append_item(row, sbitem_to_plist(item));
                 } else {
-                    plist_array_append_item(row, plist_new_bool(0));
+                    if (use_version == 1)
+                        plist_array_append_item(row, plist_new_bool(0));
                 }
             }
             plist_array_append_item(iconstate, plist_copy(ppage));
@@ -879,6 +923,27 @@ static gboolean stage_key_press_cb(ClutterActor *actor, ClutterEvent *event, gpo
     return TRUE;
 }
 
+static void gui_draw_subitems(SBItem *item)
+{
+    ClutterActor *grp = clutter_actor_get_parent(item->texture);
+    guint i;
+    for (i = 0; i < g_list_length(item->subitems); i++) {
+        SBItem *subitem = (SBItem*)g_list_nth_data(item->subitems, i);
+        if (subitem && subitem->texture && !subitem->drawn && subitem->node) {
+            subitem->is_dock_item = FALSE;
+            ClutterActor *suba = subitem->texture;
+            clutter_container_add_actor(CLUTTER_CONTAINER(grp), suba);
+            clutter_actor_set_scale(suba, 0.22, 0.22);
+            clutter_actor_set_position(suba, 8.0 + (i%3)*15.0, 8.0 + ((double)(int)((int)i/(int)3))*16.0);
+            if (i < 9)
+                clutter_actor_show(suba);
+            else
+                clutter_actor_hide(suba);
+            subitem->drawn = TRUE;
+        }
+    }
+}
+
 static void gui_show_icons()
 {
     guint i;
@@ -892,7 +957,7 @@ static void gui_show_icons()
         debug_printf("%s: showing dock icons\n", __func__);
         for (i = 0; i < g_list_length(dockitems); i++) {
             SBItem *item = (SBItem*)g_list_nth_data(dockitems, i);
-            if (item && item->texture && !CLUTTER_ACTOR_IS_VISIBLE(item->texture) && item->node) {
+            if (item && item->texture && !item->drawn && item->node) {
                 item->is_dock_item = TRUE;
                 ClutterActor *grp = clutter_group_new();
                 ClutterActor *actor = item->texture;
@@ -908,6 +973,11 @@ static void gui_show_icons()
                 clutter_actor_show(actor);
                 clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                 clutter_container_add_actor(CLUTTER_CONTAINER(the_dock), grp);
+		item->drawn = TRUE;
+            }
+            /* process subitems */
+            if (item->texture && item->is_folder && item->subitems) {
+                gui_draw_subitems(item);
             }
         }
         gui_dock_align_icons(FALSE);
@@ -922,7 +992,7 @@ static void gui_show_icons()
             debug_printf("%s: showing page icons for page %d\n", __func__, j);
             for (i = 0; i < g_list_length(cpage); i++) {
                 SBItem *item = (SBItem*)g_list_nth_data(cpage, i);
-                if (item && item->texture && !CLUTTER_ACTOR_IS_VISIBLE(item->texture) && item->node) {
+                if (item && item->texture && !item->drawn && item->node) {
                     item->is_dock_item = FALSE;
                     ClutterActor *grp = clutter_group_new();
                     ClutterActor *actor = item->texture;
@@ -938,6 +1008,11 @@ static void gui_show_icons()
                     clutter_actor_show(actor);
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                     clutter_container_add_actor(CLUTTER_CONTAINER(the_sb), grp);
+		    item->drawn = TRUE;
+                }
+                /* process subitems */
+                if (item->texture && item->is_folder && item->subitems) {
+                    gui_draw_subitems(item);
                 }
             }
             gui_page_align_icons(j, FALSE);
@@ -949,7 +1024,12 @@ static void gui_show_icons()
 static gboolean sbitem_texture_new(gpointer data)
 {
     SBItem *item = (SBItem *)data;
-    char *icon_filename = sbitem_get_icon_filename(item);
+    char *icon_filename;
+    if (item->is_folder) {
+        icon_filename = g_strdup(SBMGR_DATA "/folder.png");
+    } else {
+        icon_filename = sbitem_get_icon_filename(item);
+    }
     GError *err = NULL;
 
     /* create and load texture */
@@ -1011,26 +1091,50 @@ static guint gui_load_icon_row(plist_t items, GList **row)
     count = plist_array_get_size(items);
     for (i = 0; i < count; i++) {
         plist_t icon_info = plist_array_get_item(items, i);
-        item = sbitem_new(icon_info);
-        if (item != NULL) {
-            /* load texture of icon in a new thread */
-            g_thread_create(sbitem_thread_load_texture, item, FALSE, NULL);
+        plist_t subitems = plist_dict_get_item(icon_info, "iconLists");
+        if (subitems) {
+            /* this is a folder, so we need to load the subitems */
+            GList *folderitems = NULL;
+            if (plist_get_node_type(subitems) == PLIST_ARRAY) {
+                subitems = plist_array_get_item(subitems, 0);
+                if (plist_get_node_type(subitems) == PLIST_ARRAY) {
+                    icon_count += gui_load_icon_row(subitems, &folderitems);
+                }
+            }
+            if (folderitems) {
+                item = sbitem_new_with_subitems(icon_info, folderitems);
+                if (item != NULL) {
+                    clutter_threads_add_idle((GSourceFunc)sbitem_texture_new, item);
+                    *row = g_list_append(*row, item);
+                    icon_count++;
+                }
+            }
+        } else {
+            item = sbitem_new(icon_info);
+            if (item != NULL) {
+                /* load texture of icon in a new thread */
+                g_thread_create(sbitem_thread_load_texture, item, FALSE, NULL);
 
-            *row = g_list_append(*row, item);
-            icon_count++;
+                *row = g_list_append(*row, item);
+                icon_count++;
+            }
         }
     }
 
     return icon_count;
 }
 
-static void gui_set_iconstate(plist_t iconstate)
+static void gui_set_iconstate(plist_t iconstate, const char *format_version)
 {
     int total;
 
     /* get total number of pages */
-    total = plist_array_get_size(iconstate);
+    if (plist_get_node_type(iconstate) != PLIST_ARRAY) {
+        fprintf(stderr, "ERROR: Invalid icon state format!\n");
+        return;
+    }
 
+    total = plist_array_get_size(iconstate);
     if (total < 1) {
         fprintf(stderr, "ERROR: No icons returned in icon state\n");
         return;
@@ -1041,10 +1145,13 @@ static void gui_set_iconstate(plist_t iconstate)
             fprintf(stderr, "ERROR: error getting outer dock icon array!\n");
             return;
         }
-        dock = plist_array_get_item(dock, 0);
-        if (plist_get_node_type(dock) != PLIST_ARRAY) {
-            fprintf(stderr, "ERROR: error getting inner dock icon array!\n");
-            return;
+
+        if (!format_version || (strcmp(format_version, "2") != 0)) {
+            dock = plist_array_get_item(dock, 0);
+            if (plist_get_node_type(dock) != PLIST_ARRAY) {
+                fprintf(stderr, "ERROR: error getting inner dock icon array!\n");
+                return;
+            }
         }
 
         /* load dock icons */
@@ -1062,9 +1169,11 @@ static void gui_set_iconstate(plist_t iconstate)
                         fprintf(stderr, "ERROR: error getting outer page icon array!\n");
                         return;
                 }
-                /* rows */
-                rows = plist_array_get_size(npage);
-                for (r = 0; r < rows; r++) {
+
+                if (!format_version || (strcmp(format_version, "2") != 0)) {
+                    /* rows */
+                    rows = plist_array_get_size(npage);
+                    for (r = 0; r < rows; r++) {
                         debug_printf("%s: processing page %d, row %d\n", __func__, p, r);
 
                         plist_t nrow = plist_array_get_item(npage, r);
@@ -1073,6 +1182,9 @@ static void gui_set_iconstate(plist_t iconstate)
                             return;
                         }
                         total_icons += gui_load_icon_row(nrow, &page);
+                    }
+                } else {
+                    total_icons += gui_load_icon_row(npage, &page);
                 }
 
                 if (page) {
@@ -1138,7 +1250,6 @@ static void gui_set_wallpaper(const char *wp)
 static gboolean gui_pages_init_cb(gpointer user_data)
 {
     const char *uuid = (const char*)user_data;
-    uint32_t osversion = 0;
     GError *error = NULL;
     plist_t iconstate = NULL;
 
@@ -1159,17 +1270,19 @@ static gboolean gui_pages_init_cb(gpointer user_data)
     }
 
     if (sbc) {
+        const char *fmt_version = NULL;
 #ifdef HAVE_LIBIMOBILEDEVICE_1_1
         if (osversion >= 0x04000000) {
-            /* Load wallpaper if available */
+            fmt_version = "2";
+	    /* Load wallpaper if available */
             if (device_sbs_save_wallpaper(sbc, "/tmp/wallpaper.png", &error)) {
                 gui_set_wallpaper("/tmp/wallpaper.png");
             }
         }
 #endif
         /* Load icon data */
-        if (device_sbs_get_iconstate(sbc, &iconstate, &error)) {
-            gui_set_iconstate(iconstate);
+        if (device_sbs_get_iconstate(sbc, &iconstate, fmt_version, &error)) {
+            gui_set_iconstate(iconstate, fmt_version);
             plist_free(iconstate);
         }
     }
@@ -1228,6 +1341,7 @@ void gui_pages_free()
     if (sbc) {
         device_sbs_free(sbc);
 	sbc = NULL;
+	osversion = 0;
     }
 }
 

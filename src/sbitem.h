@@ -34,7 +34,10 @@ typedef struct {
     plist_t node;
     ClutterActor *texture;
     ClutterActor *label;
+    gboolean drawn;
     gboolean is_dock_item;
+    gboolean is_folder;
+    GList *subitems;
 } SBItem;
 
 char *sbitem_get_display_name(SBItem *item);
@@ -42,6 +45,7 @@ char *sbitem_get_display_identifier(SBItem *item);
 char *sbitem_get_icon_filename(SBItem *item);
 
 SBItem *sbitem_new(plist_t icon_info);
+SBItem *sbitem_new_with_subitems(plist_t icon_info, GList *subitems);
 void sbitem_free(SBItem *item);
 
 void g_func_sbitem_free(SBItem *item, gpointer data);

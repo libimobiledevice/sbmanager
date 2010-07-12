@@ -39,7 +39,7 @@ typedef struct device_info_int *device_info_t;
 void device_init();
 sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError **error);
 void device_sbs_free(sbservices_client_t sbc);
-gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, GError **error);
+gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, const char *format_version, GError **error);
 gboolean device_sbs_save_icon(sbservices_client_t sbc, char *display_identifier, char *filename, GError **error);
 gboolean device_sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate, GError **error);
 gboolean device_sbs_save_wallpaper(sbservices_client_t sbc, const char *filename, GError **error);

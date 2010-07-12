@@ -115,14 +115,20 @@ void device_sbs_free(sbservices_client_t sbc)
     }
 }
 
-gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, GError **error)
+gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, const char *format_version, GError **error)
 {
     plist_t iconstate_loc = NULL;
     gboolean ret = FALSE;
 
     *iconstate = NULL;
     if (sbc) {
-        if (sbservices_get_icon_state(sbc, &iconstate_loc) != SBSERVICES_E_SUCCESS || !iconstate_loc) {
+        sbservices_error_t err;
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1
+        err = sbservices_get_icon_state(sbc, &iconstate_loc, format_version);
+#else
+        err = sbservices_get_icon_state(sbc, &iconstate_loc);
+#endif
+        if (err != SBSERVICES_E_SUCCESS || !iconstate_loc) {
             if (error)
                 *error = g_error_new(device_domain, EIO, _("Could not get icon state!"));
             goto leave_cleanup;
@@ -133,7 +139,7 @@ gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, G
             goto leave_cleanup;
         }
         *iconstate = iconstate_loc;
-	ret = TRUE;
+        ret = TRUE;
     }
 
   leave_cleanup:

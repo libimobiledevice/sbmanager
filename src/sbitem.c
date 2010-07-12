@@ -63,8 +63,21 @@ SBItem *sbitem_new(plist_t icon_info)
     item = g_new0(SBItem, 1);
     item->node = plist_copy(icon_info);
     item->texture = NULL;
+    item->drawn = FALSE;
     item->is_dock_item = FALSE;
+    item->is_folder = FALSE;
+    item->subitems = NULL;
 
+    return item;
+}
+
+SBItem *sbitem_new_with_subitems(plist_t icon_info, GList *subitems)
+{
+    SBItem *item = sbitem_new(icon_info);
+    if (item) {
+        item->subitems = subitems;
+	item->is_folder = TRUE;
+    }
     return item;
 }
 
@@ -84,6 +97,10 @@ void sbitem_free(SBItem *item)
                 clutter_actor_destroy(item->texture);
                 item->texture = NULL;
             }
+        }
+        if (item->subitems) {
+            g_list_foreach(item->subitems, (GFunc)(g_func_sbitem_free), NULL);
+            g_list_free(item->subitems);
         }
         if (item->label && CLUTTER_IS_ACTOR(item->label)) {
             clutter_actor_destroy(item->label);
