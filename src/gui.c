@@ -931,7 +931,23 @@ static void gui_draw_subitems(SBItem *item)
         SBItem *subitem = (SBItem*)g_list_nth_data(item->subitems, i);
         if (subitem && subitem->texture && !subitem->drawn && subitem->node) {
             subitem->is_dock_item = FALSE;
-            ClutterActor *suba = subitem->texture;
+            ClutterActor *sgrp = clutter_group_new();
+            ClutterActor *actor = subitem->texture;
+            clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
+            clutter_actor_set_position(actor, 0.0, 0.0);
+            clutter_actor_set_reactive(actor, TRUE);
+            clutter_actor_show(actor);
+
+            actor = subitem->label;
+            clutter_actor_set_position(actor, (59.0 - clutter_actor_get_width(actor)) / 2, 62.0);
+            clutter_text_set_color(CLUTTER_TEXT(actor), &item_text_color);
+            clutter_actor_show(actor);
+            clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
+            clutter_container_add_actor(CLUTTER_CONTAINER(grp), sgrp);
+            clutter_actor_hide(sgrp);
+
+            ClutterActor *suba = clutter_clone_new(subitem->texture);
+            clutter_actor_unparent(suba);
             clutter_container_add_actor(CLUTTER_CONTAINER(grp), suba);
             clutter_actor_set_scale(suba, 0.22, 0.22);
             clutter_actor_set_position(suba, 8.0 + (i%3)*15.0, 8.0 + ((double)(int)((int)i/(int)3))*16.0);
