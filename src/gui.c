@@ -143,6 +143,7 @@ static void pages_free()
     if (wallpaper) {
         clutter_actor_destroy(wallpaper);
         wallpaper = NULL;
+        item_text_color.alpha = 210;
     }
 }
 
@@ -1260,6 +1261,7 @@ static void gui_set_wallpaper(const char *wp)
     clutter_group_add(CLUTTER_GROUP(stage), actor);
     clutter_actor_lower_bottom(actor);
     wallpaper = actor;
+    item_text_color.alpha = 255;
 }
 #endif
 
