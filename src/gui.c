@@ -52,6 +52,8 @@
 #define MAX_PAGE_ITEMS 16
 #define PAGE_X_OFFSET(i) ((gfloat)(i)*(gfloat)(STAGE_WIDTH))
 
+#define FOLDER_ANIM_DURATION 500
+
 const char CLOCK_FONT[] = "FreeSans Bold 12px";
 ClutterColor clock_text_color = { 255, 255, 255, 210 };
 
@@ -61,6 +63,8 @@ ClutterColor dock_item_text_color = { 255, 255, 255, 255 };
 ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };  /* Black */
 ClutterColor battery_color = { 0xff, 0xff, 0xff, 0x9f };
 ClutterColor spinner_color = { 0xff, 0xff, 0xff, 0xf0 };
+
+const char FOLDER_LARGE_FONT[] = "FreeSans Bold 18px";
 
 GtkWidget *clutter_gtk_widget;
 
@@ -87,6 +91,13 @@ ClutterTimeline *clock_timeline = NULL;
 
 GMutex *selected_mutex = NULL;
 SBItem *selected_item = NULL;
+
+ClutterActor *folder_marker = NULL;
+
+ClutterActor *aniupper = NULL;
+ClutterActor *anilower = NULL;
+ClutterActor *folder = NULL;
+gfloat split_pos = 0.0;
 
 GMutex *icon_loader_mutex = NULL;
 static int icons_loaded = 0;
@@ -778,6 +789,318 @@ static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEven
     return TRUE;
 }
 
+static void gui_folder_align_icons(SBItem *item, gboolean animated)
+{
+    if (!item || !item->subitems)
+        return;
+
+    gint count = g_list_length(item->subitems);
+
+    gfloat ypos = 8.0 + 18.0 + 12.0;
+    gfloat xpos = 16.0;
+    gint i = 0;
+
+    /* set positions */
+    for (i = 0; i < count; i++) {
+        SBItem *si = g_list_nth_data(item->subitems, i);
+        if (!si) {
+            debug_printf("%s: item is null for i=%d\n", __func__, i);
+            continue;
+        }
+        if (!si->texture) {
+            debug_printf("%s: i=%d item->texture is null\n", __func__, i);
+            continue;
+        }
+        ClutterActor *icon = clutter_actor_get_parent(si->texture);
+        if (!icon) {
+            continue;
+        }
+
+        if (si != selected_item) {
+            if (animated) {
+                clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+            } else {
+                clutter_actor_set_position(icon, xpos, ypos);
+            }
+        }
+
+        if (((i + 1) % 4) == 0) {
+            xpos = 16.0;
+            ypos += 88.0;
+        } else {
+            xpos += 76.0;
+        }
+    }
+}
+
+static gboolean folderview_close_finish(gpointer user_data)
+{
+    SBItem *item = (SBItem*)user_data;
+
+    ClutterActor *label = clutter_group_get_nth_child(CLUTTER_GROUP(folder), 1);
+
+    const gchar *oldname = clutter_text_get_text(CLUTTER_TEXT(item->label));
+    const gchar *newname = clutter_text_get_text(CLUTTER_TEXT(label));
+    if (g_str_equal(oldname, newname) == FALSE) {
+        gfloat oldwidth = clutter_actor_get_width(item->label);
+        clutter_text_set_text(CLUTTER_TEXT(item->label), newname);
+        plist_dict_remove_item(item->node, "displayName");
+        plist_dict_insert_item(item->node, "displayName", plist_new_string(newname));
+        gfloat newwidth = clutter_actor_get_width(item->label);
+        gfloat xshift = -(newwidth-oldwidth)/2;
+        clutter_actor_move_by(item->label, xshift, 0);
+    }
+    clutter_actor_show(item->label);
+
+    ClutterActor *newparent = clutter_actor_get_parent(item->texture);
+    GList *subitems = item->subitems;
+    guint i;
+    for (i = 0; i < g_list_length(subitems); i++) {
+        SBItem *si = g_list_nth_data(subitems, i);
+        ClutterActor *actor = clutter_actor_get_parent(si->texture);
+        clutter_actor_reparent(actor, newparent);
+        clutter_actor_hide(actor);
+    }
+    clutter_actor_destroy(folder);
+    folder = NULL;
+    clutter_actor_destroy(aniupper);
+    aniupper = NULL;
+    clutter_actor_destroy(anilower);
+    anilower = NULL;
+    split_pos = 0.0;
+
+    /* un-dim sb and dock items */
+    GList *page = g_list_nth_data(sbpages, current_page);
+    SBItem *it;
+    ClutterActor *act;
+    for (i = 0; i < g_list_length(page); i++) {
+        it = g_list_nth_data(page, i);
+        act = clutter_actor_get_parent(it->texture);
+        clutter_actor_set_opacity(act, 255);
+    }
+    for (i = 0; i < g_list_length(dockitems); i++) {
+        it = g_list_nth_data(dockitems, i);
+        act = clutter_actor_get_parent(it->texture);
+        clutter_actor_set_opacity(act, 255);
+    }
+
+    /* show page indicators */
+    clutter_actor_show(page_indicator_group);
+
+    clutter_actor_set_reactive(item->texture, TRUE);
+
+    return FALSE;
+}
+
+static gboolean folderview_close_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
+{
+    /* discard double clicks */
+    if (event->click_count > 1) {
+        return FALSE;
+    }
+
+    SBItem *item = (SBItem*)user_data;
+
+    clutter_actor_set_reactive(item->texture, FALSE);
+
+    clutter_actor_set_reactive(aniupper, FALSE);
+    clutter_actor_set_reactive(anilower, FALSE);
+
+    clutter_actor_raise_top(aniupper);
+    clutter_actor_raise_top(anilower);
+    clutter_actor_animate(aniupper, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", 0.0, NULL);
+    clutter_actor_animate(anilower, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", 0.0, NULL);
+    clutter_actor_animate(folder, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", split_pos, NULL);
+
+    clutter_threads_add_timeout(FOLDER_ANIM_DURATION, (GSourceFunc)folderview_close_finish, user_data);
+
+    return TRUE;
+}
+
+static gboolean folderview_open_finish(gpointer user_data)
+{
+    ClutterActor *marker = clutter_group_get_nth_child(CLUTTER_GROUP(folder), 2);
+
+    clutter_actor_raise_top(folder);
+    clutter_actor_show(marker);
+
+    g_signal_connect(aniupper, "button-press-event", G_CALLBACK(folderview_close_cb), user_data);
+    g_signal_connect(anilower, "button-press-event", G_CALLBACK(folderview_close_cb), user_data);
+
+    return FALSE;
+}
+
+static void folderview_open(SBItem *item)
+{
+    GList *page = g_list_nth_data(sbpages, current_page);
+    guint i;
+    SBItem *it;
+    ClutterActor *act;
+    gfloat ypos = 0;
+    gfloat xpos = 0;
+
+    gboolean is_dock_folder = FALSE;
+
+    /* dim the springboard icons */
+    for (i = 0; i < g_list_length(page); i++) {
+        it = g_list_nth_data(page, i);
+        act = clutter_actor_get_parent(it->texture);
+        if (item == it) {
+            clutter_actor_set_opacity(act, 255);
+            ypos = 24.0+(gfloat)((int)(i / 4)+1) * 88.0;
+            xpos = 16 + ((i % 4))*76.0;
+            clutter_actor_hide(it->label);
+        } else {
+            clutter_actor_set_opacity(act, 64);
+        }
+    }
+
+    /* dim the dock icons */
+    guint count = g_list_length(dockitems);
+    for (i = 0; i < count; i++) {
+        it = g_list_nth_data(dockitems, i);
+        act = clutter_actor_get_parent(it->texture);
+        if (item == it) {
+            clutter_actor_set_opacity(act, 255);
+	    ypos = STAGE_HEIGHT-DOCK_HEIGHT-12.0;
+	    gfloat spacing = 16.0;
+	    if (count > 4) {
+		spacing = 3.0; 
+	    }
+            gfloat totalwidth = count*60.0 + (count-1) * spacing;
+	    xpos = (STAGE_WIDTH - totalwidth)/2.0 + (i*60.0) + (i*spacing);
+            clutter_actor_hide(it->label);
+	    is_dock_folder = TRUE;
+        } else {
+            clutter_actor_set_opacity(act, 64);
+        }
+    }
+
+    /* hide page indicators */
+    clutter_actor_hide(page_indicator_group);
+
+    /* make snapshot from the stage */
+    guchar *shot = clutter_stage_read_pixels(CLUTTER_STAGE(stage), 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+    if (!shot) {
+        printf("Error creating stage snapshot!\n");
+        return;
+    }
+
+    /* upper */
+    aniupper = clutter_texture_new();
+    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(aniupper), shot, TRUE, STAGE_WIDTH, ypos, STAGE_WIDTH*4, 4, CLUTTER_TEXTURE_NONE, NULL);
+    clutter_container_add_actor(CLUTTER_CONTAINER(stage), aniupper);
+    clutter_actor_set_position(aniupper, 0, 0);
+    clutter_actor_set_reactive(aniupper, TRUE);
+    clutter_actor_show(aniupper);
+    clutter_actor_raise_top(aniupper);
+
+    /* lower */
+    anilower = clutter_texture_new();
+    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(anilower), shot, TRUE, STAGE_WIDTH, STAGE_HEIGHT, STAGE_WIDTH*4, 4, CLUTTER_TEXTURE_NONE, NULL);
+    clutter_container_add_actor(CLUTTER_CONTAINER(stage), anilower);
+    clutter_actor_set_position(anilower, 0, 0);
+    clutter_actor_set_clip(anilower, 0.0, ypos, (gfloat)(STAGE_WIDTH), (gfloat)(STAGE_HEIGHT)-ypos);
+    clutter_actor_set_reactive(anilower, TRUE);
+    clutter_actor_show(anilower);
+    clutter_actor_raise_top(anilower);
+
+    /* create folder container */
+    folder = clutter_group_new();
+    clutter_container_add_actor(CLUTTER_CONTAINER(stage), folder);
+    clutter_actor_raise_top(folder);
+    clutter_actor_set_position(folder, 0, ypos);
+    clutter_actor_show(folder);
+
+    /* folder background rect */
+    ClutterColor folderbg = {0x70, 0x70, 0x70, 255};
+    act = clutter_rectangle_new_with_color(&folderbg);
+    ClutterColor folderbd = {0xe0, 0xe0, 0xe0, 255};
+    clutter_rectangle_set_border_color(CLUTTER_RECTANGLE(act), &folderbd);
+    clutter_rectangle_set_border_width(CLUTTER_RECTANGLE(act), 1);
+    clutter_actor_set_size(act, STAGE_WIDTH, 1);
+    clutter_actor_set_position(act, 0, 0);
+    clutter_actor_set_reactive(act, TRUE);
+    clutter_container_add_actor(CLUTTER_CONTAINER(folder), act);
+    clutter_actor_show(act);
+
+    /* create folder name label */
+    const gchar *ltext = clutter_text_get_text(CLUTTER_TEXT(item->label));
+    ClutterColor lcolor;
+    clutter_text_get_color(CLUTTER_TEXT(item->label), &lcolor);
+    ClutterActor *lbl = clutter_text_new_full(FOLDER_LARGE_FONT, ltext, &lcolor);
+    clutter_container_add_actor(CLUTTER_CONTAINER(folder), lbl);
+    clutter_actor_set_position(lbl, 16.0, 8.0);
+    clutter_text_set_editable(CLUTTER_TEXT(lbl), TRUE);
+    clutter_text_set_selectable(CLUTTER_TEXT(lbl), TRUE);
+    clutter_text_set_single_line_mode(CLUTTER_TEXT(lbl), TRUE);
+    clutter_text_set_line_wrap(CLUTTER_TEXT(lbl), FALSE);
+    clutter_actor_set_reactive(lbl, TRUE);
+    ClutterColor selcolor = {0, 0, 0xa0, 200};
+    ClutterColor curcolor = {0, 0, 0xa0, 255};
+    clutter_text_set_selection_color(CLUTTER_TEXT(lbl), &selcolor);
+    clutter_text_set_cursor_color(CLUTTER_TEXT(lbl), &curcolor);
+
+    /* calculate height */
+    gfloat fh = 8.0 + 18.0 + 8.0;
+    if (item->subitems && (g_list_length(item->subitems) > 0)) {
+        fh += (((g_list_length(item->subitems)-1)/4) + 1)*88.0;
+    } else {
+        fh += 88.0;
+    }
+
+    /* folder marker */
+    ClutterActor *marker = clutter_clone_new(folder_marker);
+    clutter_actor_unparent(marker);
+    clutter_container_add_actor(CLUTTER_CONTAINER(folder), marker);
+    if (is_dock_folder) {
+	clutter_actor_set_rotation(marker, CLUTTER_Z_AXIS, 180.0, 29.0, 8.0, 0.0);
+	clutter_actor_set_position(marker, xpos, fh-2.0);
+        clutter_actor_hide(marker);
+    } else {
+        clutter_actor_set_position(marker, xpos, -14.0);
+        clutter_actor_show(marker);
+    }
+
+    /* reparent the icons to the folder */
+    for (i = 0; i < g_list_length(item->subitems); i++) {
+        SBItem *si = g_list_nth_data(item->subitems, i);
+        ClutterActor *a = clutter_actor_get_parent(si->texture);
+        clutter_actor_reparent(a, folder);
+        clutter_actor_set_position(a, 0, 0);
+        clutter_actor_show(a);
+    }
+
+    /* align folder icons */
+    gui_folder_align_icons(item, FALSE);
+
+    /* distance to move upwards */
+    gfloat move_up_by = 0;
+    if (is_dock_folder) {
+	move_up_by = fh;
+    } else {
+        if ((ypos + fh) > (STAGE_HEIGHT - DOCK_HEIGHT/2)) {
+            move_up_by = (ypos + fh) - (STAGE_HEIGHT - DOCK_HEIGHT/2);
+	}
+    }
+
+    clutter_actor_raise_top(folder);
+    clutter_actor_raise_top(anilower);
+
+    /* now animate the actors */
+    clutter_actor_animate(act, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "height", fh, NULL);
+    clutter_actor_animate(folder, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", ypos-move_up_by, NULL);
+
+    clutter_actor_animate(aniupper, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", (gfloat) -move_up_by, NULL);
+    clutter_actor_animate(anilower, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", (gfloat) fh-move_up_by, NULL);
+
+    free(shot);
+
+    split_pos = ypos;
+
+    clutter_threads_add_timeout(FOLDER_ANIM_DURATION, (GSourceFunc)folderview_open_finish, item);
+}
+
 static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
     if (!user_data) {
@@ -790,12 +1113,21 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
     }
 
     /* discard double clicks */
-    if (event->click_count > 1) {
+    if (event->click_count > 2) {
         return FALSE;
     }
 
     SBItem *item = (SBItem*)user_data;
 
+    if (event->click_count == 2) {
+        if (item->is_folder) {
+            folderview_open(item);
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
+    
     char *strval = sbitem_get_display_name(item);
 
     g_mutex_lock(selected_mutex);
@@ -924,6 +1256,16 @@ static gboolean stage_key_press_cb(ClutterActor *actor, ClutterEvent *event, gpo
     return TRUE;
 }
 
+static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
+{
+    return TRUE;
+}
+
+static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
+{
+    return TRUE;
+}
+
 static void gui_draw_subitems(SBItem *item)
 {
     ClutterActor *grp = clutter_actor_get_parent(item->texture);
@@ -937,6 +1279,8 @@ static void gui_draw_subitems(SBItem *item)
             clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
             clutter_actor_set_position(actor, 0.0, 0.0);
             clutter_actor_set_reactive(actor, TRUE);
+            g_signal_connect(actor, "button-press-event", G_CALLBACK(subitem_button_press_cb), item);
+            g_signal_connect(actor, "button-release-event", G_CALLBACK(subitem_button_release_cb), item);
             clutter_actor_show(actor);
 
             actor = subitem->label;
@@ -1173,8 +1517,8 @@ static void gui_set_iconstate(plist_t iconstate, const char *format_version)
 
         /* load dock icons */
         debug_printf("%s: processing dock\n", __func__);
-        num_dock_items = gui_load_icon_row(dock, &dockitems);
-        total_icons += num_dock_items;
+        total_icons += gui_load_icon_row(dock, &dockitems);
+        num_dock_items = g_list_length(dockitems);
         if (total > 1) {
             /* get all page icons */
             int p, r, rows;
@@ -1495,6 +1839,20 @@ GtkWidget *gui_init()
     if (page_indicator) {
         clutter_actor_hide(page_indicator);
         clutter_container_add_actor(CLUTTER_CONTAINER(stage), page_indicator);
+    }
+
+    /* folder marker */
+    folder_marker = clutter_texture_new();
+    clutter_texture_set_load_async(CLUTTER_TEXTURE(folder_marker), TRUE);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(folder_marker), SBMGR_DATA "/foldermarker.png", &err);
+     if (err) {
+        fprintf(stderr, "Could not load texture " SBMGR_DATA "/foldermarker.png" ": %s\n", err->message);
+        g_error_free(err);
+        err = NULL;
+    }  
+    if (folder_marker) {
+        clutter_actor_hide(folder_marker);
+        clutter_container_add_actor(CLUTTER_CONTAINER(stage), folder_marker);
     }
 
     /* a group for the springboard icons */
