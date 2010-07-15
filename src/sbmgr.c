@@ -174,8 +174,8 @@ static gboolean iconstate_changed_v2(plist_t current_state, plist_t new_state)
                         debug_printf("%s: page %d folder item %d displayName changed!\n", __func__, i, k);
                         return TRUE;
                     }
-                    cur_di = plist_dict_get_item(cur_di, "iconLists");
-                    new_di = plist_dict_get_item(new_di, "iconLists");
+                    cur_di = plist_dict_get_item(cur_node, "iconLists");
+                    new_di = plist_dict_get_item(new_node, "iconLists");
                     cur_di = plist_array_get_item(cur_di, 0);
                     new_di = plist_array_get_item(new_di, 0);
                     if (plist_array_get_size(cur_di) != plist_array_get_size(new_di)) {
