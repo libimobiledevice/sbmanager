@@ -1275,6 +1275,9 @@ static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEven
 static void gui_draw_subitems(SBItem *item)
 {
     ClutterActor *grp = clutter_actor_get_parent(item->texture);
+    ClutterActor *minigrp = clutter_group_new();
+    clutter_actor_set_name(minigrp, "mini");
+    clutter_container_add_actor(CLUTTER_CONTAINER(grp), minigrp);
     guint i;
     for (i = 0; i < g_list_length(item->subitems); i++) {
         SBItem *subitem = (SBItem*)g_list_nth_data(item->subitems, i);
@@ -1299,7 +1302,7 @@ static void gui_draw_subitems(SBItem *item)
 
             ClutterActor *suba = clutter_clone_new(subitem->texture);
             clutter_actor_unparent(suba);
-            clutter_container_add_actor(CLUTTER_CONTAINER(grp), suba);
+            clutter_container_add_actor(CLUTTER_CONTAINER(minigrp), suba);
             clutter_actor_set_scale(suba, 0.22, 0.22);
             clutter_actor_set_position(suba, 8.0 + (i%3)*15.0, 8.0 + ((double)(int)((int)i/(int)3))*16.0);
             if (i < 9)
