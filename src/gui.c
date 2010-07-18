@@ -131,6 +131,7 @@ static int clutter_initialized = 0;
 
 static void gui_page_indicator_group_add(GList *page, int page_index);
 static void gui_page_align_icons(guint page_num, gboolean animated);
+static void gui_folder_align_icons(SBItem *item, gboolean animated);
 
 /* helper */
 static void sbpage_free(GList *sbitems, gpointer data)
@@ -716,14 +717,14 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
     gfloat center_y;
     clutter_actor_get_abs_center(icon, &center_x, &center_y);
 
-    if (clutter_actor_box_contains(&left_trigger, center_x-30, center_y)) {
+    if (!selected_folder && clutter_actor_box_contains(&left_trigger, center_x-30, center_y)) {
         if (current_page > 0) {
             if (elapsed_ms(&last_page_switch, 1000)) {
                 gui_show_previous_page();
                 gettimeofday(&last_page_switch, NULL);
             }
         }
-    } else if (clutter_actor_box_contains(&right_trigger, center_x+30, center_y)) {
+    } else if (!selected_folder && clutter_actor_box_contains(&right_trigger, center_x+30, center_y)) {
         if (current_page < (gint)(g_list_length(sbpages)-1)) {
             if (elapsed_ms(&last_page_switch, 1000)) {
                 gui_show_next_page();
@@ -732,7 +733,12 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         }
     }
 
-    if (selected_item->is_dock_item) {
+    if (selected_folder) {
+        selected_folder->subitems = g_list_remove(selected_folder->subitems, selected_item);
+        selected_folder->subitems =
+            iconlist_insert_item_at(selected_folder->subitems, selected_item, (center_x - 0.0), (center_y - split_pos - clutter_actor_get_y(aniupper)), 0, 4);
+        gui_folder_align_icons(selected_folder, TRUE);  
+    } else if (selected_item->is_dock_item) {
         dockitems = g_list_remove(dockitems, selected_item);
         if (center_y >= dock_area.y1) {
             debug_printf("%s: icon from dock moving inside the dock!\n", __func__);
@@ -1264,11 +1270,88 @@ static gboolean stage_key_press_cb(ClutterActor *actor, ClutterEvent *event, gpo
 
 static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
+    if (!user_data) {
+        return FALSE;
+    }
+
+    if (selected_item) {
+        /* do not allow a button_press event without a prior release */
+        return FALSE;
+    }
+
+    /* discard double clicks */
+    if (event->click_count > 1) {
+        return FALSE;
+    }
+
+    SBItem *item = (SBItem*)user_data;
+
+    char *strval = sbitem_get_display_name(item);
+
+    g_mutex_lock(selected_mutex);
+    debug_printf("%s: %s mouse pressed\n", __func__, strval);
+
+    if (actor) {
+        gfloat diffx = 0.0;
+        gfloat diffy = 0.0;
+        ClutterActor *sc = clutter_actor_get_parent(actor);
+
+        diffy = split_pos + clutter_actor_get_y(aniupper);
+
+        clutter_actor_reparent(sc, stage);
+        clutter_actor_set_position(sc, clutter_actor_get_x(sc) + diffx, clutter_actor_get_y(sc) + diffy);
+        clutter_actor_raise_top(sc);
+        clutter_actor_set_scale_full(sc, 1.2, 1.2,
+                                     clutter_actor_get_x(actor) +
+                                     clutter_actor_get_width(actor) / 2,
+                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
+        clutter_actor_set_opacity(sc, 160);
+        selected_item = item;
+        start_x = event->x;
+        start_y = event->y;
+    }
+    g_mutex_unlock(selected_mutex);
+
     return TRUE;
 }
 
 static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
+    if (!user_data) {
+        return FALSE;
+    }
+
+    /* discard double clicks */
+    if (event->click_count > 1) {
+        return FALSE;
+    }
+
+    SBItem *item = (SBItem*)user_data;
+    char *strval = sbitem_get_display_name(item);
+
+    g_mutex_lock(selected_mutex);
+    debug_printf("%s: %s mouse released\n", __func__, strval);
+
+    if (actor) {
+        ClutterActor *sc = clutter_actor_get_parent(actor);
+        clutter_actor_set_scale_full(sc, 1.0, 1.0,
+                                     clutter_actor_get_x(actor) +
+                                     clutter_actor_get_width(actor) / 2,
+                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
+        clutter_actor_set_opacity(sc, 255);
+
+        clutter_actor_reparent(sc, folder);
+        clutter_actor_set_position(sc,
+                                       clutter_actor_get_x(sc), clutter_actor_get_y(sc) - (split_pos + clutter_actor_get_y(aniupper)));
+    }
+
+    selected_item = NULL;
+    gui_folder_align_icons(selected_folder, TRUE);
+    start_x = 0.0;
+    start_y = 0.0;
+
+    g_mutex_unlock(selected_mutex);
+
     return TRUE;
 }
 
@@ -1288,8 +1371,8 @@ static void gui_draw_subitems(SBItem *item)
             clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
             clutter_actor_set_position(actor, 0.0, 0.0);
             clutter_actor_set_reactive(actor, TRUE);
-            g_signal_connect(actor, "button-press-event", G_CALLBACK(subitem_button_press_cb), item);
-            g_signal_connect(actor, "button-release-event", G_CALLBACK(subitem_button_release_cb), item);
+            g_signal_connect(actor, "button-press-event", G_CALLBACK(subitem_button_press_cb), subitem);
+            g_signal_connect(actor, "button-release-event", G_CALLBACK(subitem_button_release_cb), subitem);
             clutter_actor_show(actor);
 
             actor = subitem->label;
