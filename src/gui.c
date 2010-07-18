@@ -92,6 +92,8 @@ ClutterTimeline *clock_timeline = NULL;
 GMutex *selected_mutex = NULL;
 SBItem *selected_item = NULL;
 
+SBItem *selected_folder = NULL;
+
 ClutterActor *folder_marker = NULL;
 
 ClutterActor *aniupper = NULL;
@@ -889,6 +891,8 @@ static gboolean folderview_close_finish(gpointer user_data)
 
     clutter_actor_set_reactive(item->texture, TRUE);
 
+    selected_folder = NULL;
+
     return FALSE;
 }
 
@@ -940,6 +944,8 @@ static void folderview_open(SBItem *item)
     gfloat xpos = 0;
 
     gboolean is_dock_folder = FALSE;
+
+    selected_folder = item;
 
     /* dim the springboard icons */
     for (i = 0; i < g_list_length(page); i++) {
@@ -1618,6 +1624,10 @@ static gboolean gui_pages_init_cb(gpointer user_data)
     gui_disable_controls();
     icons_loaded = 0;
     total_icons = 0;
+
+    if (selected_folder) {
+        folderview_close_finish(selected_folder);
+    }
 
     pages_free();
 
