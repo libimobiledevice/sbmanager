@@ -797,6 +797,46 @@ static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEven
     return TRUE;
 }
 
+static void gui_redraw_subitems(SBItem *item)
+{
+    if (!item)
+        return;
+
+    ClutterActor *minigrp = NULL;
+    ClutterActor *grp = clutter_actor_get_parent(item->texture);
+    guint cnt = clutter_group_get_n_children(CLUTTER_GROUP(grp));
+    guint i;
+    for (i = 0; i < cnt; i++) {
+        ClutterActor *act = clutter_group_get_nth_child(CLUTTER_GROUP(grp), i);
+        const char *nm = clutter_actor_get_name(act);
+        if (nm && !strcmp(nm, "mini")) {
+            minigrp = act;
+	    break;
+        }
+    }
+    if (minigrp) {
+        clutter_actor_destroy(minigrp);
+    }
+
+    minigrp = clutter_group_new();
+    clutter_actor_set_name(minigrp, "mini");
+    clutter_container_add_actor(CLUTTER_CONTAINER(grp), minigrp);
+    for (i = 0; i < g_list_length(item->subitems); i++) {
+        SBItem *subitem = (SBItem*)g_list_nth_data(item->subitems, i);
+        if (subitem && subitem->texture && subitem->node) {
+            ClutterActor *suba = clutter_clone_new(subitem->texture);
+            clutter_actor_unparent(suba);
+            clutter_container_add_actor(CLUTTER_CONTAINER(minigrp), suba);
+            clutter_actor_set_scale(suba, 0.22, 0.22);
+            clutter_actor_set_position(suba, 8.0 + (i%3)*15.0, 8.0 + ((double)(int)((int)i/(int)3))*16.0);
+            if (i < 9)
+                clutter_actor_show(suba);
+            else
+                clutter_actor_hide(suba);
+        }
+    }
+}
+
 static void gui_folder_align_icons(SBItem *item, gboolean animated)
 {
     if (!item || !item->subitems)
@@ -869,6 +909,9 @@ static gboolean folderview_close_finish(gpointer user_data)
         clutter_actor_reparent(actor, newparent);
         clutter_actor_hide(actor);
     }
+
+    gui_redraw_subitems(item);
+
     clutter_actor_destroy(folder);
     folder = NULL;
     clutter_actor_destroy(aniupper);
@@ -953,6 +996,8 @@ static void folderview_open(SBItem *item)
 
     selected_folder = item;
 
+    ClutterActor *fldr = NULL;
+
     /* dim the springboard icons */
     for (i = 0; i < g_list_length(page); i++) {
         it = g_list_nth_data(page, i);
@@ -962,6 +1007,7 @@ static void folderview_open(SBItem *item)
             ypos = 24.0+(gfloat)((int)(i / 4)+1) * 88.0;
             xpos = 16 + ((i % 4))*76.0;
             clutter_actor_hide(it->label);
+            fldr = act;
         } else {
             clutter_actor_set_opacity(act, 64);
         }
@@ -983,6 +1029,7 @@ static void folderview_open(SBItem *item)
 	    xpos = (STAGE_WIDTH - totalwidth)/2.0 + (i*60.0) + (i*spacing);
             clutter_actor_hide(it->label);
 	    is_dock_folder = TRUE;
+            fldr = act;
         } else {
             clutter_actor_set_opacity(act, 64);
         }
@@ -1020,6 +1067,16 @@ static void folderview_open(SBItem *item)
     clutter_actor_set_reactive(anilower, TRUE);
     clutter_actor_show(anilower);
     clutter_actor_raise_top(anilower);
+
+    /* add a clone of the original folder icon */
+    act = clutter_clone_new(fldr);
+    if (is_dock_folder) {
+        clutter_container_add_actor(CLUTTER_CONTAINER(anilower), act);
+        clutter_actor_set_position(act, xpos, ypos+20.0);
+    } else {
+        clutter_container_add_actor(CLUTTER_CONTAINER(aniupper), act);
+        clutter_actor_set_position(act, xpos, ypos-80.0);
+    }
 
     /* create folder container */
     folder = clutter_group_new();
@@ -1355,6 +1412,9 @@ static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEven
     start_y = 0.0;
 
     g_mutex_unlock(selected_mutex);
+
+    if (selected_folder)
+        gui_redraw_subitems(selected_folder);
 
     return TRUE;
 }
