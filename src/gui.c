@@ -737,7 +737,7 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         selected_folder->subitems = g_list_remove(selected_folder->subitems, selected_item);
         selected_folder->subitems =
             iconlist_insert_item_at(selected_folder->subitems, selected_item, (center_x - 0.0), (center_y - split_pos - clutter_actor_get_y(aniupper)), 0, 4);
-        gui_folder_align_icons(selected_folder, TRUE);  
+        gui_folder_align_icons(selected_folder, TRUE);
     } else if (selected_item->is_dock_item) {
         dockitems = g_list_remove(dockitems, selected_item);
         if (center_y >= dock_area.y1) {
@@ -999,20 +999,24 @@ static void folderview_open(SBItem *item)
     }
 
     /* upper */
-    aniupper = clutter_texture_new();
-    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(aniupper), shot, TRUE, STAGE_WIDTH, ypos, STAGE_WIDTH*4, 4, CLUTTER_TEXTURE_NONE, NULL);
+    aniupper = clutter_group_new();
     clutter_container_add_actor(CLUTTER_CONTAINER(stage), aniupper);
+    act = clutter_texture_new();
+    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(act), shot, TRUE, STAGE_WIDTH, ypos, STAGE_WIDTH*4, 4, CLUTTER_TEXTURE_NONE, NULL);
+    clutter_container_add_actor(CLUTTER_CONTAINER(aniupper), act);
     clutter_actor_set_position(aniupper, 0, 0);
     clutter_actor_set_reactive(aniupper, TRUE);
     clutter_actor_show(aniupper);
     clutter_actor_raise_top(aniupper);
 
     /* lower */
-    anilower = clutter_texture_new();
-    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(anilower), shot, TRUE, STAGE_WIDTH, STAGE_HEIGHT, STAGE_WIDTH*4, 4, CLUTTER_TEXTURE_NONE, NULL);
+    anilower = clutter_group_new();
     clutter_container_add_actor(CLUTTER_CONTAINER(stage), anilower);
+    act = clutter_texture_new();
+    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(act), shot, TRUE, STAGE_WIDTH, STAGE_HEIGHT, STAGE_WIDTH*4, 4, CLUTTER_TEXTURE_NONE, NULL);
+    clutter_actor_set_clip(act, 0.0, ypos, (gfloat)(STAGE_WIDTH), (gfloat)(STAGE_HEIGHT)-ypos);
+    clutter_container_add_actor(CLUTTER_CONTAINER(anilower), act);
     clutter_actor_set_position(anilower, 0, 0);
-    clutter_actor_set_clip(anilower, 0.0, ypos, (gfloat)(STAGE_WIDTH), (gfloat)(STAGE_HEIGHT)-ypos);
     clutter_actor_set_reactive(anilower, TRUE);
     clutter_actor_show(anilower);
     clutter_actor_raise_top(anilower);
