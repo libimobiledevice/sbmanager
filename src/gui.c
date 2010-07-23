@@ -885,7 +885,7 @@ static gboolean folderview_close_finish(gpointer user_data)
 {
     SBItem *item = (SBItem*)user_data;
 
-    ClutterActor *label = clutter_group_get_nth_child(CLUTTER_GROUP(folder), 1);
+    ClutterActor *label = clutter_group_get_nth_child(CLUTTER_GROUP(folder), 2);
 
     const gchar *oldname = clutter_text_get_text(CLUTTER_TEXT(item->label));
     const gchar *newname = clutter_text_get_text(CLUTTER_TEXT(label));
@@ -1098,12 +1098,20 @@ static void folderview_open(SBItem *item)
     clutter_actor_show(act);
 
     /* create folder name label */
+    ClutterColor rcolor = {255, 255, 255, 255};
+    ClutterActor *trect = clutter_rectangle_new_with_color(&rcolor);
+    clutter_container_add_actor(CLUTTER_CONTAINER(folder), trect);
+    clutter_actor_set_position(trect, 16.0, 8.0);
+    clutter_actor_set_size(trect, (gfloat)(STAGE_WIDTH)-32.0, 24.0);
+
     const gchar *ltext = clutter_text_get_text(CLUTTER_TEXT(item->label));
-    ClutterColor lcolor;
-    clutter_text_get_color(CLUTTER_TEXT(item->label), &lcolor);
+    ClutterColor lcolor = {0, 0, 0, 255};
     ClutterActor *lbl = clutter_text_new_full(FOLDER_LARGE_FONT, ltext, &lcolor);
     clutter_container_add_actor(CLUTTER_CONTAINER(folder), lbl);
     clutter_actor_set_position(lbl, 16.0, 8.0);
+    clutter_actor_set_width(lbl, (gfloat)(STAGE_WIDTH)-32.0);
+    clutter_actor_raise(lbl, trect);
+    clutter_actor_grab_key_focus(lbl);
     clutter_text_set_editable(CLUTTER_TEXT(lbl), TRUE);
     clutter_text_set_selectable(CLUTTER_TEXT(lbl), TRUE);
     clutter_text_set_single_line_mode(CLUTTER_TEXT(lbl), TRUE);
