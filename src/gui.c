@@ -1804,7 +1804,10 @@ static gboolean gui_pages_init_cb(gpointer user_data)
 #ifdef HAVE_LIBIMOBILEDEVICE_1_1
         if (osversion >= 0x04000000) {
             fmt_version = "2";
-	    /* Load wallpaper if available */
+        }
+
+        /* Load wallpaper if available */
+        if (osversion >= 0x03020000) {
             if (device_sbs_save_wallpaper(sbc, "/tmp/wallpaper.png", &error)) {
                 gui_set_wallpaper("/tmp/wallpaper.png");
             }
