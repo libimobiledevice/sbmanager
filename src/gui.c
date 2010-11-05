@@ -1940,6 +1940,7 @@ GtkWidget *gui_init()
     }
 
     if (!clutter_initialized) {
+        g_setenv ("CLUTTER_VBLANK", "none", FALSE);
         if (gtk_clutter_init(NULL, NULL) != CLUTTER_INIT_SUCCESS) {
             g_error("Unable to initialize GtkClutter");
             return NULL;
