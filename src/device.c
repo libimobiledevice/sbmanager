@@ -157,10 +157,7 @@ gboolean device_sbs_save_icon(sbservices_client_t sbc, char *display_identifier,
 
     if ((sbservices_get_icon_pngdata(sbc, display_identifier, &png, &pngsize) == SBSERVICES_E_SUCCESS) && (pngsize > 0)) {
         /* save png icon to disk */
-        FILE *f = fopen(filename, "w");
-        fwrite(png, 1, pngsize, f);
-        fclose(f);
-        res = TRUE;
+        res = g_file_set_contents (filename, png, pngsize, error);
     } else {
         if (error)
             *error = g_error_new(device_domain, EIO, _("Could not get icon png data for '%s'"), display_identifier);
@@ -193,18 +190,36 @@ gboolean device_sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate, GE
 }
 
 #ifdef HAVE_LIBIMOBILEDEVICE_1_1
-gboolean device_sbs_save_wallpaper(sbservices_client_t sbc, const char *filename, GError **error)
+char *device_sbs_save_wallpaper(sbservices_client_t sbc, const char *uuid, GError **error)
 {
-    gboolean res = FALSE;
+    char *res = NULL;
     char *png = NULL;
     uint64_t pngsize = 0;
 
     if ((sbservices_get_home_screen_wallpaper_pngdata(sbc, &png, &pngsize) == SBSERVICES_E_SUCCESS) && (pngsize > 0)) {
         /* save png icon to disk */
-        FILE *f = fopen(filename, "w");
-        fwrite(png, 1, pngsize, f);
-        fclose(f);
-        res = TRUE;
+        char *path;
+        char *filename;
+
+	path = g_build_filename (g_get_user_cache_dir (),
+				 "libimobiledevice",
+				 "wallpaper", NULL);
+	g_mkdir_with_parents (path, 0755);
+	g_free (path);
+
+	filename = g_strdup_printf ("%s.png", uuid);
+	path = g_build_filename (g_get_user_cache_dir (),
+				 "libimobiledevice",
+				 "wallpaper",
+				 filename, NULL);
+        g_free (filename);
+
+        if (g_file_set_contents (path, png, pngsize, error) == FALSE) {
+          g_free (filename);
+          free (png);
+          return NULL;
+	}
+	res = path;
     } else {
         if (error)
             *error = g_error_new(device_domain, EIO, _("Could not get wallpaper png data"));

@@ -1808,9 +1808,16 @@ static gboolean gui_pages_init_cb(gpointer user_data)
 
         /* Load wallpaper if available */
         if (osversion >= 0x03020000) {
-            if (device_sbs_save_wallpaper(sbc, "/tmp/wallpaper.png", &error)) {
-                gui_set_wallpaper("/tmp/wallpaper.png");
-            }
+            char *path;
+            path = device_sbs_save_wallpaper(sbc, uuid, &error);
+            if (path == NULL) {
+              g_printerr("%s", error->message);
+              g_error_free(error);
+              error = NULL;
+	    } else {
+	      gui_set_wallpaper(path);
+	    }
+	    g_free (path);
         }
 #endif
         /* Load icon data */

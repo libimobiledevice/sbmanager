@@ -117,9 +117,28 @@ void g_func_sbitem_free(SBItem *item, gpointer data)
 
 char *sbitem_get_icon_filename(SBItem *item)
 {
-    char *value = sbitem_get_display_identifier(item);
+    static gboolean create_dir = FALSE;
+    const char *value;
+    char *filename, *path;
+
+    if (create_dir == FALSE) {
+      path = g_build_filename (g_get_user_cache_dir (),
+			       "libimobiledevice",
+			       "icons", NULL);
+      if (g_mkdir_with_parents (path, 0755) >= 0)
+        create_dir = TRUE;
+      g_free (path);
+    }
+
+    value = sbitem_get_display_identifier(item);
     if (!value)
         return NULL;
 
-    return g_strdup_printf("/tmp/%s.png", value);
+    filename = g_strdup_printf ("%s.png", value);
+    path = g_build_filename (g_get_user_cache_dir (),
+			     "libimobiledevice",
+			     "icons",
+			     filename, NULL);
+    g_free (filename);
+    return path;
 }

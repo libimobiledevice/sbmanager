@@ -42,7 +42,7 @@ void device_sbs_free(sbservices_client_t sbc);
 gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, const char *format_version, GError **error);
 gboolean device_sbs_save_icon(sbservices_client_t sbc, char *display_identifier, char *filename, GError **error);
 gboolean device_sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate, GError **error);
-gboolean device_sbs_save_wallpaper(sbservices_client_t sbc, const char *filename, GError **error);
+char *device_sbs_save_wallpaper(sbservices_client_t sbc, const char *uuid, GError **error);
 
 device_info_t device_info_new();
 void device_info_free(device_info_t device_info);
