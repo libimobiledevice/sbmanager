@@ -33,6 +33,17 @@ struct device_info_int {
     char *device_type;
     guint battery_capacity;
     guint battery_poll_interval;
+    /* layout on iOS 3.2+ */
+    guint home_screen_icon_columns;
+    guint home_screen_icon_dock_max_count;
+    guint home_screen_icon_height;
+    guint home_screen_icon_rows;
+    guint home_screen_icon_width;
+    /* folders on iOS 4+ */
+    guint icon_folder_columns;
+    guint icon_folder_max_pages;
+    guint icon_folder_rows;
+    gboolean icon_state_saves;
 };
 typedef struct device_info_int *device_info_t;
 

@@ -386,12 +386,54 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
 	plist_free(node);
     } 
 
-    /* get battery poll interval */
+    /* get layout information */
     node = NULL;
-    lockdownd_get_value(client, "com.apple.mobile.iTunes", "BatteryPollInterval", &node);
-    plist_get_uint_val(node, &interval);
-    (*device_info)->battery_poll_interval = (guint)interval;
+    plist_t value = NULL;
+    lockdownd_get_value(client, "com.apple.mobile.iTunes", NULL, &node);
+
+    value = plist_dict_get_item(node, "HomeScreenIconColumns");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->home_screen_icon_columns = (guint)integer;
+
+    value = plist_dict_get_item(node, "HomeScreenIconDockMaxCount");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->home_screen_icon_dock_max_count = (guint)integer;
+
+    value = plist_dict_get_item(node, "HomeScreenIconHeight");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->home_screen_icon_height = (guint)integer;
+
+    value = plist_dict_get_item(node, "HomeScreenIconRows");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->home_screen_icon_rows = (guint)integer;
+
+    value = plist_dict_get_item(node, "HomeScreenIconWidth");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->home_screen_icon_width = (guint)integer;
+
+    value = plist_dict_get_item(node, "IconFolderColumns");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->icon_folder_columns = (guint)integer;
+
+    value = plist_dict_get_item(node, "IconFolderMaxPages");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->icon_folder_max_pages = (guint)integer;
+
+    value = plist_dict_get_item(node, "IconFolderRows");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->icon_folder_rows = (guint)integer;
+
+    value = plist_dict_get_item(node, "IconStateSaves");
+    plist_get_bool_val(value, &boolean);
+    (*device_info)->icon_state_saves = (gboolean)boolean;
+
+    /* get battery poll interval */
+    value = plist_dict_get_item(node, "BatteryPollInterval");
+    plist_get_uint_val(value, &integer);
+    (*device_info)->battery_poll_interval = (guint)integer;
+
     plist_free(node);
+    value = NULL;
 
     /* get current battery capacity */
     node = NULL;
