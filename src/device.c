@@ -312,15 +312,16 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
     lockdownd_get_value(client, NULL, "ProductType", &node);
     if (node) {
         char *devtype = NULL;
-        const char *devtypes[8][2] = {
+        const char *devtypes[9][2] = {
             {"iPhone1,1", "iPhone"},
             {"iPhone1,2", "iPhone 3G"},
             {"iPhone2,1", "iPhone 3GS"},
 	    {"iPhone3,1", "iPhone 4"},
 	    {"iPad1,1", "iPad"},
 	    {"iPod1,1", "iPod Touch"},
-            {"iPod2,1", "iPod touch (2G)"},
-            {"iPod3,1", "iPod Touch (3G)"}
+            {"iPod2,1", "iPod Touch (2G)"},
+            {"iPod3,1", "iPod Touch (3G)"},
+            {"iPod4,1", "iPod Touch (4G)"}
         };
         plist_get_string_val(node, &devtype);
         if (devtype) {
