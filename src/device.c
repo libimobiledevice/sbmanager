@@ -277,9 +277,52 @@ static guint battery_info_get_current_capacity(plist_t battery_info)
     return (guint)current_capacity;
 }
 
+gboolean device_poll_battery_capacity(const char *uuid, device_info_t *device_info, GError **error) {
+    plist_t node = NULL;
+    idevice_t phone = NULL;
+    lockdownd_client_t client = NULL;
+    gboolean res = FALSE;
+
+    printf("%s: %s\n", __func__, uuid);
+
+    if (!device_info) {
+        return res;
+    }
+
+    printf("%s\n", __func__);
+
+    g_mutex_lock(idevice_mutex);
+    if (!device_connect(uuid, &phone, &client, error)) {
+        goto leave_cleanup;
+    }
+
+    if (!*device_info) {
+        /* make new device info */
+        *device_info = device_info_new();
+    }
+
+    /* get current battery capacity */
+    node = NULL;
+    lockdownd_get_value(client, "com.apple.mobile.battery", NULL, &node);
+    (*device_info)->battery_capacity = battery_info_get_current_capacity(node);
+    plist_free(node);
+
+    res = TRUE;
+
+  leave_cleanup:
+    if (client) {
+        lockdownd_client_free(client);
+    }
+    idevice_free(phone);
+    g_mutex_unlock(idevice_mutex);
+
+    return res;
+}
+
 gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **error)
 {
-    uint64_t interval = 60;
+    uint8_t boolean = FALSE;
+    uint64_t integer = 60;
     plist_t node = NULL;
     idevice_t phone = NULL;
     lockdownd_client_t client = NULL;

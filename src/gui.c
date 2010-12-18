@@ -1979,7 +1979,7 @@ static gboolean update_battery_info_cb(gpointer user_data)
         return FALSE;
     }
 
-    if (device_get_info(uuid, &device_info, &error)) {
+    if (device_poll_battery_capacity(uuid, &device_info, &error)) {
         clutter_actor_set_size(battery_level, (guint) (((double) (device_info->battery_capacity) / 100.0) * 15), 6);
         if (device_info->battery_capacity == 100) {
             res = FALSE;

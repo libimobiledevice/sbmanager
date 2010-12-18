@@ -46,6 +46,7 @@ char *device_sbs_save_wallpaper(sbservices_client_t sbc, const char *uuid, GErro
 
 device_info_t device_info_new();
 void device_info_free(device_info_t device_info);
+gboolean device_poll_battery_capacity(const char *uuid, device_info_t *device_info, GError **error);
 gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **error);
 
 #endif
