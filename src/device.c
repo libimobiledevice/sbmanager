@@ -246,7 +246,20 @@ char *device_sbs_save_wallpaper(sbservices_client_t sbc, const char *uuid, GErro
 
 device_info_t device_info_new()
 {
-    return g_new0(struct device_info_int, 1);
+    device_info_t device_info = g_new0(struct device_info_int, 1);
+
+    /* initialize default values */
+    device_info->home_screen_icon_columns = 4;
+    device_info->home_screen_icon_dock_max_count = 4;
+    device_info->home_screen_icon_height = 57;
+    device_info->home_screen_icon_rows = 4;
+    device_info->home_screen_icon_width = 57;
+    device_info->icon_folder_columns = 4;
+    device_info->icon_folder_max_pages = 1;
+    device_info->icon_folder_rows = 3;
+    device_info->icon_state_saves = 1;
+
+    return device_info;
 }
 
 void device_info_free(device_info_t device_info)
