@@ -47,6 +47,28 @@ void device_init()
     device_domain = g_quark_from_string("libimobiledevice");
 }
 
+static gboolean device_connect(const char *uuid, idevice_t *phone, lockdownd_client_t *client, GError **error) {
+    gboolean res = FALSE;
+
+    if (!client || !phone) {
+        return res;
+    }
+
+    if (IDEVICE_E_SUCCESS != idevice_new(phone, uuid)) {
+        *error = g_error_new(device_domain, ENODEV, _("No device found, is it plugged in?"));
+        return res;
+    }
+
+    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(*phone, client, "sbmanager")) {
+        *error = g_error_new(device_domain, EIO, _("Could not connect to lockdownd!"));
+        return res;
+    }
+
+    res = TRUE;
+
+    return res;
+}
+
 sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError **error)
 {
     sbservices_client_t sbc = NULL;
@@ -57,16 +79,7 @@ sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError
     printf("%s: %s\n", __func__, uuid);
 
     g_mutex_lock(idevice_mutex);
-    if (IDEVICE_E_SUCCESS != idevice_new(&phone, uuid)) {
-        if (error)
-            *error = g_error_new(device_domain, ENODEV, _("No device found, is it plugged in?"));
-        g_mutex_unlock(idevice_mutex);
-        return sbc;
-    }
-
-    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
-        if (error)
-            *error = g_error_new(device_domain, EIO, _("Could not connect to lockdownd!"));
+    if (!device_connect(uuid, &phone, &client, error)) {
         goto leave_cleanup;
     }
 
@@ -281,13 +294,7 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
     printf("%s\n", __func__);
 
     g_mutex_lock(idevice_mutex);
-    if (IDEVICE_E_SUCCESS != idevice_new(&phone, uuid)) {
-        *error = g_error_new(device_domain, ENODEV, _("No device found, is it plugged in?"));
-        goto leave_cleanup;
-    }
-
-    if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake(phone, &client, "sbmanager")) {
-        *error = g_error_new(device_domain, EIO, _("Could not connect to lockdownd!"));
+    if (!device_connect(uuid, &phone, &client, error)) {
         goto leave_cleanup;
     }
 
