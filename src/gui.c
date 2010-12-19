@@ -52,9 +52,9 @@
 #define STAGE_WIDTH 320
 #define STAGE_HEIGHT 480
 #define DOCK_HEIGHT 90
-#define MAX_PAGE_ITEMS 16
-#define PAGE_X_OFFSET(i) ((gfloat)(i)*(gfloat)(STAGE_WIDTH))
+#define MAX_PAGE_ITEMS (gint)(device_info->home_screen_icon_rows*device_info->home_screen_icon_columns+device_info->home_screen_icon_dock_max_count)
 #define ICON_SPACING 18
+#define PAGE_X_OFFSET(i) ((gfloat)(i)*(gfloat)(stage_area.x2))
 
 #define ICON_MOVEMENT_DURATION 250
 #define FOLDER_ANIM_DURATION 500
@@ -75,12 +75,10 @@ const char FOLDER_LARGE_FONT[] = "FreeSans Bold 18px";
 GtkWidget *clutter_gtk_widget;
 
 ClutterActorBox stage_area = { 0.0, 0.0, STAGE_WIDTH, STAGE_HEIGHT };
-const ClutterActorBox dock_area = { 0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH, STAGE_HEIGHT };
-
-const ClutterActorBox sb_area = { 0.0, 16.0, STAGE_WIDTH, STAGE_HEIGHT - DOCK_HEIGHT - 16.0 };
-
-const ClutterActorBox left_trigger = { -30.0, 16.0, -8.0, STAGE_HEIGHT - DOCK_HEIGHT - 16.0 };
-const ClutterActorBox right_trigger = { STAGE_WIDTH + 8.0, 16.0, STAGE_WIDTH + 30.0, STAGE_HEIGHT - DOCK_HEIGHT - 16.0 };
+ClutterActorBox dock_area = { 0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH, STAGE_HEIGHT };
+ClutterActorBox sb_area = { 0.0, ICON_SPACING, STAGE_WIDTH, STAGE_HEIGHT - DOCK_HEIGHT - ICON_SPACING };
+ClutterActorBox left_trigger = { -30.0, ICON_SPACING, -8.0, STAGE_HEIGHT - DOCK_HEIGHT - ICON_SPACING };
+ClutterActorBox right_trigger = { STAGE_WIDTH + 8.0, ICON_SPACING, STAGE_WIDTH + 30.0, STAGE_HEIGHT - DOCK_HEIGHT - ICON_SPACING };
 
 ClutterActor *stage = NULL;
 ClutterActor *wallpaper = NULL;
@@ -210,29 +208,29 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
 
     gfloat xpageoffset = PAGE_X_OFFSET(pageindex);
 
-    gfloat spacing = 16;
-    if (icons_per_row > 4) {
+    gfloat spacing = ICON_SPACING;
+    if (icons_per_row > (gint)device_info->home_screen_icon_columns) {
         spacing = 3;
     }
 
     gfloat xpos = spacing + xpageoffset;
-    gfloat ypos = 16;
+    gfloat ypos = ICON_SPACING;
     gfloat oxpos = xpos;
 
     for (i = 0; i < count; i++) {
         oxpos = xpos;
 
-        gint nrow = (ypos - 16) / 88;
-        gint irow = (item_y - 16) / 88;
+        gint nrow = (ypos - ICON_SPACING) / 88;
+        gint irow = (item_y - ICON_SPACING) / 88;
 
-        oxpos += nrow*STAGE_WIDTH;
-        gfloat ixpos = item_x + irow*STAGE_WIDTH;
+        oxpos += nrow*stage_area.x2;
+        gfloat ixpos = item_x + irow*stage_area.x2;
 
         /* if required, add spacing */
         if (!move_left)
             oxpos += spacing;
 
-        if (ixpos < oxpos + 60) {
+        if (ixpos < oxpos + 75) {
             newpos = i;
             break;
         }
@@ -243,7 +241,7 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
                 ypos += 88.0;
             }
         } else {
-            xpos += 60;
+            xpos += 75;
             xpos += spacing;
         }
     }
@@ -251,25 +249,25 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
     debug_printf("%s: newpos:%d\n", __func__, newpos);
 
     /* do we have a full page? */
-    if ((count >= MAX_PAGE_ITEMS) && (icons_per_row == 4)) {
+    if ((count >= MAX_PAGE_ITEMS) && (icons_per_row == (gint)device_info->home_screen_icon_columns)) {
         debug_printf("%s: full page detected\n", __func__);
         /* remove overlapping item from current page */
         SBItem *last_item = g_list_nth_data(iconlist, MAX_PAGE_ITEMS-1);
         iconlist = g_list_remove(iconlist, last_item);
         /* animate it to new position */
         ClutterActor *actor = clutter_actor_get_parent(last_item->texture);
-        clutter_actor_animate(actor, CLUTTER_EASE_OUT_QUAD, 250, "x", 16.0 + PAGE_X_OFFSET(pageindex + 1), "y", 16.0, NULL);
+        clutter_actor_animate(actor, CLUTTER_EASE_OUT_QUAD, 250, "x", ICON_SPACING + PAGE_X_OFFSET(pageindex + 1), "y", ICON_SPACING, NULL);
         /* first, we need to get the pages that we have to manipulate */
         gint page_count = g_list_length(sbpages);
         gint last_index = pageindex;
         for (i = pageindex; i < page_count; i++) {
             GList *thepage = g_list_nth_data(sbpages, i);
-            if (g_list_length(thepage) < 16) {
+            if (g_list_length(thepage) < (device_info->home_screen_icon_columns*device_info->home_screen_icon_rows)) {
                 last_index = i;
                 break;
             }
         }
-        if (g_list_length(g_list_nth_data(sbpages, last_index)) >= MAX_PAGE_ITEMS) {
+        if ((gint)g_list_length(g_list_nth_data(sbpages, last_index)) >= MAX_PAGE_ITEMS) {
             /* it's the last page that is full, so we need to add a new page */
             debug_printf("last page is full, appending page\n");
             sbpages = g_list_append(sbpages, NULL);
@@ -293,7 +291,7 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
                 SBItem *prev_page_item = g_list_nth_data(prevpage, MAX_PAGE_ITEMS-1);
                 /* animate this item to fix drawing error */
                 actor = clutter_actor_get_parent(prev_page_item->texture);
-                clutter_actor_animate(actor, CLUTTER_LINEAR, 100, "x", 16 + PAGE_X_OFFSET(i + 1), "y", 16.0, NULL);
+                clutter_actor_animate(actor, CLUTTER_LINEAR, 100, "x", ICON_SPACING + PAGE_X_OFFSET(i + 1), "y", ICON_SPACING, NULL);
                 thepage = g_list_prepend(thepage, prev_page_item);
             } else {
                 thepage = g_list_prepend(thepage, last_item);
@@ -326,7 +324,7 @@ static void gui_fade_init()
     fade_rectangle = clutter_rectangle_new_with_color(&fade_color);
     clutter_container_add_actor (CLUTTER_CONTAINER (stage), fade_rectangle);
     clutter_actor_set_position(fade_rectangle, 0, 0);
-    clutter_actor_set_size(fade_rectangle, STAGE_WIDTH, STAGE_HEIGHT);
+    clutter_actor_set_size(fade_rectangle, stage_area.x2, stage_area.y2);
     clutter_actor_set_opacity(fade_rectangle, 0);
 }
 
@@ -366,14 +364,14 @@ static void gui_spinner_init()
     for (i = 0; i < 12; i++) {
         ClutterActor *actor = clutter_clone_new(spinner_element);
         clutter_group_add(CLUTTER_GROUP(spinner), actor);
-        clutter_actor_set_position(actor, 15.0, 0.0);
+        clutter_actor_set_position(actor, ICON_SPACING, 0.0);
         clutter_actor_set_opacity(actor, (guint8)(((gfloat)(i)/12.0)*255));
         clutter_actor_set_rotation(actor, CLUTTER_Z_AXIS, i*30, 1.0, 15.0, 0);
         clutter_actor_show(actor);
     }
     clutter_actor_hide(spinner);
     clutter_group_add(CLUTTER_GROUP(stage), spinner);
-    clutter_actor_set_position(spinner, (STAGE_WIDTH-32.0)/2, (STAGE_HEIGHT-64.0)/2);
+    clutter_actor_set_position(spinner, (stage_area.x2-32.0)/2, (stage_area.y2-64.0)/2);
     spinner_timeline = clutter_timeline_new(100);
     clutter_timeline_set_loop(spinner_timeline, TRUE);
     g_signal_connect(spinner_timeline, "completed", G_CALLBACK(spinner_spin_cb), NULL);
@@ -400,15 +398,15 @@ static void gui_dock_align_icons(gboolean animated)
     if (count == 0) {
         return;
     }
-    gfloat spacing = 16.0;
-    gfloat ypos = 8.0;
+    gfloat spacing = ICON_SPACING;
+    gfloat ypos = ICON_SPACING/2;
     gfloat xpos = 0.0;
     gint i = 0;
-    if (count > 4) {
+    if (count > (gint)device_info->home_screen_icon_columns) {
         spacing = 3.0;
     }
-    gfloat totalwidth = count * 60.0 + spacing * (count - 1);
-    xpos = (STAGE_WIDTH - totalwidth) / 2.0;
+    gfloat totalwidth = count * device_info->home_screen_icon_width + spacing * (count - 1);
+    xpos = (stage_area.x2 - totalwidth) / 2.0;
 
     /* set positions */
     for (i = 0; i < count; i++) {
@@ -429,7 +427,7 @@ static void gui_dock_align_icons(gboolean animated)
             }
         }
 
-        xpos += 60;
+        xpos += device_info->home_screen_icon_width;
         if (i < count - 1) {
             xpos += spacing;
         }
@@ -454,9 +452,11 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
 
     gint count = g_list_length(pageitems);
 
-    gfloat ypos = 16.0;
-    gfloat xpos = 16.0 + PAGE_X_OFFSET(page_num);
+    gfloat ypos = ICON_SPACING;
+    gfloat xpos = ICON_SPACING + PAGE_X_OFFSET(page_num);
+
     gint i = 0;
+    gfloat item_offset = (device_info->home_screen_icon_height+ICON_SPACING);
 
     /* set positions */
     for (i = 0; i < count; i++) {
@@ -482,13 +482,13 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
             }
         }
 
-        if (((i + 1) % 4) == 0) {
-            xpos = 16.0 + PAGE_X_OFFSET(page_num);
-            if (ypos + 88.0 < sb_area.y2 - sb_area.y1) {
-                ypos += 88.0;
+        if (((i + 1) % device_info->home_screen_icon_columns) == 0) {
+            xpos = ICON_SPACING + PAGE_X_OFFSET(page_num);
+            if (ypos + item_offset < sb_area.y2 - sb_area.y1) {
+                ypos += (device_info->home_screen_icon_height + ICON_SPACING);
             }
         } else {
-            xpos += 76;
+            xpos += device_info->home_screen_icon_width + (stage_area.x2 - (ICON_SPACING*2) - (device_info->home_screen_icon_columns*device_info->home_screen_icon_width)) / (device_info->home_screen_icon_columns-1);
         }
     }
 }
@@ -514,7 +514,7 @@ static void gui_page_indicator_group_align()
         xpos += clutter_actor_get_width(dot);
     }
 
-    clutter_actor_set_x(page_indicator_group, (STAGE_WIDTH - xpos) / 2.0);
+    clutter_actor_set_x(page_indicator_group, (stage_area.x2 - xpos) / 2.0);
 }
 
 static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer data);
@@ -685,10 +685,10 @@ plist_t gui_get_iconstate(const char *format_version)
                 row = plist_new_array();
                 plist_array_append_item(ppage, row);
             }
-            for (j = 0; j < 16; j++) {
+            for (j = 0; j < (device_info->home_screen_icon_columns*device_info->home_screen_icon_rows); j++) {
                 SBItem *item = g_list_nth_data(page, j);
                 if (use_version == 1) {
-                    if ((j % 4) == 0) {
+                    if ((j % device_info->home_screen_icon_columns) == 0) {
                         row = plist_new_array();
                         plist_array_append_item(ppage, row);
                     }
@@ -733,14 +733,14 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
     gfloat center_y;
     clutter_actor_get_abs_center(icon, &center_x, &center_y);
 
-    if (!selected_folder && clutter_actor_box_contains(&left_trigger, center_x-30, center_y)) {
+    if (!selected_folder && clutter_actor_box_contains(&left_trigger, center_x - (device_info->home_screen_icon_width / 2), center_y)) {
         if (current_page > 0) {
             if (elapsed_ms(&last_page_switch, 1000)) {
                 gui_show_previous_page();
                 gettimeofday(&last_page_switch, NULL);
             }
         }
-    } else if (!selected_folder && clutter_actor_box_contains(&right_trigger, center_x+30, center_y)) {
+    } else if (!selected_folder && clutter_actor_box_contains(&right_trigger, center_x + (device_info->home_screen_icon_width / 2), center_y)) {
         if (current_page < (gint)(g_list_length(sbpages)-1)) {
             if (elapsed_ms(&last_page_switch, 1000)) {
                 gui_show_next_page();
@@ -844,7 +844,7 @@ static void gui_folder_redraw_subitems(SBItem *item)
             clutter_actor_unparent(suba);
             clutter_container_add_actor(CLUTTER_CONTAINER(minigrp), suba);
             clutter_actor_set_scale(suba, 0.22, 0.22);
-            clutter_actor_set_position(suba, 8.0 + (i%3)*15.0, 8.0 + ((double)(int)((int)i/(int)3))*16.0);
+            clutter_actor_set_position(suba, 8.0 + (i%3)*ICON_SPACING, 8.0 + ((double)(int)((int)i/(int)3))*ICON_SPACING);
             if (i < 9)
                 clutter_actor_show(suba);
             else
@@ -860,8 +860,8 @@ static void gui_folder_align_icons(SBItem *item, gboolean animated)
 
     gint count = g_list_length(item->subitems);
 
-    gfloat ypos = 8.0 + 18.0 + 12.0;
-    gfloat xpos = 16.0;
+    gfloat ypos = 8.0 + ICON_SPACING + ICON_SPACING;
+    gfloat xpos = (ICON_SPACING / 2);
     gint i = 0;
 
     /* set positions */
@@ -889,7 +889,7 @@ static void gui_folder_align_icons(SBItem *item, gboolean animated)
         }
 
         if (((i + 1) % 4) == 0) {
-            xpos = 16.0;
+            xpos = ICON_SPACING;
             ypos += 88.0;
         } else {
             xpos += 76.0;
@@ -1051,13 +1051,13 @@ static void folderview_open(SBItem *item)
         act = clutter_actor_get_parent(it->texture);
         if (item == it) {
             clutter_actor_set_opacity(act, 255);
-	    ypos = STAGE_HEIGHT-DOCK_HEIGHT-12.0;
-	    gfloat spacing = 16.0;
+	    ypos = stage_area.y1 - DOCK_HEIGHT - ICON_SPACING;
+	    gfloat spacing = ICON_SPACING;
 	    if (count > 4) {
 		spacing = 3.0; 
 	    }
-            gfloat totalwidth = count*60.0 + (count-1) * spacing;
-	    xpos = (STAGE_WIDTH - totalwidth)/2.0 + (i*60.0) + (i*spacing);
+            gfloat totalwidth = count*57.0 + (count-1) * spacing;
+	    xpos = (stage_area.x2 - totalwidth)/2.0 + (i*57.0) + (i*spacing);
             clutter_actor_hide(it->label);
             if (it->label_shadow) {
                 clutter_actor_hide(it->label_shadow);
@@ -1077,7 +1077,7 @@ static void folderview_open(SBItem *item)
     }
 
     /* make snapshot from the stage */
-    guchar *shot = clutter_stage_read_pixels(CLUTTER_STAGE(stage), 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
+    guchar *shot = clutter_stage_read_pixels(CLUTTER_STAGE(stage), 0, 0, stage_area.x2, stage_area.y2);
     if (!shot) {
         printf("Error creating stage snapshot!\n");
         return;
@@ -1091,7 +1091,7 @@ static void folderview_open(SBItem *item)
     aniupper = clutter_group_new();
     clutter_container_add_actor(CLUTTER_CONTAINER(stage), aniupper);
     act = clutter_texture_new();
-    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(act), shot, TRUE, STAGE_WIDTH, ypos, STAGE_WIDTH*4, 4, CLUTTER_TEXTURE_NONE, NULL);
+    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(act), shot, TRUE, stage_area.x2, ypos, stage_area.x2*4, 4, CLUTTER_TEXTURE_NONE, NULL);
     clutter_container_add_actor(CLUTTER_CONTAINER(aniupper), act);
     clutter_actor_set_position(aniupper, 0, 0);
     clutter_actor_set_reactive(aniupper, TRUE);
@@ -1102,8 +1102,8 @@ static void folderview_open(SBItem *item)
     anilower = clutter_group_new();
     clutter_container_add_actor(CLUTTER_CONTAINER(stage), anilower);
     act = clutter_texture_new();
-    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(act), shot, TRUE, STAGE_WIDTH, STAGE_HEIGHT, STAGE_WIDTH*4, 4, CLUTTER_TEXTURE_NONE, NULL);
-    clutter_actor_set_clip(act, 0.0, ypos, (gfloat)(STAGE_WIDTH), (gfloat)(STAGE_HEIGHT)-ypos);
+    clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(act), shot, TRUE, stage_area.x2, stage_area.y2, stage_area.x2*4, 4, CLUTTER_TEXTURE_NONE, NULL);
+    clutter_actor_set_clip(act, 0.0, ypos, (gfloat)(stage_area.x2), (gfloat)(stage_area.y2)-ypos);
     clutter_container_add_actor(CLUTTER_CONTAINER(anilower), act);
     clutter_actor_set_position(anilower, 0, 0);
     clutter_actor_set_reactive(anilower, TRUE);
@@ -1133,7 +1133,7 @@ static void folderview_open(SBItem *item)
     ClutterColor folderbd = {0xe0, 0xe0, 0xe0, 255};
     clutter_rectangle_set_border_color(CLUTTER_RECTANGLE(act), &folderbd);
     clutter_rectangle_set_border_width(CLUTTER_RECTANGLE(act), 1);
-    clutter_actor_set_size(act, STAGE_WIDTH, 1);
+    clutter_actor_set_size(act, stage_area.x2, 1);
     clutter_actor_set_position(act, 0, 0);
     clutter_actor_set_reactive(act, TRUE);
     clutter_container_add_actor(CLUTTER_CONTAINER(folder), act);
@@ -1144,14 +1144,14 @@ static void folderview_open(SBItem *item)
     ClutterActor *trect = clutter_rectangle_new_with_color(&rcolor);
     clutter_container_add_actor(CLUTTER_CONTAINER(folder), trect);
     clutter_actor_set_position(trect, 16.0, 8.0);
-    clutter_actor_set_size(trect, (gfloat)(STAGE_WIDTH)-32.0, 24.0);
+    clutter_actor_set_size(trect, (gfloat)(stage_area.x2)-32.0, 24.0);
 
     const gchar *ltext = clutter_text_get_text(CLUTTER_TEXT(item->label));
     ClutterColor lcolor = {0, 0, 0, 255};
     ClutterActor *lbl = clutter_text_new_full(FOLDER_LARGE_FONT, ltext, &lcolor);
     clutter_container_add_actor(CLUTTER_CONTAINER(folder), lbl);
     clutter_actor_set_position(lbl, 16.0, 8.0);
-    clutter_actor_set_width(lbl, (gfloat)(STAGE_WIDTH)-32.0);
+    clutter_actor_set_width(lbl, (gfloat)(stage_area.x2)-32.0);
     clutter_actor_raise(lbl, trect);
     clutter_actor_grab_key_focus(lbl);
     clutter_text_set_editable(CLUTTER_TEXT(lbl), TRUE);
@@ -1167,7 +1167,7 @@ static void folderview_open(SBItem *item)
     /* calculate height */
     gfloat fh = 8.0 + 18.0 + 8.0;
     if (item->subitems && (g_list_length(item->subitems) > 0)) {
-        fh += (((g_list_length(item->subitems)-1)/4) + 1)*88.0;
+        fh += (((g_list_length(item->subitems)-1)/device_info->home_screen_icon_columns) + 1)*88.0;
     } else {
         fh += 88.0;
     }
@@ -1202,8 +1202,8 @@ static void folderview_open(SBItem *item)
     if (is_dock_folder) {
 	move_up_by = fh;
     } else {
-        if ((ypos + fh) > (STAGE_HEIGHT - DOCK_HEIGHT/2)) {
-            move_up_by = (ypos + fh) - (STAGE_HEIGHT - DOCK_HEIGHT/2);
+        if ((ypos + fh) > (stage_area.y2 - DOCK_HEIGHT/2)) {
+            move_up_by = (ypos + fh) - (stage_area.y2 - DOCK_HEIGHT/2);
 	}
     }
 
@@ -1266,9 +1266,9 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
         ClutterActor *sc = clutter_actor_get_parent(actor);
         if (item->is_dock_item) {
             clutter_text_set_color(CLUTTER_TEXT(item->label), &item_text_color);
-            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + 62.0);
+            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height);
             if (item->label_shadow) {
-                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + 62.0 + 1.0);
+                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height + 1.0);
             }
             diffx = dock_area.x1;
             diffy = dock_area.y1;
@@ -1336,9 +1336,9 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
         clutter_actor_set_opacity(sc, 255);
         if (item->is_dock_item) {
             clutter_text_set_color(CLUTTER_TEXT(item->label), &dock_item_text_color);
-            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + 67.0);
+            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height);
             if (item->label_shadow) {
-                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + 67.0 + 1.0);
+                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height + 1.0);
             }
             clutter_actor_reparent(sc, the_dock);
             clutter_actor_set_position(sc,
@@ -1520,8 +1520,9 @@ static void gui_folder_draw_subitems(SBItem *item)
             g_signal_connect(actor, "button-release-event", G_CALLBACK(subitem_button_release_cb), subitem);
             clutter_actor_show(actor);
 
+            /* setup label */
             actor = subitem->label;
-            clutter_actor_set_position(actor, (59.0 - clutter_actor_get_width(actor)) / 2, 62.0);
+            clutter_actor_set_position(actor, (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2, device_info->home_screen_icon_height);
             clutter_text_set_color(CLUTTER_TEXT(actor), &item_text_color);
             clutter_actor_show(actor);
             clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
@@ -1532,7 +1533,7 @@ static void gui_folder_draw_subitems(SBItem *item)
             clutter_actor_unparent(suba);
             clutter_container_add_actor(CLUTTER_CONTAINER(minigrp), suba);
             clutter_actor_set_scale(suba, 0.22, 0.22);
-            clutter_actor_set_position(suba, 8.0 + (i%3)*15.0, 8.0 + ((double)(int)((int)i/(int)3))*16.0);
+            clutter_actor_set_position(suba, 8.0 + (i%3)*ICON_SPACING, 8.0 + ((double)(int)((int)i/3))*ICON_SPACING);
             if (i < 9)
                 clutter_actor_show(suba);
             else
@@ -1579,7 +1580,7 @@ static void gui_show_icons()
                 g_signal_connect(actor, "button-release-event", G_CALLBACK(item_button_release_cb), item);
                 clutter_actor_show(actor);
                 actor = item->label;
-                clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2, ypos + 67.0);
+                clutter_actor_set_position(actor, xpos + (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2, ypos + device_info->home_screen_icon_height);
                 clutter_text_set_color(CLUTTER_TEXT(actor), &dock_item_text_color);
                 clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                 clutter_container_add_actor(CLUTTER_CONTAINER(the_dock), grp);
@@ -1628,7 +1629,7 @@ static void gui_show_icons()
                     clutter_actor_show(actor);
                     actor = item->label;
                     clutter_text_set_color(CLUTTER_TEXT(actor), &item_text_color);
-                    clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2, ypos + 62.0);
+                    clutter_actor_set_position(actor, xpos + (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2, ypos + device_info->home_screen_icon_height);
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                     clutter_container_add_actor(CLUTTER_CONTAINER(the_sb), grp);
 		    item->drawn = TRUE;
@@ -1672,7 +1673,8 @@ static gboolean sbitem_texture_new(gpointer data)
     ClutterActor *actor = clutter_texture_new();
     clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
     g_signal_connect(actor, "load-finished", G_CALLBACK(sbitem_texture_load_finished), (gpointer)item); 
-    clutter_actor_set_size(actor, 59.0, 62.0);
+    clutter_actor_set_size(actor, device_info->home_screen_icon_width, device_info->home_screen_icon_height);
+    clutter_actor_set_scale(actor, 1.0, 1.0);
 
     /* create item */
     item->texture = actor;
@@ -1888,7 +1890,7 @@ static void gui_set_wallpaper(const char *wp)
         err = NULL;
         return;
     }
-    clutter_actor_set_size(actor, 320.0, 480.0);
+    clutter_actor_set_size(actor, stage_area.x2, stage_area.y2);
     clutter_actor_set_position(actor, 0, 0);
     clutter_actor_show(actor);
     clutter_group_add(CLUTTER_GROUP(stage), actor);
@@ -2146,12 +2148,12 @@ GtkWidget *gui_init()
     gettimeofday(&last_page_switch, NULL);
 
     /* Create the clutter widget */
-    GtkWidget *clutter_widget = gtk_clutter_embed_new();
+    GtkWidget *clutter_widget = clutter_gtk_widget = gtk_clutter_embed_new();
 
     /* Set the size of the widget, because we should not set the size of its
      * stage when using GtkClutterEmbed.
      */
-    gtk_widget_set_size_request(clutter_widget, STAGE_WIDTH, STAGE_HEIGHT);
+    gtk_widget_set_size_request(clutter_widget, stage_area.x2, stage_area.y2);
 
     /* Set the stage background color */
     stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(clutter_widget));
@@ -2192,7 +2194,7 @@ GtkWidget *gui_init()
     clutter_group_add(CLUTTER_GROUP(stage), page_indicator_group);
 
     /* alignment will be done when new indicators are added */
-    clutter_actor_set_position(page_indicator_group, 0, STAGE_HEIGHT - DOCK_HEIGHT - 18);
+    clutter_actor_set_position(page_indicator_group, 0, stage_area.y2 - DOCK_HEIGHT - ICON_SPACING);
 
     /* page indicator (dummy), will be cloned when the pages are created */
     page_indicator = clutter_texture_new();
@@ -2239,7 +2241,7 @@ GtkWidget *gui_init()
     /* a group for the springboard icons */
     the_sb = clutter_group_new();
     clutter_group_add(CLUTTER_GROUP(stage), the_sb);
-    clutter_actor_set_position(the_sb, 0, 16);
+    clutter_actor_set_position(the_sb, sb_area.x1, sb_area.y1);
 
     /* a group for the dock icons */
     the_dock = clutter_group_new();
@@ -2272,7 +2274,7 @@ GtkWidget *gui_init()
     /* battery capacity */
     battery_level = clutter_rectangle_new_with_color(&battery_color);
     clutter_group_add(CLUTTER_GROUP(stage), battery_level);
-    clutter_actor_set_position(battery_level, 298, 6);
+    clutter_actor_set_position(battery_level, stage_area.x2 - 22, 6);
 
     return clutter_widget;
 }
