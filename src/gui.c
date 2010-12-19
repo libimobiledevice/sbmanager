@@ -52,6 +52,7 @@
 #define MAX_PAGE_ITEMS 16
 #define PAGE_X_OFFSET(i) ((gfloat)(i)*(gfloat)(STAGE_WIDTH))
 
+#define ICON_MOVEMENT_DURATION 250
 #define FOLDER_ANIM_DURATION 500
 
 const char CLOCK_FONT[] = "FreeSans Bold 12px";
@@ -159,6 +160,14 @@ static void pages_free()
         wallpaper = NULL;
         item_text_color.alpha = 210;
     }
+}
+
+static gboolean item_enable(gpointer item)
+{
+	if (item) {
+		((SBItem*)item)->enabled = TRUE;
+	}
+	return FALSE;
 }
 
 static void clutter_actor_get_abs_center(ClutterActor *actor, gfloat *center_x, gfloat *center_y)
@@ -407,7 +416,7 @@ static void gui_dock_align_icons(gboolean animated)
 
         if (item != selected_item) {
             if (animated) {
-                clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+                clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, ICON_MOVEMENT_DURATION, "x", xpos, "y", ypos, NULL);
             } else {
                 clutter_actor_set_position(icon, xpos, ypos);
             }
@@ -460,7 +469,7 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
 
         if (item != selected_item) {
             if (animated) {
-                clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, 250, "x", xpos, "y", ypos, NULL);
+                clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, ICON_MOVEMENT_DURATION, "x", xpos, "y", ypos, NULL);
             } else {
                 clutter_actor_set_position(icon, xpos, ypos);
             }
@@ -1208,7 +1217,11 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
             return FALSE;
         }
     }
-    
+
+    if (!item->enabled) {
+        return FALSE;
+    }
+
     char *strval = sbitem_get_display_name(item);
 
     g_mutex_lock(selected_mutex);
@@ -1267,6 +1280,11 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
     }
 
     SBItem *item = (SBItem*)user_data;
+    if (!item->enabled) {
+        return FALSE;
+    }
+    item->enabled = FALSE;
+
     char *strval = sbitem_get_display_name(item);
 
     /* remove empty pages and page indicators as needed */
@@ -1312,6 +1330,8 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
     start_x = 0.0;
     start_y = 0.0;
 
+    clutter_threads_add_timeout(ICON_MOVEMENT_DURATION, (GSourceFunc)item_enable, (gpointer)item);
+
     g_mutex_unlock(selected_mutex);
 
     return TRUE;
@@ -1354,6 +1374,9 @@ static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent 
     }
 
     SBItem *item = (SBItem*)user_data;
+    if (!item->enabled) {
+        return FALSE;
+    }
 
     char *strval = sbitem_get_display_name(item);
 
@@ -1396,6 +1419,11 @@ static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEven
     }
 
     SBItem *item = (SBItem*)user_data;
+    if (!item->enabled) {
+        return FALSE;
+    }
+    item->enabled = FALSE;
+
     char *strval = sbitem_get_display_name(item);
 
     g_mutex_lock(selected_mutex);
@@ -1418,6 +1446,8 @@ static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEven
     gui_folder_align_icons(selected_folder, TRUE);
     start_x = 0.0;
     start_y = 0.0;
+
+    clutter_threads_add_timeout(ICON_MOVEMENT_DURATION, (GSourceFunc)item_enable, (gpointer)item);
 
     g_mutex_unlock(selected_mutex);
 

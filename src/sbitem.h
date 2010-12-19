@@ -37,6 +37,7 @@ typedef struct {
     gboolean drawn;
     gboolean is_dock_item;
     gboolean is_folder;
+    gboolean enabled;
     GList *subitems;
 } SBItem;
 

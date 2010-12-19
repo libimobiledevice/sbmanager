@@ -66,6 +66,7 @@ SBItem *sbitem_new(plist_t icon_info)
     item->drawn = FALSE;
     item->is_dock_item = FALSE;
     item->is_folder = FALSE;
+    item->enabled = TRUE;
     item->subitems = NULL;
 
     return item;
