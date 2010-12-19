@@ -808,7 +808,7 @@ static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEven
     return TRUE;
 }
 
-static void gui_redraw_subitems(SBItem *item)
+static void gui_folder_redraw_subitems(SBItem *item)
 {
     if (!item)
         return;
@@ -928,7 +928,7 @@ static gboolean folderview_close_finish(gpointer user_data)
         clutter_actor_hide(actor);
     }
 
-    gui_redraw_subitems(item);
+    gui_folder_redraw_subitems(item);
 
     clutter_actor_destroy(folder);
     folder = NULL;
@@ -1474,12 +1474,12 @@ static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEven
     g_mutex_unlock(selected_mutex);
 
     if (selected_folder)
-        gui_redraw_subitems(selected_folder);
+        gui_folder_redraw_subitems(selected_folder);
 
     return TRUE;
 }
 
-static void gui_draw_subitems(SBItem *item)
+static void gui_folder_draw_subitems(SBItem *item)
 {
     ClutterActor *grp = clutter_actor_get_parent(item->texture);
     ClutterActor *minigrp = clutter_group_new();
@@ -1582,7 +1582,7 @@ static void gui_show_icons()
             }
             /* process subitems */
             if (item->texture && item->is_folder && item->subitems) {
-                gui_draw_subitems(item);
+                gui_folder_draw_subitems(item);
             }
         }
         gui_dock_align_icons(FALSE);
@@ -1630,7 +1630,7 @@ static void gui_show_icons()
                 }
                 /* process subitems */
                 if (item->texture && item->is_folder && item->subitems) {
-                    gui_draw_subitems(item);
+                    gui_folder_draw_subitems(item);
                 }
             }
             gui_page_align_icons(j, FALSE);
