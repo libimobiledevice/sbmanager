@@ -265,13 +265,16 @@ device_info_t device_info_new()
 void device_info_free(device_info_t device_info)
 {
     if (device_info) {
+        if (device_info->uuid) {
+            free(device_info->uuid);
+        }
         if (device_info->device_name) {
             free(device_info->device_name);
-	}
+        }
         if (device_info->device_type) {
             free(device_info->device_type);
         }
-	free(device_info);
+        free(device_info);
     }
 }
 
@@ -358,6 +361,8 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
         /* make new device info */
         *device_info = device_info_new();
     }
+
+    (*device_info)->uuid = strdup(uuid);
 
     if ((*device_info)->device_name) {
 	free((*device_info)->device_name);
