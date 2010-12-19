@@ -335,6 +335,30 @@ gboolean device_poll_battery_capacity(const char *uuid, device_info_t *device_in
     return res;
 }
 
+static void device_dump_info(device_info_t info) {
+    printf("%s: Device Information\n", __func__);
+
+    printf("%s: UUID: %s\n", __func__, info->uuid);
+    printf("%s: Name: %s\n", __func__, info->device_name);
+    printf("%s: Type: %s\n", __func__, info->device_type);
+
+    printf("%s: Battery\n", __func__);
+    printf("%s: PollInterval: %d\n", __func__, info->battery_poll_interval);
+    printf("%s: CurrentCapacity: %d\n", __func__, info->battery_capacity);
+
+    printf("%s: HomeScreen Settings\n", __func__);
+
+    printf("%s: IconColumns: %d\n", __func__, info->home_screen_icon_columns);
+    printf("%s: IconRows: %d\n", __func__, info->home_screen_icon_rows);
+    printf("%s: IconDockMaxCount: %d\n", __func__, info->home_screen_icon_dock_max_count);
+    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
+    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
+
+    printf("%s: IconFolder Settings\n", __func__);
+    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
+    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
+}
+
 gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **error)
 {
     uint8_t boolean = FALSE;
@@ -460,6 +484,8 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
     plist_free(node);
 
     res = TRUE;
+
+    device_dump_info((*device_info));
 
   leave_cleanup:
     if (client) {
