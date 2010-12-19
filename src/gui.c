@@ -46,11 +46,15 @@
 #include "sbitem.h"
 #include "gui.h"
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b)) 
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 #define STAGE_WIDTH 320
 #define STAGE_HEIGHT 480
 #define DOCK_HEIGHT 90
 #define MAX_PAGE_ITEMS 16
 #define PAGE_X_OFFSET(i) ((gfloat)(i)*(gfloat)(STAGE_WIDTH))
+#define ICON_SPACING 18
 
 #define ICON_MOVEMENT_DURATION 250
 #define FOLDER_ANIM_DURATION 500
@@ -70,6 +74,7 @@ const char FOLDER_LARGE_FONT[] = "FreeSans Bold 18px";
 
 GtkWidget *clutter_gtk_widget;
 
+ClutterActorBox stage_area = { 0.0, 0.0, STAGE_WIDTH, STAGE_HEIGHT };
 const ClutterActorBox dock_area = { 0.0, STAGE_HEIGHT - DOCK_HEIGHT, STAGE_WIDTH, STAGE_HEIGHT };
 
 const ClutterActorBox sb_area = { 0.0, 16.0, STAGE_WIDTH, STAGE_HEIGHT - DOCK_HEIGHT - 16.0 };
@@ -2005,11 +2010,74 @@ void gui_pages_free()
     }
 }
 
+static void gui_update_layout(device_info_t info) {
+    if (!info)
+        return;
+
+    /* calculate stage boundry */
+    stage_area.x1 = 0.0;
+    stage_area.y1 = 0.0;
+    stage_area.x2 = (info->home_screen_icon_width * MAX(info->home_screen_icon_columns, info->home_screen_icon_dock_max_count));
+    stage_area.x2 += (ICON_SPACING * MAX(info->home_screen_icon_columns, info->home_screen_icon_dock_max_count));
+    stage_area.x2 += ICON_SPACING + 2;
+
+    stage_area.y2 = (info->home_screen_icon_height * info->home_screen_icon_rows);
+    stage_area.y2 += ((ICON_SPACING*2) * info->home_screen_icon_rows);
+    stage_area.y2 += DOCK_HEIGHT;
+
+    printf("%s: stage_area x: %f, y: %f, width: %f, height: %f\n", __func__, stage_area.x1, stage_area.y1, stage_area.x2, stage_area.y2);
+
+    /* update areas */
+    dock_area.x1 = 0.0;
+    dock_area.y1 = stage_area.y2 - DOCK_HEIGHT - (ICON_SPACING / 2);
+    dock_area.x2 = stage_area.x2;
+    dock_area.y2 = stage_area.y2;
+
+    printf("%s: dock_area x: %f, y: %f, width: %f, height: %f\n", __func__, dock_area.x1, dock_area.y1, dock_area.x2, dock_area.y2);
+
+    sb_area.x1 = 0.0;
+    sb_area.y1 = ICON_SPACING;
+    sb_area.x2 = stage_area.x2;
+    sb_area.y2 = dock_area.y1;
+
+    printf("%s: sb_area x: %f, y: %f, width: %f, height: %f\n", __func__, sb_area.x1, sb_area.y1, sb_area.x2, sb_area.y2);
+
+    /* update triggers */
+    left_trigger.x1 = -ICON_SPACING - 2;
+    left_trigger.y1 = ICON_SPACING;
+    left_trigger.x2 = -(ICON_SPACING / 2);
+    left_trigger.y2 = stage_area.y2 - DOCK_HEIGHT - ICON_SPACING;
+
+    printf("%s: left_trigger x: %f, y: %f, width: %f, height: %f\n", __func__, left_trigger.x1, left_trigger.y1, left_trigger.x2, left_trigger.y2);
+
+    right_trigger.x1 = stage_area.x2 + (ICON_SPACING / 2);
+    right_trigger.y1 = ICON_SPACING;
+    right_trigger.x2 = stage_area.x2 + (ICON_SPACING*2);
+    right_trigger.y2 = stage_area.y2 - DOCK_HEIGHT - ICON_SPACING;
+
+    printf("%s: right_trigger x: %f, y: %f, width: %f, height: %f\n", __func__, right_trigger.x1, right_trigger.y1, right_trigger.x2, right_trigger.y2);
+
+    /* update widget to new layout */
+    gtk_widget_set_size_request(clutter_gtk_widget, stage_area.x2, stage_area.y2);
+    clutter_actor_set_position(the_dock, dock_area.x1, dock_area.y1);
+    clutter_actor_set_position(page_indicator_group, 0, stage_area.y2 - DOCK_HEIGHT - ICON_SPACING);
+    clutter_actor_set_position(the_sb, sb_area.x1, sb_area.y1);
+    clutter_actor_set_position(battery_level, stage_area.x2 - 22, 6);
+    clutter_actor_set_position(spinner, (stage_area.x2 - 32.0) / 2, (stage_area.y2 - 64.0) / 2);
+    clutter_actor_set_size(fade_rectangle, stage_area.x2, stage_area.y2);
+
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1
+    clutter_actor_set_size(wallpaper, stage_area.x2, stage_area.y2);
+#endif
+}
+
 static gboolean device_info_cb(gpointer user_data)
 {
     GError *error = NULL;
     const char *uuid = (const char*)user_data;
     if (device_get_info(uuid, &device_info, &error)) {
+        /* Update layout */
+        gui_update_layout(device_info);
         /* Update device info */
         clutter_threads_add_idle((GSourceFunc)update_device_info_cb, device_info);
         /* Update battery information */
