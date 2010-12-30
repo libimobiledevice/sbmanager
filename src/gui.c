@@ -1232,14 +1232,8 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
         gfloat diffy = 0.0;
         ClutterActor *sc = clutter_actor_get_parent(actor);
         if (item->is_dock_item) {
-            GList *children = clutter_container_get_children(CLUTTER_CONTAINER(sc));
-            if (children) {
-                ClutterActor *icon = g_list_nth_data(children, 0);
-                ClutterActor *label = g_list_nth_data(children, 1);
-                clutter_text_set_color(CLUTTER_TEXT(label), &item_text_color);
-                clutter_actor_set_y(label, clutter_actor_get_y(icon) + 62.0);
-                g_list_free(children);
-            }
+            clutter_text_set_color(CLUTTER_TEXT(item->label), &item_text_color);
+            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + 62.0);
             diffx = dock_area.x1;
             diffy = dock_area.y1;
         } else {
@@ -1305,14 +1299,8 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
                                      clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
         clutter_actor_set_opacity(sc, 255);
         if (item->is_dock_item) {
-            GList *children = clutter_container_get_children(CLUTTER_CONTAINER(sc));
-            if (children) {
-                ClutterActor *icon = g_list_nth_data(children, 0);
-                ClutterActor *label = g_list_nth_data(children, 1);
-                clutter_text_set_color(CLUTTER_TEXT(label), &dock_item_text_color);
-                clutter_actor_set_y(label, clutter_actor_get_y(icon) + 67.0);
-                g_list_free(children);
-            }
+            clutter_text_set_color(CLUTTER_TEXT(item->label), &dock_item_text_color);
+            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + 67.0);
             clutter_actor_reparent(sc, the_dock);
             clutter_actor_set_position(sc,
                                        clutter_actor_get_x(sc) - dock_area.x1, clutter_actor_get_y(sc) - dock_area.y1);
