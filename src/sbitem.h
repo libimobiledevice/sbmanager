@@ -33,7 +33,9 @@
 typedef struct {
     plist_t node;
     ClutterActor *texture;
+    ClutterActor *texture_shadow;
     ClutterActor *label;
+    ClutterActor *label_shadow;
     gboolean drawn;
     gboolean is_dock_item;
     gboolean is_folder;

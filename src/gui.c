@@ -64,6 +64,7 @@ ClutterColor dock_item_text_color = { 255, 255, 255, 255 };
 ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };  /* Black */
 ClutterColor battery_color = { 0xff, 0xff, 0xff, 0x9f };
 ClutterColor spinner_color = { 0xff, 0xff, 0xff, 0xf0 };
+ClutterColor label_shadow_color = { 0x00, 0x00, 0x00, 0xe0 };
 
 const char FOLDER_LARGE_FONT[] = "FreeSans Bold 18px";
 
@@ -87,6 +88,7 @@ ClutterActor *page_indicator = NULL;
 ClutterActor *page_indicator_group = NULL;
 ClutterActor *fade_rectangle = NULL;
 ClutterActor *spinner = NULL;
+ClutterActor *icon_shadow = NULL;
 ClutterTimeline *spinner_timeline = NULL;
 ClutterTimeline *clock_timeline = NULL;
 
@@ -906,8 +908,15 @@ static gboolean folderview_close_finish(gpointer user_data)
         gfloat newwidth = clutter_actor_get_width(item->label);
         gfloat xshift = -(newwidth-oldwidth)/2;
         clutter_actor_move_by(item->label, xshift, 0);
+        if (item->label_shadow) {
+            clutter_text_set_text(CLUTTER_TEXT(item->label_shadow), newname);
+            clutter_actor_move_by(item->label_shadow, xshift, 0);
+        }
     }
     clutter_actor_show(item->label);
+    if (item->label_shadow) {
+        clutter_actor_show(item->label_shadow);
+    }
 
     ClutterActor *newparent = clutter_actor_get_parent(item->texture);
     GList *subitems = item->subitems;
@@ -1016,6 +1025,9 @@ static void folderview_open(SBItem *item)
             ypos = 24.0+(gfloat)((int)(i / 4)+1) * 88.0;
             xpos = 16 + ((i % 4))*76.0;
             clutter_actor_hide(it->label);
+            if (it->label_shadow) {
+                clutter_actor_hide(it->label_shadow);
+            }
             fldr = act;
         } else {
             clutter_actor_set_opacity(act, 64);
@@ -1037,6 +1049,9 @@ static void folderview_open(SBItem *item)
             gfloat totalwidth = count*60.0 + (count-1) * spacing;
 	    xpos = (STAGE_WIDTH - totalwidth)/2.0 + (i*60.0) + (i*spacing);
             clutter_actor_hide(it->label);
+            if (it->label_shadow) {
+                clutter_actor_hide(it->label_shadow);
+            }
 	    is_dock_folder = TRUE;
             fldr = act;
         } else {
@@ -1047,11 +1062,19 @@ static void folderview_open(SBItem *item)
     /* hide page indicators */
     clutter_actor_hide(page_indicator_group);
 
+    if (item->texture_shadow) {
+        clutter_actor_hide(item->texture_shadow);
+    }
+
     /* make snapshot from the stage */
     guchar *shot = clutter_stage_read_pixels(CLUTTER_STAGE(stage), 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
     if (!shot) {
         printf("Error creating stage snapshot!\n");
         return;
+    }
+
+    if (item->texture_shadow) {
+        clutter_actor_show(item->texture_shadow);
     }
 
     /* upper */
@@ -1234,6 +1257,9 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
         if (item->is_dock_item) {
             clutter_text_set_color(CLUTTER_TEXT(item->label), &item_text_color);
             clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + 62.0);
+            if (item->label_shadow) {
+                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + 62.0 + 1.0);
+            }
             diffx = dock_area.x1;
             diffy = dock_area.y1;
         } else {
@@ -1301,6 +1327,9 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
         if (item->is_dock_item) {
             clutter_text_set_color(CLUTTER_TEXT(item->label), &dock_item_text_color);
             clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + 67.0);
+            if (item->label_shadow) {
+                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + 67.0 + 1.0);
+            }
             clutter_actor_reparent(sc, the_dock);
             clutter_actor_set_position(sc,
                                        clutter_actor_get_x(sc) - dock_area.x1, clutter_actor_get_y(sc) - dock_area.y1);
@@ -1457,7 +1486,23 @@ static void gui_draw_subitems(SBItem *item)
         if (subitem && subitem->texture && !subitem->drawn && subitem->node) {
             subitem->is_dock_item = FALSE;
             ClutterActor *sgrp = clutter_group_new();
-            ClutterActor *actor = subitem->texture;
+            ClutterActor *actor;
+            // icon shadow
+            actor = subitem->texture_shadow;
+            if (actor) {
+                clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
+                clutter_actor_set_position(actor, -12.0, -12.0);
+                clutter_actor_show(actor);
+            }
+            // label shadow
+            actor = subitem->label_shadow;
+            if (actor) {
+                clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
+                clutter_actor_set_position(actor, (59.0 - clutter_actor_get_width(actor)) / 2 + 1.0, 62.0 + 1.0);
+                clutter_actor_show(actor);
+            }
+
+            actor = subitem->texture;
             clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
             clutter_actor_set_position(actor, 0.0, 0.0);
             clutter_actor_set_reactive(actor, TRUE);
@@ -1503,7 +1548,22 @@ static void gui_show_icons()
             if (item && item->texture && !item->drawn && item->node) {
                 item->is_dock_item = TRUE;
                 ClutterActor *grp = clutter_group_new();
-                ClutterActor *actor = item->texture;
+                ClutterActor *actor;
+                // icon shadow
+                actor = item->texture_shadow;
+                if (actor) {
+                    clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
+                    clutter_actor_set_position(actor, xpos-12, ypos-12);
+                    clutter_actor_show(actor);
+                }
+                // label shadow
+                actor = item->label_shadow;
+                if (actor) {
+                    clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
+                    clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + 67.0 + 1.0);
+                    clutter_actor_show(actor);
+                }
+                actor = item->texture;
                 clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                 clutter_actor_set_position(actor, xpos, ypos);
                 clutter_actor_set_reactive(actor, TRUE);
@@ -1538,7 +1598,23 @@ static void gui_show_icons()
                 if (item && item->texture && !item->drawn && item->node) {
                     item->is_dock_item = FALSE;
                     ClutterActor *grp = clutter_group_new();
-                    ClutterActor *actor = item->texture;
+                    ClutterActor *actor;
+                    // icon shadow
+                    actor = item->texture_shadow;
+                    if (actor) {
+                        clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
+                        clutter_actor_set_position(actor, xpos-12, ypos-12);
+                        clutter_actor_show(actor);
+                    }
+
+                    // label shadow
+                    actor = item->label_shadow;
+                    if (actor) {
+                        clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
+                        clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + 62.0 + 1.0);
+                        clutter_actor_show(actor);
+                    }
+                    actor = item->texture;
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                     clutter_actor_set_position(actor, xpos, ypos);
                     clutter_actor_set_reactive(actor, TRUE);
@@ -1584,9 +1660,18 @@ static gboolean sbitem_texture_new(gpointer data)
     /* create item */
     item->texture = actor;
 
+    if (wallpaper) {
+        actor = clutter_clone_new(icon_shadow);
+        clutter_actor_set_size(actor, 59.0+24.0, 62.0+24.0);
+        item->texture_shadow = actor;
+    }
+
     char *txtval = sbitem_get_display_name(item);
     if (txtval) {
         item->label = clutter_text_new_with_text(ITEM_FONT, txtval);
+        if (wallpaper) {
+            item->label_shadow = clutter_text_new_full(ITEM_FONT, txtval, &label_shadow_color);
+        }
     }
     if (err) {
         fprintf(stderr, "ERROR: %s\n", err->message);
@@ -2036,6 +2121,20 @@ GtkWidget *gui_init()
     if (page_indicator) {
         clutter_actor_hide(page_indicator);
         clutter_container_add_actor(CLUTTER_CONTAINER(stage), page_indicator);
+    }
+
+    /* icon shadow texture dummy, cloned when drawing the icons */
+    icon_shadow = clutter_texture_new();
+    clutter_texture_set_load_async(CLUTTER_TEXTURE(icon_shadow), TRUE);
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(icon_shadow), SBMGR_DATA "/iconshadow.png", &err);
+    if (err) {
+        fprintf(stderr, "Could not load texture " SBMGR_DATA "/iconshadow.png" ": %s\n", err->message);
+        g_error_free(err);
+        err = NULL;
+    }
+    if (icon_shadow) {
+        clutter_actor_hide(icon_shadow);
+        clutter_container_add_actor(CLUTTER_CONTAINER(stage), icon_shadow);
     }
 
     /* folder marker */

@@ -99,6 +99,15 @@ void sbitem_free(SBItem *item)
                 item->texture = NULL;
             }
         }
+        if (item->texture_shadow && CLUTTER_IS_ACTOR(item->texture_shadow)) {
+            clutter_actor_destroy(item->texture_shadow);
+            item->texture_shadow = NULL;
+        }
+        if (item->label_shadow && CLUTTER_IS_ACTOR(item->label_shadow)) {
+            clutter_actor_destroy(item->label_shadow);
+            item->label_shadow = NULL;
+        }
+
         if (item->subitems) {
             g_list_foreach(item->subitems, (GFunc)(g_func_sbitem_free), NULL);
             g_list_free(item->subitems);
