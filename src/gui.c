@@ -963,16 +963,9 @@ static gboolean folderview_close_finish(gpointer user_data)
     return FALSE;
 }
 
-static gboolean folderview_close_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
+static void folderview_close(SBItem *folderitem)
 {
-    /* discard double clicks */
-    if (event->click_count > 1) {
-        return FALSE;
-    }
-
-    SBItem *item = (SBItem*)user_data;
-
-    clutter_actor_set_reactive(item->texture, FALSE);
+    clutter_actor_set_reactive(folderitem->texture, FALSE);
 
     clutter_actor_set_reactive(aniupper, FALSE);
     clutter_actor_set_reactive(anilower, FALSE);
@@ -983,7 +976,19 @@ static gboolean folderview_close_cb(ClutterActor *actor, ClutterButtonEvent *eve
     clutter_actor_animate(anilower, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", 0.0, NULL);
     clutter_actor_animate(folder, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", split_pos, NULL);
 
-    clutter_threads_add_timeout(FOLDER_ANIM_DURATION, (GSourceFunc)folderview_close_finish, user_data);
+    clutter_threads_add_timeout(FOLDER_ANIM_DURATION, (GSourceFunc)folderview_close_finish, (gpointer)folderitem);
+}
+
+static gboolean folderview_close_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
+{
+    /* discard double clicks */
+    if (event->click_count > 1) {
+        return FALSE;
+    }
+
+    SBItem *item = (SBItem*)user_data;
+
+    folderview_close(item);
 
     return TRUE;
 }
