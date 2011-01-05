@@ -1559,14 +1559,12 @@ static void gui_show_icons()
                 if (actor) {
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                     clutter_actor_set_position(actor, xpos-12, ypos-12);
-                    clutter_actor_show(actor);
                 }
                 // label shadow
                 actor = item->label_shadow;
                 if (actor) {
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                     clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + 67.0 + 1.0);
-                    clutter_actor_show(actor);
                 }
                 actor = item->texture;
                 clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
@@ -1578,7 +1576,6 @@ static void gui_show_icons()
                 actor = item->label;
                 clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2, ypos + 67.0);
                 clutter_text_set_color(CLUTTER_TEXT(actor), &dock_item_text_color);
-                clutter_actor_show(actor);
                 clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                 clutter_container_add_actor(CLUTTER_CONTAINER(the_dock), grp);
 		item->drawn = TRUE;
@@ -1609,7 +1606,6 @@ static void gui_show_icons()
                     if (actor) {
                         clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                         clutter_actor_set_position(actor, xpos-12, ypos-12);
-                        clutter_actor_show(actor);
                     }
 
                     // label shadow
@@ -1617,7 +1613,6 @@ static void gui_show_icons()
                     if (actor) {
                         clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                         clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + 62.0 + 1.0);
-                        clutter_actor_show(actor);
                     }
                     actor = item->texture;
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
@@ -1629,7 +1624,6 @@ static void gui_show_icons()
                     actor = item->label;
                     clutter_text_set_color(CLUTTER_TEXT(actor), &item_text_color);
                     clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2, ypos + 62.0);
-                    clutter_actor_show(actor);
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
                     clutter_container_add_actor(CLUTTER_CONTAINER(the_sb), grp);
 		    item->drawn = TRUE;
@@ -1643,6 +1637,19 @@ static void gui_show_icons()
         }
     }
     clutter_stage_ensure_redraw(CLUTTER_STAGE(stage));
+}
+
+static void sbitem_texture_load_finished(ClutterTexture *texture, gpointer error, gpointer data)
+{
+    SBItem *item = (SBItem *)data;
+
+    if (item->texture_shadow) {
+        clutter_actor_show(item->texture_shadow);
+    }
+    clutter_actor_show(item->label);
+    if (item->label_shadow) {
+        clutter_actor_show(item->label_shadow);
+    }
 }
 
 static gboolean sbitem_texture_new(gpointer data)
@@ -1659,7 +1666,7 @@ static gboolean sbitem_texture_new(gpointer data)
     /* create and load texture */
     ClutterActor *actor = clutter_texture_new();
     clutter_texture_set_load_async(CLUTTER_TEXTURE(actor), TRUE);
-    clutter_texture_set_from_file(CLUTTER_TEXTURE(actor), icon_filename, &err);
+    g_signal_connect(actor, "load-finished", G_CALLBACK(sbitem_texture_load_finished), (gpointer)item); 
     clutter_actor_set_size(actor, 59.0, 62.0);
 
     /* create item */
@@ -1667,6 +1674,7 @@ static gboolean sbitem_texture_new(gpointer data)
 
     if (wallpaper) {
         actor = clutter_clone_new(icon_shadow);
+        clutter_actor_hide(actor);
         clutter_actor_set_size(actor, 59.0+24.0, 62.0+24.0);
         item->texture_shadow = actor;
     }
@@ -1674,14 +1682,18 @@ static gboolean sbitem_texture_new(gpointer data)
     char *txtval = sbitem_get_display_name(item);
     if (txtval) {
         item->label = clutter_text_new_with_text(ITEM_FONT, txtval);
+        clutter_actor_hide(item->label);
         if (wallpaper) {
             item->label_shadow = clutter_text_new_full(ITEM_FONT, txtval, &label_shadow_color);
+            clutter_actor_hide(item->label_shadow);
         }
     }
     if (err) {
         fprintf(stderr, "ERROR: %s\n", err->message);
         g_error_free(err);
     }
+
+    clutter_texture_set_from_file(CLUTTER_TEXTURE(item->texture), icon_filename, &err);
 
     /* FIXME: Optimize! Do not traverse whole iconlist, just this icon */
     gui_show_icons();
