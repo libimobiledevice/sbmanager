@@ -31,6 +31,7 @@ PKG_CHECK_MODULES(libclutter, clutter-1.0 >= 1.0.6)
 PKG_CHECK_MODULES(libcluttergtk, clutter-gtk-0.10 >= 0.10)
 PKG_CHECK_MODULES(libgtk, gtk+-2.0 >= 2.16)
 PKG_CHECK_MODULES(libgdkpixbuf, gdk-pixbuf-2.0 >= 2.16)
+PKG_CHECK_MODULES(libbz2, bzip2 >= 1.0)
 
 # Checks for header files.
 AC_HEADER_STDC
