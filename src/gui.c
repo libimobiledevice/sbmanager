@@ -1508,7 +1508,7 @@ static void gui_folder_draw_subitems(SBItem *item)
             actor = subitem->label_shadow;
             if (actor) {
                 clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor);
-                clutter_actor_set_position(actor, (59.0 - clutter_actor_get_width(actor)) / 2 + 1.0, 62.0 + 1.0);
+                clutter_actor_set_position(actor, (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2 + 1.0, device_info->home_screen_icon_height + 1.0);
                 clutter_actor_show(actor);
             }
 
@@ -1570,7 +1570,7 @@ static void gui_show_icons()
                 actor = item->label_shadow;
                 if (actor) {
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-                    clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + 67.0 + 1.0);
+                    clutter_actor_set_position(actor, xpos + (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + device_info->home_screen_icon_height + 1.0);
                 }
                 actor = item->texture;
                 clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
@@ -1611,14 +1611,14 @@ static void gui_show_icons()
                     actor = item->texture_shadow;
                     if (actor) {
                         clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-                        clutter_actor_set_position(actor, xpos-12, ypos-12);
+                        clutter_actor_set_position(actor, xpos-12.0, ypos-12.0);
                     }
 
                     // label shadow
                     actor = item->label_shadow;
                     if (actor) {
                         clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
-                        clutter_actor_set_position(actor, xpos + (59.0 - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + 62.0 + 1.0);
+                        clutter_actor_set_position(actor, xpos + (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + device_info->home_screen_icon_height + 1.0);
                     }
                     actor = item->texture;
                     clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor);
@@ -1682,7 +1682,7 @@ static gboolean sbitem_texture_new(gpointer data)
     if (wallpaper) {
         actor = clutter_clone_new(icon_shadow);
         clutter_actor_hide(actor);
-        clutter_actor_set_size(actor, 59.0+24.0, 62.0+24.0);
+        clutter_actor_set_size(actor, device_info->home_screen_icon_width+24.0, device_info->home_screen_icon_height+24.0);
         item->texture_shadow = actor;
     }
 
