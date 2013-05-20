@@ -144,7 +144,7 @@ char *sbitem_get_icon_filename(SBItem *item)
 
     filename = g_strdup_printf ("%s.png", value);
     path = g_build_filename (g_get_user_cache_dir (),"libimobiledevice", "icons", filename, NULL);
-	/* fprintf(stderr,"\nget-icon-filename = %s\n", path); THIS IS CORRECT TW 03/05/13 */
+	/* fprintf(stderr,"\n%s:get-icon-filename = %s\n", __func__,path); THIS IS CORRECT TW 03/05/13 */
     g_free (filename);
     return path;
 }

@@ -21,6 +21,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 
  * USA
+ *
  */
 
 #include <string.h>
@@ -63,7 +64,7 @@ void sbmgr_load(const char *uuid, device_info_cb_t info_cb, finished_cb_t finish
 	
 	/* g_thread_create' is deprecated TW 26/04/13 */
     /* g_thread_create((GThreadFunc)gui_pages_load_cb, (gpointer)uuid, FALSE, NULL); */
-	const gchar *name1 = "sbloadthd";	
+	const gchar *name1 = "sbloadthd"; /* Name Added for debugging thread TW 20/05/13 */
 	g_thread_new(name1, (GThreadFunc)gui_pages_load_cb, (gpointer)uuid);
 
 }

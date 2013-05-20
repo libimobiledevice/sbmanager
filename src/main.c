@@ -174,7 +174,7 @@ static void device_event_cb(const idevice_event_t *event, void *user_data)
 
 			/* g_thread_create’ is deprecated TW 27/04/13 */
             /*g_thread_create(device_add_cb, current_uuid, FALSE, NULL); */
-			const gchar *name3 = "devevcbthrd";
+			const gchar *name3 = "devevcbthrd"; /* threadname added for debugging */
 			g_thread_new(name3, device_add_cb, current_uuid);
 
         } else {

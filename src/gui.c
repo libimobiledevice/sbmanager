@@ -2423,7 +2423,7 @@ static gboolean sbitem_texture_new(gpointer data)
 	 
 	/* TW TEST 05/05/13 this does load all icon's on to wallpaper on top of each other */
 	/* clutter_actor_add_child(stage, actor); */
-	/* NOTE ACTORS are not added to stage THIS IS PROBABLY THE PROBLEM TW 10/05/13 */
+	/* NOTE ACTORS are not added to stage THIS IS PROBABLY THE PROBLEM TW 10/05/13 FIXED 18/05/13 */
 
 	
 	
@@ -2783,7 +2783,7 @@ static gboolean gui_pages_init_cb(gpointer user_data)
         g_error_free(error);
         error = NULL;
     }
-	/* increased time to 2500 from 500 for test TW 08/05/13 */
+	/* increased time to 2500 from 500 for test BUT NOT REQUIRED TW 08/05/13 */
     clutter_threads_add_timeout(500, (GSourceFunc)wait_icon_load_finished, NULL); 
 
     return FALSE;
@@ -3376,7 +3376,7 @@ GtkWidget *gui_init()
 	 clutter_actor_add_child(CLUTTER_ACTOR(stage), battery_level);
 	/* fprintf(stderr,"\n%s:ERROR: below9 clutter-actor-add-child\n", __func__); */
 
-     clutter_actor_set_position(battery_level, stage_area.x2 - 22, 6); /* REMOVED FOR TEST TW 18/05/13 */
+     clutter_actor_set_position(battery_level, stage_area.x2 - 22, 6); /* REMOVED FOR TEST TW ON 18/05/13 */
 
     return clutter_widget;
 }

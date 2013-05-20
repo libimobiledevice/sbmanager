@@ -1,0 +1,8 @@
+ Tim Ward 2013
+This is a change log for sbmanager to GTK3 and clutter 1.12-2 
+
+
+
+
+
+Change all Deprecated actors functions to bring it up to clutter 1.12-2.
