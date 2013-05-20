@@ -1,8 +1,40 @@
- Tim Ward 2013
-This is a change log for sbmanager to GTK3 and clutter 1.12-2 
+ Timothy Ward <gtwa001@gmail> 2013
+
+This is a change log for sbmanager to GTK3 for Gnome3 and clutter 1.12-2 
+
+Change All Clutter deprecated functions to bring it up to clutter 1.12-2.
+There was a lot of deprecated functions as the Clutter API has changed a lot.
+
+Change code for all compiler warnings for both GTK2 and minor libimobiledevice 
+library calls and function arguments.
+
+At this point the code compiled using gcc but the application failed to run due
+to gtk2 and gtk3 library available.  
+
+For development test remove GTK2 library from development system
+to ensure the application still runs. The application should operate
+with both gtk2 and gtk3 libraries available but at the moment I have removed it
+from the development system to concentrate on changes above and debugging of code
+in general.
+
+Recompile using only gtk3 library installed.
+
+The application failed to run due to Gmutex locks and these where removed in the code
+but a review will be done when the code base is stable to ensure that in the areas
+that the Gmutex where removed that this does not cause stability issues. At this time
+debugger sessions indicated it was stable with the Gmutex locks removed.
+
+Thread code functions was altered to include a name for debugging and due to deprecated functions.
+
+Deprecated timing functions and Clutter callback functions altered were necessary.
+
+At this point the application ran but did not load any initial image data files.
+
+Further clutter code was added to load icons, and needs further cleanup and proper error code handling added.
+
+Clutter code was added to the gui.c file for initial gui image files but failed due to not setting the size of the images in clutter,further cleanup and error code handling still to be done.
+
+Lots of debugging code added around Cluter functions to isolate clutter Critical run time errors or for debugging code in general.
 
 
 
-
-
-Change all Deprecated actors functions to bring it up to clutter 1.12-2.

@@ -1,11 +1,20 @@
+TO-DO 
+
+The initial test of the application failed to run due to Gmutex locks and unlocks
+although some of the library used are thread safe or their functions are thread safe
+this file is a reminder to review the source code when development reaches a stable
+code base.
+
+
+
 [tim@localhost ~]$ sbmanager
-gui_pages_load: f208e0a477129e9272babf87b7c4b4ebade7948d
-device_get_info: f208e0a477129e9272babf87b7c4b4ebade7948d
+gui_pages_load: 
+device_get_info: 
 device_get_info
 Segmentation fault (core dumped)
 [tim@localhost ~]$ sbmanager
-gui_pages_load: f208e0a477129e9272babf87b7c4b4ebade7948d
-device_get_info: f208e0a477129e9272babf87b7c4b4ebade7948d
+gui_pages_load: 
+device_get_info: 
 device_get_info
 Segmentation fault (core dumped)
 [tim@localhost ~]$ sbmanager --help
@@ -19,20 +28,13 @@ Manage SpringBoard icons of an iPhone/iPod Touch.
 
 [tim@localhost ~]$ sbmanager --debug --debug-app
 win_map_cb: mapped
-Device add event: adding device f208e0a477129e9272babf87b7c4b4ebade7948d
-gui_pages_load: f208e0a477129e9272babf87b7c4b4ebade7948d
-device_get_info: f208e0a477129e9272babf87b7c4b4ebade7948d
+Device add event: adding device 
+gui_pages_load: 
+device_get_info: 
 device_get_info
 
 (sbmanager:13786): Clutter-CRITICAL **: clutter_actor_set_child_above_sibling: assertion `child->priv->parent == self' failed
 Segmentation fault (core dumped)
-[tim@localhost ~]$ sbmanager --debug --debug-app
-Device add event: adding device f208e0a477129e9272babf87b7c4b4ebade7948d
-gui_pages_load: f208e0a477129e9272babf87b7c4b4ebade7948d
-device_get_info: f208e0a477129e9272babf87b7c4b4ebade7948d
-device_get_info
-Segmentation fault (core dumped)
-[tim@localhost ~]$ sbmanager --debug --debug-app
-win_map_cb: mapped
-[tim@localhost ~]$ 
+
+
 
