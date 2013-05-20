@@ -48,6 +48,7 @@ GtkWidget *main_window;
 GtkWidget *btn_reload;
 GtkWidget *btn_apply;
 
+
 char *match_uuid = NULL;
 char *current_uuid = NULL;
 
@@ -164,21 +165,35 @@ static gpointer device_add_cb(gpointer user_data)
 static void device_event_cb(const idevice_event_t *event, void *user_data)
 {
     if (event->event == IDEVICE_DEVICE_ADD) {
-        if (!current_uuid && (!match_uuid || !strcasecmp(match_uuid, event->uuid))) {
-            debug_printf("Device add event: adding device %s\n", event->uuid);
-            current_uuid = g_strdup(event->uuid);
-            g_thread_create(device_add_cb, current_uuid, FALSE, NULL);
+		/* TW 27/04/13 Compiler error: ‘idevice_event_t’ has no member named uuid  it is udid in libmobiledevice.h */
+        if (!current_uuid && (!match_uuid || !strcasecmp(match_uuid, event->udid))) {
+			/* TW 27/04/13 Compiler error: ‘idevice_event_t’ has no member named uuid  it is udid in libmobiledevice.h */
+            debug_printf("Device add event: adding device %s\n", event->udid);
+			/* TW 27/04/13 Compiler error: ‘idevice_event_t’ has no member named uuid  it is udid in libmobiledevice.h */
+            current_uuid = g_strdup(event->udid);
+
+			/* g_thread_create’ is deprecated TW 27/04/13 */
+            /*g_thread_create(device_add_cb, current_uuid, FALSE, NULL); */
+			const gchar *name3 = "devevcbthrd";
+			g_thread_new(name3, device_add_cb, current_uuid);
+
         } else {
-            debug_printf("Device add event: ignoring device %s\n", event->uuid);
+			/* TW 27/04/13 Compiler error: ‘idevice_event_t’ has no member named uuid  it is udid in libmobiledevice.h */
+            debug_printf("Device add event: ignoring device %s\n", event->udid);
         }
     } else if (event->event == IDEVICE_DEVICE_REMOVE) {
-        if (current_uuid && !strcasecmp(current_uuid, event->uuid)) {
-            debug_printf("Device remove event: removing device %s\n", event->uuid);
+		/* TW 27/04/13 Compiler error: ‘idevice_event_t’ has no member named uuid  it is udid in libmobiledevice.h */
+        if (current_uuid && !strcasecmp(current_uuid, event->udid)) {
+
+			/* This section does not work TW 08/05/13 */
+			/* TW 27/04/13 Compiler error: ‘idevice_event_t’ has no member named uuid  it is udid in libmobiledevice.h */
+			debug_printf("Device remove event: removing device %s\n", event->udid);
             free(current_uuid);
             current_uuid = NULL;
             sbmgr_cleanup();
         } else {
-            debug_printf("Device remove event: ignoring device %s\n", event->uuid);
+			/* TW 27/04/13 Compiler error: ‘idevice_event_t’ has no member named uuid  it is udid in libmobiledevice.h */
+            debug_printf("Device remove event: ignoring device %s\n", event->udid);
         }
     }
 }
@@ -196,7 +211,10 @@ static void wnd_init()
 
     gtk_window_set_title(GTK_WINDOW(main_window), PACKAGE_NAME);
 
-    GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
+	/* gtk_vbox_new’ is deprecated TW 27/04/13 */
+    /* GtkWidget *vbox = gtk_vbox_new(FALSE, 6); */
+	GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+
     gtk_container_add(GTK_CONTAINER(main_window), vbox);
     gtk_widget_show(vbox);
 

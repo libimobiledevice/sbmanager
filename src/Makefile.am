@@ -6,7 +6,7 @@ AM_CFLAGS =			\
 	$(libplist_CFLAGS)	\
 	$(libclutter_CFLAGS)	\
 	$(libcluttergtk_CFLAGS)	\
-	$(libgtk_CFLAGS)	\
+	$(libgtk3_CFLAGS)	\
 	$(libgdkpixbuf_CFLAGS)	\
 	-DSBMGR_DATA=\"$(pkgdatadir)\"
 
@@ -17,7 +17,7 @@ AM_LDFLAGS =			\
 	$(libplist_LIBS)	\
 	$(libclutter_LIBS)	\
 	$(libcluttergtk_LIBS)	\
-	$(libgtk_LIBS)		\
+	$(libgtk3_LIBS)		\
 	$(libgdkpixbuf_LIBS)
 
 bin_PROGRAMS = sbmanager
