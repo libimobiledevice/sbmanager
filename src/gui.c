@@ -351,6 +351,7 @@ static void gui_fade_init()
  
 	/* clutter_rectange_new_with_color is deprecated TW 20/04/13 */
 	/*	fade_rectangle = clutter_rectangle_new_with_color(&fade_color); */
+    
     fade_rectangle = clutter_actor_new(); 
 
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
@@ -674,11 +675,12 @@ static void gui_page_indicator_group_add(GList *page, int page_index)
 
 		/* clutter_actor_unparent' is deprecated TW 20/04/13 */
 		/* clutter_actor_unparent(actor); */
-		/* ClutterActor *parent = clutter_actor_get_parent(actor);   TW 24/04/13  Do not think this is required */
+        /* TW 24/04/13  Do not think this is required */
+		/* ClutterActor *parent = clutter_actor_get_parent(actor);  */
 		
-				
 		fprintf(stderr,"\n%s:above1-clutter-actor-remove-child: stage, actor\n", __func__);
-		clutter_actor_remove_child(stage, actor); /* TEST TW 06/05/13  maybe stage is self and actor is child TW 28/04/13 */
+		/* At this time actor is not a child of the stage so this should not be required. */
+        clutter_actor_remove_child(stage, actor); /* TEST  stage is self and actor is child TW 28/04/13 */
 		fprintf(stderr,"\n%s:below1-clutter-actor-remove-child: stage, actor\n", __func__);
 
         clutter_actor_set_reactive(actor, TRUE);
@@ -2811,7 +2813,7 @@ static gboolean update_battery_info_cb(gpointer user_data)
     }
 
     if (device_poll_battery_capacity(uuid, &device_info, &error)) {
-		/* fprintf(stderr,"\nERROR: above clutter_set_size8: LINE 2567 \n"); TEST TW 03/05/13 */
+	     fprintf(stderr,"\n%sERROR: above clutter_set:  \n",__func__); /* TEST TW 03/05/13 */
         clutter_actor_set_size(battery_level, (guint) (((double) (device_info->battery_capacity) / 100.0) * 15), 6);
         if (device_info->battery_capacity == 100) {
             res = FALSE;
@@ -2822,7 +2824,7 @@ static gboolean update_battery_info_cb(gpointer user_data)
 
 static gboolean init_battery_info_cb(gpointer user_data)
 {
-	/* fprintf(stderr,"\nERROR: above clutter_set_size9: LINE 2578 \n"); TEST TW 03/05/13 */
+	/* fprintf(stderr,"\n%sERROR: above clutter_set \n", __func__); TEST TW 03/05/13 */
     clutter_actor_set_size(battery_level, (guint) (((double) (device_info->battery_capacity) / 100.0) * 15), 6);
     return FALSE;
 }
@@ -2900,10 +2902,12 @@ static void gui_update_layout(device_info_t info) {
     
 	/* This returns a Runtime error */
 	/* Clutter-CRITICAL **: clutter_actor_set_size: assertion `CLUTTER_IS_ACTOR (self)' failed */
+    /* The wallpaper argument seems to be the cause - use standard clutter functions */
 	
 	/* clutter_actor_set_size(wallpaper, stage_area.x2, stage_area.y2); */
 
-	/* fprintf(stderr, "\nactor-set-size-wallpaper- stage-area.x2 = %f stage-area.y2 = %f- LINE:2655\n",stage_area.x2, stage_area.y2);  TEST TW 03/05/13 */
+	/* fprintf(stderr, "\nactor-set-size-wallpaper- stage-area.x2 = %f stage-area.y2 = %f- */
+    /* \n",stage_area.x2, stage_area.y2);  TEST TW 03/05/13 */
 #endif
 }
 
@@ -2953,7 +2957,7 @@ void gui_pages_load(const char *uuid, device_info_cb_t info_cb, finished_cb_t fi
 
 	/* g_thread_create' is deprecated TW 24/04/13 */
     /* g_thread_create((GThreadFunc)device_info_cb, (gpointer)uuid, FALSE, NULL); */
-	const gchar *name1 = "loadthread";
+	const gchar *name1 = "iconloadthrd";
 	g_thread_new(name1, (GThreadFunc)device_info_cb, (gpointer)uuid);
 }
 
@@ -2962,20 +2966,26 @@ GtkWidget *gui_init()
     device_info = device_info_new();
     ClutterActor *actor;
 	ClutterContent *image, *image1, *image2, *image3 = NULL; 
-	GdkPixbuf *pixbuf, *pixbuf1, *pixbuf2, *pixbuf3 = NULL; 
-	
+	GdkPixbuf *pixbuf, *pixbuf1, *pixbuf2, *pixbuf3; 
+	gfloat width1, width2, width3 = 0;
+    gfloat height1, height2, height3 = 0;
+
     /* if (!g_thread_supported()) */
        
-		/* g_thread_init' is deprecated	No longer necessary TW 24/03/13 */	
-		/* g_thread_init(NULL); */
+		/* g_thread_init' is deprecated	No longer necessary TW 24/03/13 */
+        /* The glib threading system is automatically initialised at the start */
+        /* of the program - Glib Reference manual */	
+		/* g_thread_init(NULL); */ 
 
    /*  if (icon_loader_mutex == NULL) */
 		/* 'g_mutex_new' is deprecated TW 24/04/13 */
     	/*    icon_loader_mutex = g_mutex_new(); */
-
+        /* Threading support is initialized when Clutter is initialized */
+        /* reference : Clutter Reference Manual */
     /* initialize clutter threading environment */
     if (!clutter_threads_initialized) {
-		/* 'clutter_threads_init' is deprecated TW 26/04/13 */
+		/* 'clutter_threads_init' is deprecated  No Longer required TW 26/04/13 */
+        
       	/*  clutter_threads_init(); */
         clutter_threads_initialized = 1;
     }
@@ -3038,11 +3048,11 @@ GtkWidget *gui_init()
 	/* pixbuf = gdk_pixbuf_new_from_file (iconfilename, &err);  TEST TW 10/08/13 */
 	/* pixbuf = gdk_pixbuf_new_from_file (SBMGR_DATA "/background.png", NULL); */
   	if(pixbuf == NULL){
-		fprintf(stderr, "\n%spixbuf error reading file on background LINE 2854\n", __func__);
+		fprintf(stderr, "\nError reading image file: background.png\n");
 	}
 	image = clutter_image_new ();
 	  
-	clutter_image_set_data (CLUTTER_IMAGE (image),
+	        clutter_image_set_data (CLUTTER_IMAGE (image),
                           gdk_pixbuf_get_pixels (pixbuf),
                           gdk_pixbuf_get_has_alpha (pixbuf)
                             ? COGL_PIXEL_FORMAT_RGBA_8888
@@ -3050,7 +3060,13 @@ GtkWidget *gui_init()
                           gdk_pixbuf_get_width (pixbuf),
                           gdk_pixbuf_get_height (pixbuf),
                           gdk_pixbuf_get_rowstride (pixbuf),
-                          NULL);
+                          &err);
+    if (err) {
+	    g_printerr("%s", err->message);
+	    fprintf(stderr,"\n%s\n",err->message);
+        g_error_free(err);
+        err = NULL; 
+    }
 
 	g_object_unref (pixbuf);
 
@@ -3069,19 +3085,7 @@ GtkWidget *gui_init()
 	
 	g_object_unref (image);
 
-	/* gtk_widget_show(image); This does not work TW 30/04/13 */
-
-	/* FIXME none of the springboard icons, background, page indicators, folder markers, and icon shadow are not being displayed TW 30/04/13 */
-	/* The problem is that the original clutter functions used are deprecated and the code has to be changed to */
-	/* do what is intended. Maybe gtk-clutter functions maybe gtk functions TW 30/04/13 then fix all the other errors */
-
-    if (err) {
-	g_printerr("%s", err->message);
-	fprintf(stderr,"\n%s\n",err->message);
-        g_error_free(err);
-        err = NULL; 
-    }
-    if (actor) {
+	if (actor) {
         clutter_actor_set_position(actor, 0, 0);
 		clutter_actor_show(actor);
 	
@@ -3148,7 +3152,11 @@ GtkWidget *gui_init()
     /* clutter_texture_set_from_file(CLUTTER_TEXTURE(page_indicator), SBMGR_DATA "/dot.png", &err); */
 	/* gdk_pixbuf_new_from_file(SBMGR_DATA "/dot.png", &err); */
 
-	pixbuf1 = gdk_pixbuf_new_from_file ("/usr/local/share/sbmanager/dot.png", NULL); 
+	pixbuf1 = gdk_pixbuf_new_from_file ("/usr/local/share/sbmanager/dot.png", NULL);
+    
+    if(pixbuf1 == NULL){
+		fprintf(stderr, "\nError reading data file:dot.png\n");
+	} 
   
 	image1 = clutter_image_new (); 
 	  
@@ -3160,12 +3168,11 @@ GtkWidget *gui_init()
                           gdk_pixbuf_get_width (pixbuf1), 
                           gdk_pixbuf_get_height (pixbuf1), 
                           gdk_pixbuf_get_rowstride (pixbuf1), 
-                          NULL); 
-	g_object_unref (pixbuf1); 
+                          &err);
+     
+	
+    g_object_unref (pixbuf1); 
 
-    gfloat width1 = 0;
-    gfloat height1 = 0;
-   
     clutter_content_get_preferred_size(image1, &width1, &height1); 
 
     clutter_actor_set_size(page_indicator, width1, height1);
@@ -3191,9 +3198,7 @@ GtkWidget *gui_init()
 		 clutter_actor_add_child(CLUTTER_ACTOR(stage), page_indicator); 
         /* fprintf(stderr,"\n%s:ERROR: below4 clutter-actor-add-child\n", __func__); */
 
-		/* clutter_actor_show(stage);  TEST TW 04/05/13 */	
-
-   } 
+    } 
 
     /* icon shadow texture dummy, cloned when drawing the icons */
     
@@ -3209,7 +3214,10 @@ GtkWidget *gui_init()
 	/*gtk_image_new_from_file(SBMGR_DATA "/iconshadow.png"); TEST */
 	
 	pixbuf2 = gdk_pixbuf_new_from_file ("/usr/local/share/sbmanager/iconshadow.png", NULL); 
-  
+    
+    if(pixbuf2 == NULL){
+		fprintf(stderr, "\nError reading image file:iconshadow.png\n");
+	} 
 	image2 = clutter_image_new (); 
 	  
 	clutter_image_set_data (CLUTTER_IMAGE (image2), 
@@ -3220,12 +3228,15 @@ GtkWidget *gui_init()
                           gdk_pixbuf_get_width (pixbuf2), 
                           gdk_pixbuf_get_height (pixbuf2), 
                           gdk_pixbuf_get_rowstride (pixbuf2), 
-                          NULL); 
-	g_object_unref (pixbuf2); 
+                          &err); 
+	if (err) { 
+        fprintf(stderr, "Could not load texture " SBMGR_DATA "/iconshadow.png" ": %s\n", err->message); 
+        g_error_free(err); 
+        err = NULL; 
+    } 
     
-    gfloat width2 = 0;
-    gfloat height2 = 0;
-   
+    g_object_unref (pixbuf2); 
+    
     clutter_content_get_preferred_size(image2, &width2, &height2); 
 
     clutter_actor_set_size(icon_shadow, width2, height2);
@@ -3234,11 +3245,6 @@ GtkWidget *gui_init()
 
     g_object_unref (image2); 
 	
-    if (err) { 
-        fprintf(stderr, "Could not load texture " SBMGR_DATA "/iconshadow.png" ": %s\n", err->message); 
-        g_error_free(err); 
-        err = NULL; 
-    } 
     if (icon_shadow) { 
         clutter_actor_hide(icon_shadow); 
 
@@ -3265,8 +3271,12 @@ GtkWidget *gui_init()
 	/* gtk_image_new_from_file(SBMGR_DATA "/foldermarker.png"); */
 	
 	pixbuf3 = gdk_pixbuf_new_from_file ("/usr/local/share/sbmanager/foldermarker.png", NULL);  
-  
-	image3 = clutter_image_new (); 
+    
+    if(pixbuf3 == NULL){
+		fprintf(stderr, "\nError reading image file: foldermarker.png\n");
+	} 
+	
+    image3 = clutter_image_new (); 
 	  
 	clutter_image_set_data (CLUTTER_IMAGE (image3), 
                           gdk_pixbuf_get_pixels (pixbuf3), 
@@ -3276,12 +3286,15 @@ GtkWidget *gui_init()
                           gdk_pixbuf_get_width (pixbuf3), 
                           gdk_pixbuf_get_height (pixbuf3), 
                           gdk_pixbuf_get_rowstride (pixbuf3), 
-                          NULL); 
+                          &err);
+
+    if (err) { 
+        fprintf(stderr, "Could not load texture " SBMGR_DATA "/foldermarker.png" ": %s\n", err->message); 
+        g_error_free(err); 
+        err = NULL;
+    }   
 	g_object_unref (pixbuf3); 
     
-    gfloat width3 = 0;
-    gfloat height3 = 0;
-   
     clutter_content_get_preferred_size(image3, &width3, &height3); 
 
     clutter_actor_set_size(folder_marker, width3, height3);	
@@ -3290,11 +3303,7 @@ GtkWidget *gui_init()
 
     g_object_unref (image3); 
 
-    if (err) { 
-        fprintf(stderr, "Could not load texture " SBMGR_DATA "/foldermarker.png" ": %s\n", err->message); 
-        g_error_free(err); 
-        err = NULL;  
-    }  
+     
     if (folder_marker) { 
          clutter_actor_hide(folder_marker); 
 /*		clutter_actor_show(folder_marker);  TEST TW 12/05/13 */
@@ -3367,7 +3376,8 @@ GtkWidget *gui_init()
 
 	/* clutter_rectange_new_with_color is deprecated TW 20/04/13 */
     /* battery_level = clutter_rectangle_new_with_color(&battery_color); */
-	battery_level = clutter_actor_new();
+	
+    battery_level = clutter_actor_new();
 
     /* clutter_container_add_actor' is deprecated TW 21/04/13 */
 	/* clutter_group_add(CLUTTER_GROUP(stage), battery_level); */

@@ -30,11 +30,14 @@ Deprecated timing functions and Clutter callback functions altered were necessar
 
 At this point the application ran but did not load any initial image data files.
 
-Further clutter code was added to load icons, and needs further cleanup and proper error code handling added.
+Further clutter code was added to load icons, and needs further cleanup and proper error code
+handling .
 
-Clutter code was added to the gui.c file for initial gui image files but failed due to not setting the size of the images in clutter,further cleanup and error code handling still to be done.
+Clutter code was added to the gui.c file for initial gui image files but failed due to not setting
+ the size of the images in clutter,further cleanup and error code handling still to be done.
 
-Lots of debugging code added around Cluter functions to isolate clutter Critical run time errors or for debugging code in general.
+Lots of debugging code added around Cluter functions to isolate clutter Critical run time errors
+or for debugging code in general.
 
 
 
