@@ -65,7 +65,7 @@ ClutterColor clock_text_color = { 255, 255, 255, 210 };
 const char ITEM_FONT[] = "FreeSans Bold 10px";
 ClutterColor item_text_color = { 255, 255, 255, 210 };
 ClutterColor dock_item_text_color = { 255, 255, 255, 255 };
-ClutterColor stage_color = { 0x00, 0x00, 0x00, 0x00 };  /* last 00 was ff TW 06/05/13 Black */
+ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };  /* last 00 was ff TW 06/05/13 Black */
 ClutterColor battery_color = { 0xff, 0xff, 0xff, 0x9f }; /* White */
 ClutterColor spinner_color = { 0xff, 0xff, 0xff, 0xf0 };
 ClutterColor label_shadow_color = { 0x00, 0x00, 0x00, 0xe0 };
@@ -347,13 +347,13 @@ static void clock_update_cb(ClutterTimeline *timeline, gint msecs, gpointer data
 /* gui */
 static void gui_fade_init() 
 { 
-    /* ClutterColor fade_color = { 0x00, 0x00, 0x00, 0xff }; BLACK */
+     ClutterColor fade_color = { 0x00, 0x00, 0x00, 0xff }; /* BLACK */
  
 	/* clutter_rectange_new_with_color is deprecated TW 20/04/13 */
 	/*	fade_rectangle = clutter_rectangle_new_with_color(&fade_color); */
     
     fade_rectangle = clutter_actor_new(); 
-
+    clutter_actor_set_background_color(fade_rectangle, &fade_color);
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER (stage), fade_rectangle); */
 	
@@ -435,7 +435,7 @@ static void gui_spinner_init()
 	/* clutter_rectange_new_with_color is deprecated TW 20/04/13 */
     /* ClutterActor *spinner_element = clutter_rectangle_new_with_color(&spinner_color); */
 	ClutterActor *spinner_element = clutter_actor_new();
-	
+	clutter_actor_set_background_color(spinner_element, &spinner_color);
 
 	/* fprintf(stderr,"\nERROR: above clutter_set_size2: LINE 414 \n"); */
     clutter_actor_set_size(spinner_element, 2.0, 8.0);
@@ -497,9 +497,8 @@ static void gui_spinner_start()
 
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(spinner); */
-	/* clutter_actor_set_child_above_sibling(spinner, stage,((void *)0) ); */
 	/* fprintf(stderr, "\ngui-spinner-start-above clutter_actor_insert_child_above LINE 479\n");  TEST TE 03/05/13 */
-	/* clutter_actor_insert_child_above(spinner, stage, ((void *)0) );  TEST TW 06/05/13 */
+	 clutter_actor_set_child_above_sibling(stage, spinner, ((void *)0) ); 
 
     clutter_timeline_start(spinner_timeline);
 }
@@ -599,13 +598,13 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
             continue;
         }
 
-		/* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__); */
+		 fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__); 
 
 		/* Clutter-CRITICAL **: clutter_actor_get_parent: assertion `CLUTTER_IS_ACTOR (self)' failed */
 		/* Runtime error when moving icons with mouse or click on icon TW 13/05/13 */
 
         ClutterActor *icon = clutter_actor_get_parent(item->texture);
-		/* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__); */
+		 fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__); 
 
         if (!icon) {
             continue;
@@ -1491,12 +1490,13 @@ static void folderview_open(SBItem *item)
     clutter_actor_show(folder);
 
     /* folder background rect */
-    /* ClutterColor folderbg = {0x70, 0x70, 0x70, 255}; */ /* TW 24/04/13 */
+    ClutterColor folderbg = {0x70, 0x70, 0x70, 255};  /* TW 24/04/13 */
 
 	/* clutter_rectange_new_with_color is deprecated TW 20/04/13 */
    
     /*  *act = clutter_rectangle_new_with_color(&folderbg); */
 	ClutterActor *act11 = clutter_actor_new();
+    clutter_actor_set_background_color(act11, &folderbg);
 
     /* ClutterColor folderbd = {0xe0, 0xe0, 0xe0, 255}; */ /* TW 24/04/13 */
 	
@@ -1521,12 +1521,13 @@ static void folderview_open(SBItem *item)
     clutter_actor_show(act11);
 
     /* create folder name label */
-    /* ClutterColor rcolor = {255, 255, 255, 255}; */ /* TW 24/04/13 */
+     ClutterColor rcolor = {255, 255, 255, 255};  /* TW 24/04/13 */
 
 	/* clutter_rectange_new_with_color is deprecated TW 20/04/13 */
     /* ClutterActor *trect = clutter_rectangle_new_with_color(&rcolor); */
 	ClutterActor *trect = clutter_actor_new();
-
+    clutter_actor_set_background_color(trect, &rcolor);
+    
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(folder), trect); */
 
@@ -1754,7 +1755,7 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
  		
 		/* Runtime error TW 10/05/13 */
 		
-		clutter_actor_remove_child(sc, stage);
+		/* clutter_actor_remove_child(sc, stage); This is incorect as sc is parent and stage is parent */
 		
 		fprintf(stderr, "\n%s ERROR:above1 - clutter-actor-remove-child: sc, stage\n",__func__); /* TEST TW 12/05/13 */
 		clutter_actor_remove_child(sc, actor); /* TEST TW 12/05/13 */
@@ -1876,7 +1877,7 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
 
     clutter_threads_add_timeout(ICON_MOVEMENT_DURATION, (GSourceFunc)item_enable, (gpointer)item);
 
-    /* g_mutex_unlock(selected_mutex); */
+     /* g_mutex_unlock(selected_mutex); */
 
     return TRUE;
 }
@@ -2034,9 +2035,9 @@ static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEven
 
 static void gui_folder_draw_subitems(SBItem *item)
 {
-	/* fprintf(stderr,"\n%s above1-clutter-actor-get-parent--item->texture\n", __func__); */
+	 fprintf(stderr,"\n%s above1-clutter-actor-get-parent--item->texture\n", __func__); 
     ClutterActor *grp = clutter_actor_get_parent(item->texture);
-    /* fprintf(stderr,"\n%s below1-clutter-actor-get-parent--item->texture\n", __func__); */
+     fprintf(stderr,"\n%s below1-clutter-actor-get-parent--item->texture\n", __func__); 
 
 	/* clutter_group_new is deprecated TW 20/04/13 */
 	/* ClutterActor *minigrp = clutter_group_new(); */
@@ -2210,8 +2211,7 @@ static void gui_show_icons()
 
 					/* clutter_container_add_actor is deprecated TW 20/04/13 */
                     /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor); */
-					/* fprintf(stderr,"\n clutter-actor-add-child: LINE 2017\n"); TEST TW 03/05/13 */
-
+					
 					/* fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-add-child\n", __func__); */
 					clutter_actor_add_child(CLUTTER_ACTOR(grp), actor);
 					/* fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-add-child\n", __func__); */
@@ -2429,8 +2429,7 @@ static gboolean sbitem_texture_new(gpointer data)
 
 	
 	
-	/* sbitem_texture_load_finished(CLUTTER_ACTOR(actor), (gpointer)err, (gpointer)item); REMOVED FOR TEST TW 19/05/13 */	
-     g_signal_connect(CLUTTER_ACTOR(actor), "actor-added", G_CALLBACK(sbitem_texture_load_finished), (gpointer)item);
+	g_signal_connect(CLUTTER_ACTOR(actor), "actor-added", G_CALLBACK(sbitem_texture_load_finished), (gpointer)item);
 	/* fprintf(stderr,"\nERROR: above clutter_set_size5: LINE 2194 \n"); TEST TW 03/05/13 */
     clutter_actor_set_size(actor, device_info->home_screen_icon_width, device_info->home_screen_icon_height);
     clutter_actor_set_scale(actor, 1.0, 1.0);
@@ -2813,8 +2812,7 @@ static gboolean update_battery_info_cb(gpointer user_data)
     }
 
     if (device_poll_battery_capacity(uuid, &device_info, &error)) {
-	     fprintf(stderr,"\n%sERROR: above clutter_set:  \n",__func__); /* TEST TW 03/05/13 */
-        clutter_actor_set_size(battery_level, (guint) (((double) (device_info->battery_capacity) / 100.0) * 15), 6);
+	     clutter_actor_set_size(battery_level, (guint) (((double) (device_info->battery_capacity) / 100.0) * 15), 6);
         if (device_info->battery_capacity == 100) {
             res = FALSE;
         }
@@ -2972,7 +2970,7 @@ GtkWidget *gui_init()
 
     /* if (!g_thread_supported()) */
        
-		/* g_thread_init' is deprecated	No longer necessary TW 24/03/13 */
+		/* g_thread_init' is deprecated	No longer necessary TW 24/04/13 */
         /* The glib threading system is automatically initialised at the start */
         /* of the program - Glib Reference manual */	
 		/* g_thread_init(NULL); */ 
@@ -3009,7 +3007,7 @@ GtkWidget *gui_init()
      */
     gtk_widget_set_size_request(clutter_widget, stage_area.x2, stage_area.y2);
 
-    /* Set the stage background color */
+    /* Set up the stage and background color */
     stage = gtk_clutter_embed_get_stage(GTK_CLUTTER_EMBED(clutter_widget));
 
 	/* clutter_stage_set_color is deprecated TW 23/04/13 */
@@ -3038,13 +3036,6 @@ GtkWidget *gui_init()
 	
 
 	pixbuf = gdk_pixbuf_new_from_file ("/usr/local/share/sbmanager/background.png", NULL);
-	/* fprintf(stderr,"\n%s\n", __func__);  TEST TW 10/05/13 */
-	
-	/*char *iconfilename; */
-	/* iconfilename = g_strdup(SBMGR_DATA "/background.png"); */
-
-	/* fprintf(stderr,"\n gui-init: iconfilename = %s\n", iconfilename); */
-
 	/* pixbuf = gdk_pixbuf_new_from_file (iconfilename, &err);  TEST TW 10/08/13 */
 	/* pixbuf = gdk_pixbuf_new_from_file (SBMGR_DATA "/background.png", NULL); */
   	if(pixbuf == NULL){
@@ -3072,9 +3063,7 @@ GtkWidget *gui_init()
 
     gfloat width = 0;
     gfloat height = 0;
-    /* int ptr */
-
-    /*gint addres1 = &width */
+   
     clutter_content_get_preferred_size(image, &width, &height); 
     
     /*fprintf(stderr,"\n%s - preferred width = %f, and preferred height of image = %f\n", __func__, width, height); */
@@ -3378,6 +3367,7 @@ GtkWidget *gui_init()
     /* battery_level = clutter_rectangle_new_with_color(&battery_color); */
 	
     battery_level = clutter_actor_new();
+    clutter_actor_set_background_color(battery_level, &battery_color);
 
     /* clutter_container_add_actor' is deprecated TW 21/04/13 */
 	/* clutter_group_add(CLUTTER_GROUP(stage), battery_level); */

@@ -5,7 +5,7 @@ This is a change log for sbmanager to GTK3 for Gnome3 and clutter 1.12-2
 Change All Clutter deprecated functions to bring it up to clutter 1.12-2.
 There was a lot of deprecated functions as the Clutter API has changed a lot.
 
-Change code for all compiler warnings for both GTK2 and minor libimobiledevice 
+Change code for all compiler warnings for both GTK3 and minor libimobiledevice 
 library calls and function arguments.
 
 At this point the code compiled using gcc but the application failed to run due
@@ -22,22 +22,26 @@ Recompile using only gtk3 library installed.
 The application failed to run due to Gmutex locks and these where removed in the code
 but a review will be done when the code base is stable to ensure that in the areas
 that the Gmutex where removed that this does not cause stability issues. At this time
-debugger sessions indicated it was stable with the Gmutex locks removed.
+debugger sessions indicated that the application is stable with the Gmutex locks removed.
 
 Thread code functions was altered to include a name for debugging and due to deprecated functions.
 
 Deprecated timing functions and Clutter callback functions altered were necessary.
 
-At this point the application ran but did not load any initial image data files.
+At this point the application ran but did not load any initial Gui image data files.
 
 Further clutter code was added to load icons, and needs further cleanup and proper error code
 handling .
 
-Clutter code was added to the gui.c file for initial gui image files but failed due to not setting
+Clutter code was added to the gui.c file for initial gui image files load but failed due to not setting
  the size of the images in clutter,further cleanup and error code handling still to be done.
 
-Lots of debugging code added around Cluter functions to isolate clutter Critical run time errors
+Lots of debugging code added around Clutter functions to isolate Clutter critical run time errors
 or for debugging code in general.
+
+Gui-init - added error handling for new image file loading code.
+
+Fixed background color for folders, gui fade in/out and spinner routines and battery display which had  not been altered in the original Clutter code update.
 
 
 
