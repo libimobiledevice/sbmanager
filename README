@@ -1,11 +1,26 @@
 SBManager
 ----------
 Timothy Ward <gtwa001@gmail>
+
+This code relies heavy on libimobiledevice communication
+and uses double linked Glist's for indexing and holding info.
+It is not really suited for beginners as the learning curve will be
+steep to gasp the concepts as well as learn the Clutter API.
+But this is up to you to decide. 
+
+Because it was experimental/proof of concept code there 
+are many areas were the code could be refactored to 
+suit the application better and make it simpler- 
+using both Clutter and rewriting the backend operation to 
+the phone etc. It does have some smart sections coded into it
+and the original authors should be proud of there achievement.
+ 
 This fork is for gtk3 with code updated for clutter-1.12.2.
-This is experimental code only and still unstable.
+This is experimental code only and still unstable in some
+areas.
 This is a development fork only - Use at your own risk.
 
-This fork does not have all the features below at present
+This fork does not have all the features below at present.
 
 SBManager is a program which allows to manage the SpringBoard icons on any
 iPhone/iPod Touch device running firmware 3.1 or later.
@@ -26,4 +41,4 @@ https://github.com/libimobiledevice/sbmanager
 http://matt.colyer.name/projects/iphone-linux/
 
 README updated on:
-2013-05-20
+2013-05-27

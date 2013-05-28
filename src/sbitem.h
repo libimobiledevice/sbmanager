@@ -32,7 +32,7 @@
 
 typedef struct {
     plist_t node;
-    ClutterActor *texture;
+    ClutterActor *texture; 
     ClutterActor *texture_shadow;
     ClutterActor *label;
     ClutterActor *label_shadow;

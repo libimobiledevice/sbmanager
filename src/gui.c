@@ -264,9 +264,9 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
         iconlist = g_list_remove(iconlist, last_item);
         /* animate it to new position */
 		
-		fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__); 
+		fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__); 
         ClutterActor *actor = clutter_actor_get_parent(last_item->texture);
-		fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 
 		/* clutter_actor_animate is deprecated TW 20/04/13 */
      	/* clutter_actor_animate(actor, CLUTTER_EASE_OUT_QUAD, 250, "x", ICON_SPACING + PAGE_X_OFFSET(pageindex + 1), "y", ICON_SPACING, NULL); */
@@ -309,9 +309,9 @@ static GList *iconlist_insert_item_at(GList *iconlist, SBItem *newitem, gfloat i
                 SBItem *prev_page_item = g_list_nth_data(prevpage, MAX_PAGE_ITEMS-1);
                 /* animate this item to fix drawing error */
 				
-				fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+				fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
                 actor = clutter_actor_get_parent(prev_page_item->texture);
-				fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+				fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 
        	        /* clutter_actor_animate is deprecated TW 20/04/13 */
 				/* clutter_actor_animate(actor, CLUTTER_LINEAR, 100, "x", ICON_SPACING + PAGE_X_OFFSET(i + 1), "y", ICON_SPACING, NULL); */
@@ -357,9 +357,9 @@ static void gui_fade_init()
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER (stage), fade_rectangle); */
 	
-	/* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above1 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), fade_rectangle); 
-    /* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-add-child\n", __func__); */
+    /* fprintf(stderr,"%s: below1 clutter-actor-add-child\n", __func__); */
 	
 	clutter_actor_set_position(fade_rectangle, 0, 0);
 	/* fprintf(stderr,"\nERROR: above clutter_set_size1: LINE 355 \n"); TW 01/05/13 */
@@ -369,17 +369,11 @@ static void gui_fade_init()
 
 static void gui_fade_stop()
 {
-	/* fprintf(stderr,"\ngui-fade-stop\n"); TEST TW 03/05/13 */
+	
 	/* clutter_actor_raise_top' is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(fade_rectangle); */
-	 /* fprintf(stderr,"\ngui-fade-stop(): above clutter_actor_set_child_above_sibling1: LINE 365 \n");  TEST TW 03/05/13 */
 	
-	/* Checked that self is stage and fade_rectange is child  TW 18/05/13 */
-	
-	/* Clutter-CRITICAL **: clutter_actor_insert_child_above: assertion `child->priv->parent == NULL' failed */
-	/* Runtime error TW 10/05/13 */
-	
-	  clutter_actor_set_child_above_sibling(stage, fade_rectangle, ((void *)0) ); /*  TEST TW 10/05/13 */
+	clutter_actor_set_child_above_sibling(stage, fade_rectangle, ((void *)0) ); /*  TEST TW 10/05/13 */
 
 	/* clutter_actor_animate is deprecated TW 20/04/13 */
     /* clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 500, "opacity", 0, NULL); */
@@ -397,18 +391,10 @@ static void gui_fade_start()
 
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(fade_rectangle); */
-	/* clutter_actor_insert_child_above(fade_rectangle, stage,((void *)0) ); Maybe this is wrong TW 06/05/13 */
 	
-	/* Clutter-CRITICAL **: clutter_actor_insert_child_above: assertion `child->priv->parent == NULL' failed */
-	/* Runtime error TW 10/05/13  FIXED 18/05/13 Wrong funcion - should have been this one */
-    
-     /* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-set-child-above-sibling\n", __func__); */
+    clutter_actor_set_child_above_sibling(stage, fade_rectangle, ((void *)0) );
 
-	 clutter_actor_set_child_above_sibling(stage, fade_rectangle, ((void *)0) );
-
-     /* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-set-child-above-sibling\n", __func__); */
-
-	/* clutter_actor_animate is deprecated TW 20/04/13 */
+    /* clutter_actor_animate is deprecated TW 20/04/13 */
     /*clutter_actor_animate(CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD, 500, "opacity", 180, NULL); */
 	clutter_actor_set_easing_mode (CLUTTER_ACTOR(fade_rectangle), CLUTTER_EASE_OUT_QUAD); 
 	clutter_actor_set_easing_duration (CLUTTER_ACTOR(fade_rectangle), 500); 
@@ -444,9 +430,9 @@ static void gui_spinner_init()
 	/* clutter_container_add_actor' is deprecated TW 21/04/13 */
     /* clutter_group_add(CLUTTER_GROUP(stage), spinner_element); */
 	
-	/* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above1 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), spinner_element);
-	/* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"%s: below1 clutter-actor-add-child\n", __func__); */
 
 	/* clutter_group_new' is deprecated TW 20/04/13 */   
 	/* spinner = clutter_group_new(); */
@@ -459,9 +445,9 @@ static void gui_spinner_init()
 		/* clutter_container_add_actor' is deprecated TW 21/04/13 */
         /* clutter_group_add(CLUTTER_GROUP(spinner), actor); */
 
-		/* fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-add-child\n", __func__); */
+		/* fprintf(stderr,"\n%s: above2 clutter-actor-add-child\n", __func__); */
 		clutter_actor_add_child(CLUTTER_ACTOR(spinner), actor);
-		/* fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-add-child\n", __func__); */
+		/* fprintf(stderr,"%s: below2 clutter-actor-add-child\n", __func__); */
 
         clutter_actor_set_position(actor, ICON_SPACING, 0.0);
         clutter_actor_set_opacity(actor, (guint8)(((gfloat)(i)/12.0)*255));
@@ -477,9 +463,9 @@ static void gui_spinner_init()
 	/* clutter_container_add_actor' is deprecated TW 21/04/13 */
     /* clutter_group_add(CLUTTER_GROUP(stage), spinner); */
 	
-	/* fprintf(stderr,"\n%s:ERROR: above3 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above3 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), spinner);
-	/* fprintf(stderr,"\n%s:ERROR: below3 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"%s: below3 clutter-actor-add-child\n", __func__); */
 
     clutter_actor_set_position(spinner, (stage_area.x2-32.0)/2, (stage_area.y2-64.0)/2);
     spinner_timeline = clutter_timeline_new(100);
@@ -497,8 +483,7 @@ static void gui_spinner_start()
 
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(spinner); */
-	/* fprintf(stderr, "\ngui-spinner-start-above clutter_actor_insert_child_above LINE 479\n");  TEST TE 03/05/13 */
-	 clutter_actor_set_child_above_sibling(stage, spinner, ((void *)0) ); 
+	clutter_actor_set_child_above_sibling(stage, spinner, ((void*)0) ); 
 
     clutter_timeline_start(spinner_timeline);
 }
@@ -534,9 +519,9 @@ static void gui_dock_align_icons(gboolean animated)
             continue;
         }
 
-		/* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__); */
+		/* fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__); */
         ClutterActor *icon = clutter_actor_get_parent(item->texture);
-		/* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__); */
+		/* fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__); */
 
         if (!icon) {
             continue;
@@ -598,13 +583,13 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
             continue;
         }
 
-		 fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__); 
-
 		/* Clutter-CRITICAL **: clutter_actor_get_parent: assertion `CLUTTER_IS_ACTOR (self)' failed */
 		/* Runtime error when moving icons with mouse or click on icon TW 13/05/13 */
-
+        /* NOTE this only fails some time the function is called - like an index is out by one */
+         
+        /* fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__); */
         ClutterActor *icon = clutter_actor_get_parent(item->texture);
-		 fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__); 
+		/* fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__); */
 
         if (!icon) {
             continue;
@@ -613,7 +598,7 @@ static void gui_page_align_icons(guint page_num, gboolean animated)
         if (item != selected_item) {
             if (animated) {
 				/* clutter_actor_animate is deprecated TW 20/04/13 */
-                /* clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, ICON_MOVEMENT_DURATION, "x", xpos, "y", ypos, NULL); */
+ /* clutter_actor_animate(icon, CLUTTER_EASE_OUT_QUAD, ICON_MOVEMENT_DURATION, "x", xpos, "y", ypos, NULL); */
 				clutter_actor_set_easing_mode (icon, CLUTTER_EASE_OUT_QUAD);
 				clutter_actor_set_easing_duration (icon, ICON_MOVEMENT_DURATION);
 				clutter_actor_set_position (icon, xpos, ypos);
@@ -654,9 +639,9 @@ static void gui_page_indicator_group_align()
         clutter_actor_set_position(dot, xpos, 0.0);
         clutter_actor_set_name(dot, g_strdup_printf("%d", i));
         if (i == current_page) {
-            clutter_actor_set_opacity(dot, 200);
+            clutter_actor_set_opacity(dot, 255); /* Increased opacity from 200 when phone wallpaper is loaded */
         } else {
-            clutter_actor_set_opacity(dot, 100);
+            clutter_actor_set_opacity(dot, 255); /* Increased opacity from 100 when phone wallpaper is loaded */
         }
         xpos += clutter_actor_get_width(dot);
     }
@@ -666,6 +651,8 @@ static void gui_page_indicator_group_align()
 
 static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer data);
 
+ /* clone the page_indicator,add a callback signal,make it reactive,add it to the page_indicator_group TW */
+ /* then align the page_indicator_group */
 static void gui_page_indicator_group_add(GList *page, int page_index)
 {
     debug_printf("%s: adding page indicator for page %d\n", __func__, page_index);
@@ -674,13 +661,9 @@ static void gui_page_indicator_group_add(GList *page, int page_index)
 
 		/* clutter_actor_unparent' is deprecated TW 20/04/13 */
 		/* clutter_actor_unparent(actor); */
-        /* TW 24/04/13  Do not think this is required */
-		/* ClutterActor *parent = clutter_actor_get_parent(actor);  */
-		
-		fprintf(stderr,"\n%s:above1-clutter-actor-remove-child: stage, actor\n", __func__);
-		/* At this time actor is not a child of the stage so this should not be required. */
-        clutter_actor_remove_child(stage, actor); /* TEST  stage is self and actor is child TW 28/04/13 */
-		fprintf(stderr,"\n%s:below1-clutter-actor-remove-child: stage, actor\n", __func__);
+
+        /* NOTE cloned actors have no parent or children untill added to another actor */
+        /* They use the same source for painting */        
 
         clutter_actor_set_reactive(actor, TRUE);
         g_signal_connect(actor, "button-press-event", G_CALLBACK(page_indicator_clicked_cb), NULL);
@@ -688,9 +671,10 @@ static void gui_page_indicator_group_add(GList *page, int page_index)
 		/* clutter_container_add_actor is deprecated TW 20/04/13 */
         /* clutter_container_add_actor(CLUTTER_CONTAINER(page_indicator_group), actor); */
 		
-		/* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-add-child\n", __func__); */
+		
+        /* fprintf(stderr,"\n%s: above1 clutter-actor-add-child\n", __func__); */
 		clutter_actor_add_child(CLUTTER_ACTOR(page_indicator_group), actor);
-		/* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-add-child\n", __func__); */
+		/* fprintf(stderr,"%s: below1 clutter-actor-add-child\n", __func__); */
 
         gui_page_indicator_group_align();
     }
@@ -881,29 +865,27 @@ plist_t gui_get_iconstate(const char *format_version)
 }
 
 /* input */
+/* moves icon to a specified mouse coordinated position I think */
 static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, gpointer user_data)
 {
     /* check if an item has been raised */
     if (!selected_item) {
         return FALSE;
-    }
-
-	fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
-	
-	/* Clutter-CRITICAL **: clutter_actor_get_parent: assertion `CLUTTER_IS_ACTOR (self)' failed */
-	/* Runtime error when moving icons with mouse or click on icon TW 13/05/13 */
+    } 
+   
+    /* fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__); */
     ClutterActor *icon = clutter_actor_get_parent(selected_item->texture);
-	
-	fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
     
-    fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-move-by\n", __func__);
+    /* fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__); */
 
-    /* Clutter-CRITICAL **: clutter_actor_move_by: assertion `CLUTTER_IS_ACTOR (self)' failed */
-    /* Runtime error when moving icons on stage or click on icons TW 18/05/13 */
-    
+	if(icon == NULL){
+        fprintf(stderr,"\n%s: ERROR clutter-actor-get-parent(selected_item->texture): failure - return = NULL", __func__);
+    }
+	    
+    /* fprintf(stderr,"\n%s: above1 clutter-actor-move-by\n", __func__); */
     clutter_actor_move_by(icon, (event->x - start_x), (event->y - start_y));
-    fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-move-by\n", __func__);
-
+    /* fprintf(stderr,"%s: below1 clutter-actor-move-by\n", __func__); */
+    fprintf(stderr,"event->x = %f event->y = %f\n", event->x,event->y);
     if (event->x-start_x > 0) {
         move_left = FALSE;
     } else {
@@ -954,7 +936,7 @@ static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, 
         int p = current_page;
         int i;
         GList *pageitems = NULL;
-        debug_printf("%s: current_page %d\n", __func__, p);
+        debug_printf("\n%s: current_page %d\n", __func__, p);
         /* remove selected_item from all pages */
         int count = g_list_length(sbpages);
         for (i = 0; i < count; i++) {
@@ -995,7 +977,8 @@ static gboolean page_indicator_clicked_cb(ClutterActor *actor, ClutterButtonEven
     gui_set_current_page(pageindex, TRUE);
     return TRUE;
 }
-
+/* looks for the number of actors in grp, get the actors name at index, compares to name in mini, if not in minigrp destroy actor , then clones a new actor */
+/* and rebuilds the grp again with the existing names */
 static void gui_folder_redraw_subitems(SBItem *item)
 {
     if (!item)
@@ -1003,9 +986,9 @@ static void gui_folder_redraw_subitems(SBItem *item)
 
     ClutterActor *minigrp = NULL;
 
-	fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+	fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
     ClutterActor *grp = clutter_actor_get_parent(item->texture);
-	fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+	fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 
 	/* clutter_group_get_n_children' is deprecated TW 20/04/13 */
     /* guint cnt = clutter_group_get_n_children(CLUTTER_GROUP(grp)); */
@@ -1037,9 +1020,9 @@ static void gui_folder_redraw_subitems(SBItem *item)
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), minigrp); */
 	
-	fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-add-child\n", __func__);
+	fprintf(stderr,"\n%s: above1 clutter-actor-add-child\n", __func__);
 	clutter_actor_add_child(CLUTTER_ACTOR(grp), minigrp);
-	fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-add-child\n", __func__);
+	fprintf(stderr,"%s: below1 clutter-actor-add-child\n", __func__);
 
     for (i = 0; i < g_list_length(item->subitems); i++) {
         SBItem *subitem = (SBItem*)g_list_nth_data(item->subitems, i);
@@ -1049,20 +1032,20 @@ static void gui_folder_redraw_subitems(SBItem *item)
 			/* clutter_actor_unparent' is deprecated TW 20/04/13 */
 			/* clutter_actor_unparent(suba); */
 			
-			fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-get-parent\n", __func__);
-			ClutterActor *parent = clutter_actor_get_parent(suba); /* TW 24/04/13 */
-			fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-get-parent\n", __func__);
+			fprintf(stderr,"\n%s: above2 clutter-actor-get-parent\n", __func__);
+			/* ClutterActor *parent = clutter_actor_get_parent(suba);  TW 24/04/13 */
+			fprintf(stderr,"%s: below2 clutter-actor-get-parent\n", __func__);
 
-			fprintf(stderr, "\n%sERROR:above1-clutter-actor-remove-child: parent, suba\n", __func__); /* TEST TW 28/04/13 */
-			clutter_actor_remove_child(parent, suba);
-			fprintf(stderr, "\n%sERROR:below1-clutter-actor-remove-child: parent, suba\n", __func__); /* TEST TW 28/04/13 */
+			/* NOTE cloned actors have no parent or children untill added to another actor */
+            /* They use the same source for painting */
 
 			/* clutter_container_add_actor is deprecated TW 20/04/13 */
             /* clutter_container_add_actor(CLUTTER_CONTAINER(minigrp), suba); */
-			fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-add-child\n", __func__);
-			clutter_actor_add_child(CLUTTER_ACTOR(minigrp), suba);
-			fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-add-child\n", __func__);
-
+			fprintf(stderr,"\n%s: above2 clutter-actor-add-child\n", __func__);
+			
+            
+            clutter_actor_add_child(CLUTTER_ACTOR(minigrp), suba);
+			fprintf(stderr,"%s: below2 clutter-actor-add-child\n", __func__);
             clutter_actor_set_scale(suba, 0.22, 0.22);
             clutter_actor_set_position(suba, 8.0 + (i%3)*ICON_SPACING, 8.0 + ((double)(int)((int)i/(int)3))*ICON_SPACING);
             if (i < 9)
@@ -1096,9 +1079,9 @@ static void gui_folder_align_icons(SBItem *item, gboolean animated)
             continue;
         }
 
-		fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
         ClutterActor *icon = clutter_actor_get_parent(si->texture);
-		fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 
         if (!icon) {
             continue;
@@ -1154,25 +1137,28 @@ static gboolean folderview_close_finish(gpointer user_data)
         clutter_actor_show(item->label_shadow);
     }
 
-	fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+	fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
     ClutterActor *newparent = clutter_actor_get_parent(item->texture);
-	fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);	
+	fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);	
 
     GList *subitems = item->subitems;
     guint i;
     for (i = 0; i < g_list_length(subitems); i++) {
         SBItem *si = g_list_nth_data(subitems, i);
 
-		fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above2 clutter-actor-get-parent\n", __func__);
         ClutterActor *actor = clutter_actor_get_parent(si->texture);
-		fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below2 clutter-actor-get-parent\n", __func__);
 		
 		/* clutter_actor_reparent is deprecated TW 21/04/13 */
         /* clutter_actor_reparent(actor, newparent); */
 		
-		fprintf(stderr, "\n%sERROR:above1-clutter-actor-remove-child: actor, newparent\n", __func__); /* TEST TW 28/04/13 */
-		clutter_actor_remove_child(actor, newparent);
-		fprintf(stderr, "\n%sERROR:below1-clutter-actor-remove-child: actor, newparent\n", __func__); /* TEST TW 28/04/13 */
+		fprintf(stderr, "\n%s: above1-clutter-actor-remove-child: actor, newparent\n", __func__); /* TEST TW 28/04/13 */
+		g_object_ref(si->texture);
+        /* FIXME to reparent actor has to be removed and added to new parent */
+        /* clutter_actor_remove_child(actor, CLUTTER_ACTOR(si->texture) ); */
+		fprintf(stderr, "%s: below1-clutter-actor-remove-child: actor, newparent\n", __func__); /* TEST TW 28/04/13 */
+         clutter_actor_add_child(newparent, CLUTTER_ACTOR(si->texture) ); 
         clutter_actor_hide(actor);
     }
 
@@ -1193,17 +1179,17 @@ static gboolean folderview_close_finish(gpointer user_data)
     for (i = 0; i < g_list_length(page); i++) {
         it = g_list_nth_data(page, i);
 
-		fprintf(stderr,"\n%s:ERROR: above3 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above3 clutter-actor-get-parent\n", __func__);
         act = clutter_actor_get_parent(it->texture);
-		fprintf(stderr,"\n%s:ERROR: below3 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below3 clutter-actor-get-parent\n", __func__);
         clutter_actor_set_opacity(act, 255);
     }
     for (i = 0; i < g_list_length(dockitems); i++) {
         it = g_list_nth_data(dockitems, i);
 
-		fprintf(stderr,"\n%s:ERROR: above4 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above4 clutter-actor-get-parent\n", __func__);
         act = clutter_actor_get_parent(it->texture);
-		fprintf(stderr,"\n%s:ERROR: below4 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below4 clutter-actor-get-parent\n", __func__);
 
         clutter_actor_set_opacity(act, 255);
     }
@@ -1229,14 +1215,14 @@ static void folderview_close(SBItem *folderitem)
 	/* clutter_actor_raise_top(aniupper); */
 	/* TEST TW 28/04/13 */
 	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling2: LINE 1147 \n"); /* TEST TW 28/04/13 */
-	clutter_actor_set_child_above_sibling(aniupper, stage,((void *)0) );
+	clutter_actor_set_child_above_sibling(stage, aniupper, ((void *)0) );
     
 
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
 	/* clutter_actor_raise_top(anilower); */
 	
 	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling3: LINE 1154 \n"); /* TEST TW 28/04/13 */
-	clutter_actor_insert_child_above(anilower, stage,((void *)0) );
+	clutter_actor_set_child_above_sibling(stage, anilower, ((void *)0) );
 	
 	/* clutter_actor_animate is deprecated TW 20/04/13 */
     /* clutter_actor_animate(aniupper, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "y", 0.0, NULL); */
@@ -1281,8 +1267,9 @@ static gboolean folderview_open_finish(gpointer user_data)
 
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(folder); */
-	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling4 LINE 1200 \n"); /* TEST TW 28/04/13 */
-	clutter_actor_insert_child_above(folder, stage,((void *)0) );
+	fprintf(stderr,"%s\nERROR: clutter_actor_set_child_above_sibling\n", __func__); /* TEST TW 28/04/13 */
+    /* FIXME this function may not do what is is designed to do - refer clutter reference manual */
+	clutter_actor_set_child_above_sibling(stage, folder, ((void *)0) );
 
     clutter_actor_show(marker);
 
@@ -1292,6 +1279,8 @@ static gboolean folderview_open_finish(gpointer user_data)
     return FALSE;
 }
 
+/* Dims the springboard and dock icons, hides page indicators group, takes two screen shots(aniupper/anilower) of the stage */
+/* adds actors aniupper/anilower to stage, create a new clone folder and add to stage,*/
 static void folderview_open(SBItem *item)
 {
     GList *page = g_list_nth_data(sbpages, current_page);
@@ -1311,9 +1300,12 @@ static void folderview_open(SBItem *item)
     for (i = 0; i < g_list_length(page); i++) {
         it = g_list_nth_data(page, i);
 
-		fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+		/* fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__); */
         act = clutter_actor_get_parent(it->texture);
-		fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+        if(act == NULL){
+            fprintf(stderr, "\n%s: ERROR - item 1: clutter-actor-get-parent()1 failed: call return = NULL", __func__);
+        }
+		/* fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__); */
 
         if (item == it) {
             clutter_actor_set_opacity(act, 255);
@@ -1334,9 +1326,12 @@ static void folderview_open(SBItem *item)
     for (i = 0; i < count; i++) {
         it = g_list_nth_data(dockitems, i);
 		
-		fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-get-parent\n", __func__);
+		/* fprintf(stderr,"\n%s: above2 clutter-actor-get-parent\n", __func__); */
         act = clutter_actor_get_parent(it->texture);
-		fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-get-parent\n", __func__);
+        if(act == NULL){
+            fprintf(stderr, "\n%s: ERROR - item 2: clutter-actor-get-parent() failed: call return = NULL", __func__);
+        }
+		/* fprintf(stderr,"%s: below2 clutter-actor-get-parent\n", __func__); */
 
         if (item == it) {
             clutter_actor_set_opacity(act, 255);
@@ -1384,9 +1379,9 @@ static void folderview_open(SBItem *item)
 
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(stage), aniupper); */
-	fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"\n%s: above1 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), aniupper);
-	fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"%s: below1 clutter-actor-add-child\n", __func__); */
 
    	/* clutter_texture_new' is deprecated TW 21/04/13 */
 	/* act = clutter_texture_new(); */
@@ -1394,20 +1389,41 @@ static void folderview_open(SBItem *item)
 
 	/* clutter_texture_set_from_rgb_data' is deprecated TW 21/04/13 */
     /* clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(act), shot, TRUE, stage_area.x2, ypos, stage_area.x2*4, 4, CLUTTER_TEXTURE_NONE, NULL); */
-	clutter_image_set_data(CLUTTER_IMAGE(act1), shot, 2, stage_area.x2, ypos, stage_area.x2*4, NULL);	
+	
+    gboolean yess = clutter_image_set_data(CLUTTER_IMAGE(act1),
+                                         shot,
+                                         COGL_PIXEL_FORMAT_RGBA_8888,
+                                         stage_area.x2,
+                                         ypos,
+                                         stage_area.x2*4,
+                                         NULL);	
 
+    if(yess == FALSE){
+        fprintf(stderr, "\n%s: Failed to load stage image(aniupper)\n", __func__);
+    }
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(aniupper), act); */
-	clutter_actor_set_content(CLUTTER_ACTOR(aniupper), act1);
+	
 
+    gfloat width = 0;
+    gfloat height = 0;
+   
+    clutter_content_get_preferred_size(act1, &width, &height); 
+    
+    /*fprintf(stderr,"\n%s - preferred width = %f, and preferred height of image = %f\n", __func__, width, height); */
+    
+    clutter_actor_set_size(aniupper, width, height);
+    clutter_actor_set_content(CLUTTER_ACTOR(aniupper), act1);
+    
+    /* THIS MAY NEED SIZE OF ACTOR SET TO WORK CORRECTLY TW 24/05/13 DONE 26/05/13 */
     clutter_actor_set_position(aniupper, 0, 0);
     clutter_actor_set_reactive(aniupper, TRUE);
     clutter_actor_show(aniupper);
 	
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(aniupper); */
-	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling5: LINE 1315 \n"); /* TEST TW 28/04/13 */
-	clutter_actor_set_child_above_sibling(stage, aniupper,((void *)0) );
+	fprintf(stderr,"\n%s: clutter-actor-set-child-above-sibling5:\n", __func__); /* TEST TW 28/04/13 */
+     clutter_actor_set_child_above_sibling(stage, aniupper, ((void *)0) ); /* REMOVED FOR TEST TW 26/05/13 */ 
 
     /* lower */
 	
@@ -1417,9 +1433,9 @@ static void folderview_open(SBItem *item)
 
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(stage), anilower); */
-	fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"\n%s: above2 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), anilower);
-	fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"%s: below2 clutter-actor-add-child\n", __func__); */
 
     /* clutter_texture_new' is deprecated TW 21/04/13 */
 	/* act = clutter_texture_new(); */
@@ -1427,22 +1443,42 @@ static void folderview_open(SBItem *item)
 
 	/* clutter_texture_set_from_rgb_data' is deprecated TW 21/04/13 */    
 	/* clutter_texture_set_from_rgb_data(CLUTTER_TEXTURE(act), shot, TRUE, stage_area.x2, stage_area.y2, stage_area.x2*4, 4, CLUTTER_TEXTURE_NONE, NULL); */
-	clutter_image_set_data(CLUTTER_IMAGE(act2), shot, 2, stage_area.x2, ypos, stage_area.x2*4, NULL);
+	gboolean yes =  clutter_image_set_data(CLUTTER_IMAGE(act2),
+                                         shot,
+                                         COGL_PIXEL_FORMAT_RGBA_8888,
+                                         stage_area.x2,
+                                         ypos,
+                                         stage_area.x2*4,
+                                         NULL);
+    if(yes == FALSE){
+        fprintf(stderr, "\n%s: Failed to load stage image(anilower)\n", __func__);
+    }
+ /* FIXME THIS MAY NEED SIZE OF ACTOR SET TO WORK CORRECTLY TW 24/05/13 */
+    
+    gfloat width1 = 0;
+    gfloat height1 = 0;
+   
+    clutter_content_get_preferred_size(act2, &width1, &height1); 
+    
+    /*fprintf(stderr,"\n%s - preferred width = %f, and preferred height of image = %f\n", __func__, width, height); */
+    
+    clutter_actor_set_size(anilower, width1, height1);
+
 
     clutter_actor_set_clip(anilower, 0.0, ypos, (gfloat)(stage_area.x2), (gfloat)(stage_area.y2)-ypos);
 
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(anilower), act); */
 	clutter_actor_set_content(CLUTTER_ACTOR(anilower), act2);
-
+    
     clutter_actor_set_position(anilower, 0, 0);
     clutter_actor_set_reactive(anilower, TRUE);
     clutter_actor_show(anilower);
 
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(anilower); */
-	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling6 LINE 1348\n"); /* TEST TW 28/04/13 */
-	clutter_actor_set_child_above_sibling(stage, anilower,((void *)0) );
+	fprintf(stderr,"\n%s: clutter_actor_set_child_above_sibling6\n", __func__); /* TEST TW 28/04/13 */
+	clutter_actor_set_child_above_sibling(stage, anilower, ((void *)0 ) );
 
     /* add a clone of the original folder icon */
     ClutterActor *act3 = clutter_clone_new(fldr);
@@ -1451,9 +1487,9 @@ static void folderview_open(SBItem *item)
 		/* clutter_container_add_actor is deprecated TW 20/04/13 */
         /* clutter_container_add_actor(CLUTTER_CONTAINER(anilower), act);*/
 		
-		fprintf(stderr,"\n%s:ERROR: above3 clutter-actor-add-child\n", __func__);
+		fprintf(stderr,"\n%s: is-dock-folder: above3 clutter-actor-add-child-anilower\n", __func__);
 		clutter_actor_add_child(CLUTTER_ACTOR(anilower), act3);
-		fprintf(stderr,"\n%s:ERROR: below3 clutter-actor-add-child\n", __func__);
+		fprintf(stderr,"%s: is_dock-folder: below3 clutter-actor-add-child-anilower\n", __func__);
 
         clutter_actor_set_position(act3, xpos, ypos+20.0);
     } else {
@@ -1461,9 +1497,9 @@ static void folderview_open(SBItem *item)
 		/* clutter_container_add_actor is deprecated TW 20/04/13 */
         /* clutter_container_add_actor(CLUTTER_CONTAINER(aniupper), act); */
 		
-		fprintf(stderr,"\n%s:ERROR: above4 clutter-actor-add-child\n", __func__);
+		fprintf(stderr,"\n%s: above4 clutter-actor-add-child\n", __func__);
 		clutter_actor_add_child(CLUTTER_ACTOR(aniupper), act3);
-		fprintf(stderr,"\n%s:ERROR: below4 clutter-actor-add-child\n", __func__);
+		fprintf(stderr,"%s: below4 clutter-actor-add-child\n", __func__);
 
         clutter_actor_set_position(act3, xpos, ypos-80.0);
     }
@@ -1477,14 +1513,14 @@ static void folderview_open(SBItem *item)
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(stage), folder); */
 
-	fprintf(stderr,"\n%s:ERROR: above5 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"\n%s: above5 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), folder);
-	fprintf(stderr,"\n%s:ERROR: below5 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"%s: below5 clutter-actor-add-child\n", __func__); */
 
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(folder); */
-	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling7: LINE 1381 \n"); /* TEST TW 28/04/13 */
-	clutter_actor_set_child_above_sibling(stage, folder,((void *)0) );
+	fprintf(stderr,"\n%s: clutter_actor_set_child_above_sibling7:\n", __func__); /* TEST TW 28/04/13 */
+	clutter_actor_set_child_above_sibling(stage, folder, ((void *)0 ) );
 
     clutter_actor_set_position(folder, 0, ypos);
     clutter_actor_show(folder);
@@ -1493,9 +1529,9 @@ static void folderview_open(SBItem *item)
     ClutterColor folderbg = {0x70, 0x70, 0x70, 255};  /* TW 24/04/13 */
 
 	/* clutter_rectange_new_with_color is deprecated TW 20/04/13 */
-   
     /*  *act = clutter_rectangle_new_with_color(&folderbg); */
-	ClutterActor *act11 = clutter_actor_new();
+	
+    ClutterActor *act11 = clutter_actor_new();
     clutter_actor_set_background_color(act11, &folderbg);
 
     /* ClutterColor folderbd = {0xe0, 0xe0, 0xe0, 255}; */ /* TW 24/04/13 */
@@ -1506,7 +1542,7 @@ static void folderview_open(SBItem *item)
 	/* clutter_rectangle_set_border_width' is deprecated TW 24/03/13 */
     /* clutter_rectangle_set_border_width(CLUTTER_RECTANGLE(act), 1); */
 
-	fprintf(stderr,"\nERROR: above clutter_set_size3: LINE 1402 \n");
+	fprintf(stderr,"\n%s: above clutter_set_size3 \n", __func__);
     clutter_actor_set_size(act11, stage_area.x2, 1);
     clutter_actor_set_position(act11, 0, 0);
     clutter_actor_set_reactive(act11, TRUE);
@@ -1514,9 +1550,9 @@ static void folderview_open(SBItem *item)
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(folder), act); */
 
-	fprintf(stderr,"\n%s:ERROR: above6 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"\n%s: above6 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(folder), act11);
-	fprintf(stderr,"\n%s:ERROR: below6 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"%s: below6 clutter-actor-add-child\n", __func__); */
 
     clutter_actor_show(act11);
 
@@ -1525,20 +1561,21 @@ static void folderview_open(SBItem *item)
 
 	/* clutter_rectange_new_with_color is deprecated TW 20/04/13 */
     /* ClutterActor *trect = clutter_rectangle_new_with_color(&rcolor); */
-	ClutterActor *trect = clutter_actor_new();
+    ClutterActor *trect = clutter_actor_new();
+   /* ClutterActor *trect = clutter_text_new(); added for text TW 27/05/13 */
     clutter_actor_set_background_color(trect, &rcolor);
     
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(folder), trect); */
 
-	fprintf(stderr,"\n%s:ERROR: above7 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"\n%s: above7 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(folder), trect);
-	fprintf(stderr,"\n%s:ERROR: below7 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"%s: below7 clutter-actor-add-child\n", __func__); */
 
 
     clutter_actor_set_position(trect, 16.0, 8.0);
 
-	fprintf(stderr,"\nERROR: above clutter_set_size4: LINE 1426 \n");
+	fprintf(stderr,"\n%s: above clutter_set_size4\n", __func__);
     clutter_actor_set_size(trect, (gfloat)(stage_area.x2)-32.0, 24.0);
 
     const gchar *ltext = clutter_text_get_text(CLUTTER_TEXT(item->label));
@@ -1548,9 +1585,9 @@ static void folderview_open(SBItem *item)
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(folder), lbl); */
 
-	fprintf(stderr,"\n%s:ERROR: above8 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"\n%s: above8 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(folder), lbl);
-	fprintf(stderr,"\n%s:ERROR: below8 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"%s: below8 clutter-actor-add-child\n", __func__); */
 
 
     clutter_actor_set_position(lbl, 16.0, 8.0);
@@ -1558,8 +1595,8 @@ static void folderview_open(SBItem *item)
 
 	/* clutter_actor_raise is deprecated TW 21/04/13 */
     /* clutter_actor_raise(lbl, trect); */
-	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling8: LINE 1442 \n"); /* TEST TW 28/04/13 */
-	clutter_actor_set_child_above_sibling(lbl, trect,((void *)0) );
+	fprintf(stderr,"\n%s: clutter_actor_set_child_above_sibling8\n", __func__); /* TEST TW 28/04/13 */
+	/* clutter_actor_set_child_above_sibling(folder, lbl, trect ); */
 
     clutter_actor_grab_key_focus(lbl);
     clutter_text_set_editable(CLUTTER_TEXT(lbl), TRUE);
@@ -1585,21 +1622,16 @@ static void folderview_open(SBItem *item)
 	
 	/* clutter_actor_unparent' is deprecated TW 20/04/13 */    
 	/* clutter_actor_unparent(marker); */
-
-	fprintf(stderr,"\n%s:ERROR: above3 clutter-actor-get-parent\n", __func__);
-	ClutterActor *parent = clutter_actor_get_parent(marker); /* TW 24/04/13 */
-	fprintf(stderr,"\n%s:ERROR: below3 clutter-actor-get-parent\n", __func__);
-
-	fprintf(stderr, "\n%sERROR:above1-clutter-actor-remove-child: parent, marker\n", __func__); /* TEST TW 28/04/13 */
-	clutter_actor_remove_child(parent, marker);
-	fprintf(stderr, "\n%sERROR:below1-clutter-actor-remove-child: parent, marker\n", __func__); /* TEST TW 28/04/13 */
-
+    
+    /* NOTE cloned actors have no parent or children untill added to another actor */
+    /* They use the same source for painting */
+	
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(folder), marker); */
 
-	fprintf(stderr,"\n%s:ERROR: above9 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"\n%s: above9 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(folder), marker);
-	fprintf(stderr,"\n%s:ERROR: below9 clutter-actor-add-child\n", __func__);
+	/* fprintf(stderr,"%s: below9 clutter-actor-add-child\n", __func__); */
 
     if (is_dock_folder) {
 
@@ -1618,17 +1650,22 @@ static void folderview_open(SBItem *item)
     for (i = 0; i < g_list_length(item->subitems); i++) {
         SBItem *si = g_list_nth_data(item->subitems, i);
 		
-		fprintf(stderr,"\n%s:ERROR: above4 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above4 clutter-actor-get-parent\n", __func__);
         ClutterActor *a = clutter_actor_get_parent(si->texture);
-		fprintf(stderr,"\n%s:ERROR: below4 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below4 clutter-actor-get-parent\n", __func__);
 
 		/* clutter_actor_reparent is deprecated TW 21/04/13 */
         /* clutter_actor_reparent(a, folder); */
-
-		fprintf(stderr, "\n%sERROR:above2-clutter-actor-remove-child: a, folder\n", __func__); /* TEST TW 28/04/13 */
-		clutter_actor_remove_child(a, folder);
-		fprintf(stderr, "\n%sERROR:below2-clutter-actor-remove-child: a, folder\n", __func__); /* TEST TW 28/04/13 */
-	
+        /* FIXME Not sure if reparent is required here unless and icon is removed */
+    
+		fprintf(stderr, "\n%s: above2-clutter-actor-remove-child: a, folder\n", __func__); /* TEST TW 28/04/13 */
+		/* NOTE g_object_ref(  To reparent remove child then add child need to be done */
+        g_object_ref(si->texture);
+       
+        /* NOTE when this reparent is done the folder disappears when clicked again after closing 27/05/13 */
+        /* clutter_actor_remove_child(a, CLUTTER_ACTOR(si->texture) );  */
+		fprintf(stderr, "%s: below2-clutter-actor-remove-child: a, folder\n", __func__); /* TEST TW 28/04/13 */
+	    clutter_actor_add_child(folder, CLUTTER_ACTOR(si->texture) ); 
         clutter_actor_set_position(a, 0, 0);
         clutter_actor_show(a);
     }
@@ -1648,20 +1685,20 @@ static void folderview_open(SBItem *item)
 	
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(folder); */
-	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling9: LINE 1521 \n"); /* TEST TW 28/04/13 */
-	clutter_actor_set_child_above_sibling(stage, folder,((void *)0) );
+	fprintf(stderr,"\n%s: clutter_actor_set_child_above_sibling9\n", __func__); /* TEST TW 28/04/13 */
+	clutter_actor_set_child_above_sibling(stage, folder, ((void *)0) );
 	
 	/* clutter_actor_raise_top is deprecated TW 21/04/13 */
     /* clutter_actor_raise_top(anilower); */
-	fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling10: LINE 1526 \n"); /* TEST TW 28/04/13 */
-	clutter_actor_set_child_above_sibling(stage, anilower,((void *)0) );
+	fprintf(stderr,"\n%s: clutter_actor_set_child_above_sibling10\n", __func__); /* TEST TW 28/04/13 */
+	clutter_actor_set_child_above_sibling(stage, anilower, ((void *)0) );
 
     /* now animate the actors */
 	
 	/* clutter_actor_animate is deprecated TW 20/04/13 */
     /* clutter_actor_animate(act, CLUTTER_EASE_IN_OUT_QUAD, FOLDER_ANIM_DURATION, "height", fh, NULL); */
 	
-	/* NOTE TW 11/05/13 THIS NEEDS TO BE FIXED */
+	/* FIXME TW 11/05/13 THIS NEEDS TO BE FIXED FIND OUT WHAT "ACT" WAS AND ALTER CODE TO FIX */
 	/* clutter_actor_set_easing_mode (act, CLUTTER_EASE_IN_OUT_QUAD);act flagged by compiler TW 26/04/13 */
 	/* clutter_actor_set_easing_duration (CLUTTER_ACTOR(act), FOLDER_ANIM_DURATION);act flagged by compiler TW 26/04/13 */
 	/* clutter_actor_set_height (act, fh); act flagged by compiler TW 26/04/13 */
@@ -1690,6 +1727,11 @@ static void folderview_open(SBItem *item)
 
     clutter_threads_add_timeout(FOLDER_ANIM_DURATION, (GSourceFunc)folderview_open_finish, item);
 }
+
+
+/* If actor is clicked once increase its size, it reparents it for some reason??,  and sets is opacity */
+/* Double click on folder will go to folderview_open() */
+/* If dock item it sets up text name and text color for the icon (actor) */
 
 static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
@@ -1731,16 +1773,21 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
         gfloat diffx = 0.0;
         gfloat diffy = 0.0;
 
-		fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
         ClutterActor *sc = clutter_actor_get_parent(actor);
-		fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+        if(sc == NULL){
+            fprintf(stderr,"\n%s: below1 clutter-actor-get-parent: sc = NULL\n", __func__);
+        }
+		fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 
         if (item->is_dock_item) {
-            clutter_text_set_color(CLUTTER_TEXT(item->label), &item_text_color);
-            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height);
+    
+
+           clutter_text_set_color(CLUTTER_TEXT(item->label), &item_text_color);
+           clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height); 
             if (item->label_shadow) {
-                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height + 1.0);
-            }
+                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height + 1.0); 
+            } 
             diffx = dock_area.x1;
             diffy = dock_area.y1;
         } else {
@@ -1750,34 +1797,50 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
 
 		/* clutter_actor_reparent' is deprecated TW 21/04/13 */
         /* clutter_actor_reparent(sc, stage); */
-		/* NOTE TW 10/05/13 sc could be sb_area or dock_area or stage */
-		/*Clutter-CRITICAL **: clutter_actor_remove_child: assertion `self != child' failed */
- 		
-		/* Runtime error TW 10/05/13 */
 		
-		/* clutter_actor_remove_child(sc, stage); This is incorect as sc is parent and stage is parent */
+        /* NOTE TW 10/05/13 sc could be sb_area or dock_area or stage */
 		
-		fprintf(stderr, "\n%s ERROR:above1 - clutter-actor-remove-child: sc, stage\n",__func__); /* TEST TW 12/05/13 */
-		clutter_actor_remove_child(sc, actor); /* TEST TW 12/05/13 */
-		fprintf(stderr, "\n%s ERROR:below1 - clutter-actor-remove-child: sc, stage\n",__func__); /* TEST TW 12/05/13 */
-        
-		clutter_actor_set_position(sc, clutter_actor_get_x(sc) + diffx, clutter_actor_get_y(sc) + diffy);
+ 		/* As all actors (icons) are added to stage reparenting may not be required */
+		/* Reparenting the actor results in the actor going back to 0.0 on the sb_area or 0.0 on the dock area - because it is removed from */
+        /* its original position then added to stage it resets it x and y coordintes */
+		/* when you click on it from this point it moves down only, but it raised to the top and will move over the top of other icons */
+        /* as all actors where added to the stage sc should be the stage so reparenting them should not be necessary */
 
-		/* clutter_actor_raise_top is deprecated TW 21/04/13 */
+		fprintf(stderr, "\n%s: above1 - clutter-actor-remove-child: sc, actor\n",__func__); /* TEST TW 12/05/13 */
+        /* FIXME- ensure a reference is added before removing child actor - Clutter reference manual */
+		
+        g_object_ref(actor);
+        clutter_actor_remove_child(sc, actor);  /* TEST TW 12/05/13 */
+
+        /* FIXME -ensure sc parent is the stage and alter code below to suit */
+
+		fprintf(stderr, "%s: below1 - clutter-actor-remove-child: sc, actor\n",__func__); /* TEST TW 12/05/13 */
+        clutter_actor_add_child(stage, actor); /* Added for test tw 25/05/13 */
+
+		/* clutter_actor_set_position(sc, clutter_actor_get_x(sc) + diffx, clutter_actor_get_y(sc) + diffy); REMOVED FOR TEST TW 26/05/13 */
+        clutter_actor_set_position(actor, clutter_actor_get_x(actor) + diffx, clutter_actor_get_y(actor) + diffy);
+		
+        /* clutter_actor_raise_top is deprecated TW 21/04/13 */
         /* clutter_actor_raise_top(sc); */
 				
 		/* Clutter-CRITICAL **: clutter_actor_insert_child_above: assertion `self != child' failed */
 		/* Runtime error TW 10/05/13 */
 		
-		fprintf(stderr,"\n%sERROR:above1: clutter-actor-insert-child-above:\n", __func__); /* TEST TW 28/04/13 */
-		clutter_actor_insert_child_above(stage, sc,((void *)0));
-        fprintf(stderr,"\n%sERROR:below1: clutter-actor-insert-child-above:\n", __func__); /* TEST TW 28/04/13 */
+		fprintf(stderr,"\n%s: above1: clutter-actor-insert-child-above:\n", __func__); /* TEST TW 28/04/13 */
+        
+		/* clutter_actor_insert_child_above(stage, sc, ((void *)0) ); */
+        fprintf(stderr,"%s: below1: clutter-actor-insert-child-above:\n", __func__); /* TEST TW 28/04/13 */
 
 		/* clutter_actor_set_scale_full' is deprecated TW 21/04/13		
 		clutter_actor_set_scale_full(sc, 1.2, 1.2,
                                      clutter_actor_get_x(actor) +
                                      clutter_actor_get_width(actor) / 2,
                                      clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2); */
+        
+        /* Added clutter set pivot point to mimic original code TW 25/05/13 */
+        clutter_actor_set_pivot_point(sc, clutter_actor_get_x(actor) +
+                                     clutter_actor_get_width(actor) / 2,
+                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
 		clutter_actor_set_scale(sc, 1.2, 1.2);
 
 
@@ -1827,45 +1890,62 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
 
     if (actor) {
 		
-		fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
         ClutterActor *sc = clutter_actor_get_parent(actor);
-		fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 		
 		/* clutter_actor_set_scale_full' is deprecated TW 21/04/13        
 		clutter_actor_set_scale_full(sc, 1.0, 1.0,
                                      clutter_actor_get_x(actor) +
                                      clutter_actor_get_width(actor) / 2,
                                      clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2); */
+        clutter_actor_set_pivot_point(sc, clutter_actor_get_x(actor) +
+                                     clutter_actor_get_width(actor) / 2,
+                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
 		clutter_actor_set_scale(sc, 1.0, 1.0);
 
         clutter_actor_set_opacity(sc, 255);
         if (item->is_dock_item) {
-            clutter_text_set_color(CLUTTER_TEXT(item->label), &dock_item_text_color);
-            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height);
-            if (item->label_shadow) {
-                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height + 1.0);
-            }
+        
+            clutter_text_set_color(CLUTTER_TEXT(item->label), &dock_item_text_color); 
+            clutter_actor_set_y(item->label, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height); 
+            if (item->label_shadow) { 
+                clutter_actor_set_y(item->label_shadow, clutter_actor_get_y(item->texture) + device_info->home_screen_icon_height + 1.0); 
+            } 
+
+
 
 			/* clutter_actor_reparent is deprecated TW 21/04/13 */
             /* clutter_actor_reparent(sc, the_dock); */
 
-			fprintf(stderr, "\n%s ERROR:above1 - clutter-actor-remove-child: the-dock, sc\n",__func__);
-			clutter_actor_remove_child(the_dock, sc);
-			fprintf(stderr, "\n%s ERROR:below1 - clutter-actor-remove-child: the-dock, sc\n",__func__);
-
-            clutter_actor_set_position(sc, clutter_actor_get_x(sc) - dock_area.x1, clutter_actor_get_y(sc) - dock_area.y1);
+			fprintf(stderr, "\n%s: above1 - clutter-actor-remove-child: the-dock, sc\n",__func__);
+            
+            g_object_ref(actor);
+		    clutter_actor_remove_child(sc, actor); 
+			fprintf(stderr, "%s: below1 - clutter-actor-remove-child: the-dock, sc\n",__func__);
+            clutter_actor_add_child(the_dock, actor);
+           /* clutter_actor_set_position(actor, clutter_actor_get_x(actor) - dock_area.x1, clutter_actor_get_y(actor) - dock_area.y1);  Added for test TW 27/05/13 */
+            clutter_actor_set_position(sc, clutter_actor_get_x(sc) - dock_area.x1, clutter_actor_get_y(sc) - dock_area.y1); 
         } else {
 
 			/* clutter_actor_reparent is deprecated TW 21/04/13 */
             /* clutter_actor_reparent(sc, the_sb); */
-
-			fprintf(stderr, "\n%s ERROR:above2 -clutter-actor-remove-child: the_sb, sc \n",__func__); /* TEST TW 28/04/13 */
-			clutter_actor_remove_child(the_sb, sc);
-			fprintf(stderr, "\n%s ERROR:below2 -clutter-actor-remove-child: the_sb, sc \n",__func__); /* TEST TW 28/04/13 */
+            
+            g_object_ref(actor);
+            clutter_actor_remove_child(sc, actor); 
+			fprintf(stderr, "\n%s: above2 -clutter-actor-add-child: the_sb, sc \n",__func__); /* TEST TW 28/04/13 */
+		    clutter_actor_add_child(the_sb, actor); 
+			fprintf(stderr, "%s: below2 -clutter-actor-add-child: the_sb, sc \n",__func__); /* TEST TW 28/04/13 */
 
             clutter_actor_set_position(sc,
                                        clutter_actor_get_x(sc) +
-                                       PAGE_X_OFFSET(current_page) - sb_area.x1, clutter_actor_get_y(sc) - sb_area.y1);
+                                       PAGE_X_OFFSET(current_page) - sb_area.x1, clutter_actor_get_y(sc) - sb_area.y1); /* removed for test TW 27/05/13 */
+            
+            /* clutter_actor_set_position(actor,
+                                       clutter_actor_get_x(actor) +
+                                       PAGE_X_OFFSET(current_page) - sb_area.x1, clutter_actor_get_y(actor) - sb_area.y1); */
+            
+
         }
     }
 
@@ -1901,7 +1981,7 @@ static gboolean stage_key_press_cb(ClutterActor *actor, ClutterEvent *event, gpo
     }
     return TRUE;
 }
-
+/* handle button press on subitem icon in folder, reparent icon from folder to stage ???why, set position and scales the actor to 1.2 */
 static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent *event, gpointer user_data)
 {
     if (!user_data) {
@@ -1932,25 +2012,28 @@ static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent 
         gfloat diffx = 0.0;
         gfloat diffy = 0.0;
 
-		fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
         ClutterActor *sc = clutter_actor_get_parent(actor);
-		fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 
         diffy = split_pos + clutter_actor_get_y(aniupper);
 
         /* clutter_actor_reparent is deprecated TW 21/04/13 */
 		/* clutter_actor_reparent(sc, stage); */
 		
-		fprintf(stderr, "\n%sERROR:above1-clutter-actor-remove-child: stage, sc\n",__func__); /* TEST TW 28/04/13 */	
-		clutter_actor_remove_child(stage, sc);
-		fprintf(stderr, "\n%sERROR:below1-clutter-actor-remove-child: stage, sc\n",__func__); /* TEST TW 28/04/13 */	
+		/* fprintf(stderr, "\n%sERROR:above1-clutter-actor-remove-child: stage, sc\n",__func__);  TEST TW 28/04/13 */	
+        /* FIXME Check that sc parent is the stage and alter code below as required */
+        /* aquire reference before removing actor */
+        g_object_ref(actor);
+		clutter_actor_remove_child(sc, actor); 
+		/* fprintf(stderr, "\n%sERROR:below1-clutter-actor-remove-child: stage, sc\n",__func__);  TEST TW 28/04/13 */	
 
         clutter_actor_set_position(sc, clutter_actor_get_x(sc) + diffx, clutter_actor_get_y(sc) + diffy);
 
 		/* clutter_actor_raise_top is deprecated TW 21/04/13 */		
 		/* clutter_actor_raise_top(sc); */
-		fprintf(stderr,"\nERROR: clutter_actor_set_child_above_sibling12: LINE 1796 \n"); /* TEST TW 28/04/13 */
-		clutter_actor_insert_child_above(stage, sc, ((void *)0));
+		fprintf(stderr,"%s\n: clutter_actor_insert_child_above: \n", __func__); /* TEST TW 28/04/13 */
+		clutter_actor_insert_child_above(stage, actor, ((void *)0));
 
 
 		/* clutter_actor_set_scale_full' is deprecated TW 21/04/13 
@@ -1958,6 +2041,9 @@ static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent 
                                      clutter_actor_get_x(actor) +
                                      clutter_actor_get_width(actor) / 2,
                                      clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2); */
+        clutter_actor_set_pivot_point(sc, clutter_actor_get_x(actor) +
+                                     clutter_actor_get_width(actor) / 2,
+                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
 		clutter_actor_set_scale(sc, 1.2, 1.2);
 
         clutter_actor_set_opacity(sc, 160);
@@ -1994,26 +2080,30 @@ static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEven
 
     if (actor) {
 
-		fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
         ClutterActor *sc = clutter_actor_get_parent(actor);
-		fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-get-parent\n", __func__);
+		fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 
 		/* clutter_actor_set_scale_full' is deprecated TW 21/04/13 
         clutter_actor_set_scale_full(sc, 1.0, 1.0,
                                      clutter_actor_get_x(actor) +
                                      clutter_actor_get_width(actor) / 2,
                                      clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2); */
-		clutter_actor_set_scale(sc, 1.0, 1.0);
+		clutter_actor_set_pivot_point(sc, clutter_actor_get_x(actor) +
+                                     clutter_actor_get_width(actor) / 2,
+                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
+        clutter_actor_set_scale(sc, 1.0, 1.0);
 
         clutter_actor_set_opacity(sc, 255);
 
         /* clutter_actor_reparent is deprecated TW 21/04/13 */
 		/* clutter_actor_reparent(sc, folder); */
 
-		fprintf(stderr, "\n%sERROR:above1-clutter-actor-remove-child: sc, folder \n", __func__); /* TEST TW 28/04/13 */
-		clutter_actor_remove_child(sc, folder);
-		fprintf(stderr, "\n%sERROR:below1-clutter-actor-remove-child: sc, folder \n", __func__); /* TEST TW 28/04/13 */
-
+		fprintf(stderr, "\n%s: above1-clutter-actor-remove-child: sc, folder \n", __func__); /* TEST TW 28/04/13 */
+		g_object_ref(actor);
+        clutter_actor_remove_child(sc, actor);
+		fprintf(stderr, "%s: below1-clutter-actor-remove-child: sc, folder \n", __func__); /* TEST TW 28/04/13 */
+        clutter_actor_add_child(folder, sc);
         clutter_actor_set_position(sc,
                                        clutter_actor_get_x(sc), clutter_actor_get_y(sc) - (split_pos + clutter_actor_get_y(aniupper)));
     }
@@ -2035,9 +2125,9 @@ static gboolean subitem_button_release_cb(ClutterActor *actor, ClutterButtonEven
 
 static void gui_folder_draw_subitems(SBItem *item)
 {
-	 fprintf(stderr,"\n%s above1-clutter-actor-get-parent--item->texture\n", __func__); 
+	/* fprintf(stderr,"\n%s above1-clutter-actor-get-parent--item->texture\n", __func__); */
     ClutterActor *grp = clutter_actor_get_parent(item->texture);
-     fprintf(stderr,"\n%s below1-clutter-actor-get-parent--item->texture\n", __func__); 
+    /* fprintf(stderr,"%s below1-clutter-actor-get-parent--item->texture\n", __func__); */
 
 	/* clutter_group_new is deprecated TW 20/04/13 */
 	/* ClutterActor *minigrp = clutter_group_new(); */
@@ -2048,9 +2138,9 @@ static void gui_folder_draw_subitems(SBItem *item)
 	/* clutter_container_add_actor is deprecated TW 20/04/13 */
     /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), minigrp); */
 	
-	/* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above1 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(grp), minigrp);
-	/* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"%s: below1 clutter-actor-add-child\n", __func__); */
 
     guint i;
     for (i = 0; i < g_list_length(item->subitems); i++) {
@@ -2070,9 +2160,9 @@ static void gui_folder_draw_subitems(SBItem *item)
 				/* clutter_container_add_actor is deprecated TW 20/04/13 */
                 /* clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor); */
 
-				/* fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"\n%s: above2 clutter-actor-add-child\n", __func__); */
 				clutter_actor_add_child(CLUTTER_ACTOR(sgrp), actor);
-				/* fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"%s below2 clutter-actor-add-child\n", __func__); */
 
                 clutter_actor_set_position(actor, -12.0, -12.0);
                 clutter_actor_show(actor);
@@ -2084,9 +2174,9 @@ static void gui_folder_draw_subitems(SBItem *item)
 				/* clutter_container_add_actor is deprecated TW 20/04/13 */
                 /* clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor); */
 				
-				/* fprintf(stderr,"\n%s:ERROR: above3 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"\n%s: above3 clutter-actor-add-child\n", __func__); */
 				clutter_actor_add_child(CLUTTER_ACTOR(sgrp), actor);
-				/* fprintf(stderr,"\n%s:ERROR: below3 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"%s: below3 clutter-actor-add-child\n", __func__); */
 
                 clutter_actor_set_position(actor, (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2 + 1.0, device_info->home_screen_icon_height + 1.0);
                 clutter_actor_show(actor);
@@ -2102,9 +2192,9 @@ static void gui_folder_draw_subitems(SBItem *item)
 			/* Clutter-CRITICAL **: clutter_actor_add_child: assertion `child->priv->parent == NULL' failed */
 			/* Runtime error TW 10/05/13 */
 			
-			/*fprintf(stderr,"\n%s:ERROR: above4 clutter-actor-add-child\n", __func__); */
+			/*fprintf(stderr,"\n%s: above4 clutter-actor-add-child\n", __func__); */
 			clutter_actor_add_child(CLUTTER_ACTOR(sgrp), actor);
-			/* fprintf(stderr,"\n%s:ERROR: below4 clutter-actor-add-child\n", __func__); */
+			/* fprintf(stderr,"%s: below4 clutter-actor-add-child\n", __func__); */
 
 			/* fprintf(stderr,"%s: Clutter=actor-add-child LINE 1943\n", __func__);  TEST TW 10/05/13 */
 
@@ -2124,40 +2214,36 @@ static void gui_folder_draw_subitems(SBItem *item)
             /* clutter_container_add_actor(CLUTTER_CONTAINER(sgrp), actor); */
             /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), sgrp); */
 			
-			/* fprintf(stderr,"\n%s:ERROR: above5 clutter-actor-add-child\n", __func__); */
+			/* fprintf(stderr,"\n%s: above5 clutter-actor-add-child\n", __func__); */
 			clutter_actor_add_child(CLUTTER_ACTOR(sgrp), actor);
-			/* fprintf(stderr,"\n%s:ERROR: below5 clutter-actor-add-child\n", __func__); */
+			/* fprintf(stderr,"%s: below5 clutter-actor-add-child\n", __func__); */
 
-			/* fprintf(stderr,"\n%s:ERROR: above6 clutter-actor-add-child\n", __func__); */
+			/* fprintf(stderr,"\n%s: above6 clutter-actor-add-child\n", __func__); */
 			clutter_actor_add_child(CLUTTER_ACTOR(grp), sgrp);
-			/* fprintf(stderr,"\n%s:ERROR: below6 clutter-actor-add-child\n", __func__); */
+			/* fprintf(stderr,"%s: below6 clutter-actor-add-child\n", __func__); */
 			
             clutter_actor_hide(sgrp);
-
+            
+            /* fprintf(stderr,"\n%s: above1: clutter-clone-new(subitem->texture)\n", __func__); */
             ClutterActor *suba = clutter_clone_new(subitem->texture);
+            /* fprintf(stderr,"%s: below1: clutter-clone-new(subitem->texture)\n", __func__); */
 
 			if(suba == NULL) {
-				fprintf(stderr, "\nERROR:suba = clutter_clone_new = NULL: LINE 1954 \n"); /* TEST TW 28/04/13 */
+				fprintf(stderr, "\n%s: suba = clutter_clone_new = NULL\n", __func__); /* TEST TW 28/04/13 */
 			}
 
 			/* clutter_actor_unparent' is deprecated TW 20/04/13 */
             /* clutter_actor_unparent(suba); */
 
-			/* fprintf(stderr,"\n%s above2-clutter-actor-get-parent-suba\n", __func__); */
-			/* ClutterActor *parent = clutter_actor_get_parent(suba);  I do not think we need this TW 06/05/13 */
-			/* fprintf(stderr,"\n%s below2-clutter-actor-get-parent-suba\n", __func__); */
-
-			
-			/* fprintf(stderr,"\n%s above2-clutter-actor-remove-child: parent, suba\n", __func__); */
-			/* clutter_actor_remove_child(parent, suba);  I do not think we need this TW 06/05/13 */
-			/* fprintf(stderr,"\n%s below2-clutter-actor-remove-child: parent, suba\n", __func__); */
+			/* NOTE cloned actors have no parent or children untill added to another actor */
+            /* They use the same source for painting */
 
 			/* clutter_container_add_actor is deprecated TW 20/04/13 */
             /* clutter_container_add_actor(CLUTTER_CONTAINER(minigrp), suba); */
 			
-			/* fprintf(stderr,"\n%s:ERROR: above7 clutter-actor-add-child\n", __func__); */
+			/* fprintf(stderr,"\n%s: above7 clutter-actor-add-child\n", __func__); */
 			clutter_actor_add_child(CLUTTER_ACTOR(minigrp), suba);
-			/* fprintf(stderr,"\n%s:ERROR: below7 clutter-actor-add-child\n", __func__); */
+			/* fprintf(stderr,"%s: below7 clutter-actor-add-child\n", __func__); */
 
             clutter_actor_set_scale(suba, 0.22, 0.22);
             clutter_actor_set_position(suba, 8.0 + (i%3)*ICON_SPACING, 8.0 + ((double)(int)((int)i/3))*ICON_SPACING);
@@ -2199,9 +2285,9 @@ static void gui_show_icons()
                     /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor); */
 					/* fprintf(stderr,"\n clutter-actor-add-child: LINE 2006\n"); TEST TW 03/05/13 */
 
-					/* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"\n%s: above1 clutter-actor-add-child\n", __func__); */
 					clutter_actor_add_child(CLUTTER_ACTOR(grp), actor);
-					/* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"%s: below1 clutter-actor-add-child\n", __func__); */
 
 					clutter_actor_set_position(actor, xpos-12, ypos-12);
                 }
@@ -2212,16 +2298,16 @@ static void gui_show_icons()
 					/* clutter_container_add_actor is deprecated TW 20/04/13 */
                     /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor); */
 					
-					/* fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"\n%s: above2 clutter-actor-add-child\n", __func__); */
 					clutter_actor_add_child(CLUTTER_ACTOR(grp), actor);
-					/* fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"%s: below2 clutter-actor-add-child\n", __func__); */
 				
                     clutter_actor_set_position(actor, xpos + (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + device_info->home_screen_icon_height + 1.0);
                 }
                 actor = item->texture;
 				/* fprintf(stderr,"\ngui-show-icons: actor->texture = %s\n",item->texture);  TEST TW 06/05/13 */
 				if((item->texture) == NULL){
-				fprintf(stderr, "ERROR item-texture = NULL"); /* TEST TW 06/05/13 */
+				fprintf(stderr, "ERROR item-texture = NULL\n"); /* TEST TW 06/05/13 */
 				}
 				/* clutter_container_add_actor is deprecated TW 20/04/13 */
                 /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor); */
@@ -2230,9 +2316,9 @@ static void gui_show_icons()
 		/* Clutter-CRITICAL **: clutter_actor_add_child: assertion `child->priv->parent == NULL' failed		*/		
 		/* Runtime warning 09/05/13 */
 
-				/* fprintf(stderr,"\n%s:ERROR: above3 clutter-actor-add-child\n", __func__); */		
+				/* fprintf(stderr,"\n%s: above3 clutter-actor-add-child\n", __func__); */		
 				clutter_actor_add_child(CLUTTER_ACTOR(grp), actor); 
-				/* fprintf(stderr,"\n%s:ERROR: below3 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"%s: below3 clutter-actor-add-child\n", __func__); */
 
                 clutter_actor_set_position(actor, xpos, ypos);
                 clutter_actor_set_reactive(actor, TRUE);
@@ -2248,13 +2334,13 @@ static void gui_show_icons()
                 /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor); */
                 /* clutter_container_add_actor(CLUTTER_CONTAINER(the_dock), grp); */
 				
-				/* fprintf(stderr,"\n%s:ERROR: above4 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"\n%s: above4 clutter-actor-add-child\n", __func__); */
 				clutter_actor_add_child(CLUTTER_ACTOR(grp), actor);
-				/* fprintf(stderr,"\n%s:ERROR: below4 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"%s: below4 clutter-actor-add-child\n", __func__); */
 
-				/* fprintf(stderr,"\n%s:ERROR: above5 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"\n%s: above5 clutter-actor-add-child\n", __func__); */
 				clutter_actor_add_child(CLUTTER_ACTOR(the_dock), grp);
-				/* fprintf(stderr,"\n%s:ERROR: below5 clutter-actor-add-child\n", __func__); */
+				/* fprintf(stderr,"%s: below5 clutter-actor-add-child\n", __func__); */
 
 				item->drawn = TRUE;
             }
@@ -2295,9 +2381,9 @@ static void gui_show_icons()
 						/*  Clutter-CRITICAL **: clutter_actor_add_child: assertion `child->priv->parent == NULL' failed */
 						/* Runtime error TW 10/08/13 */
 
-						/* fprintf(stderr,"\n%s:ERROR: above6 clutter-actor-add-child\n", __func__); */
+						/* fprintf(stderr,"\n%s: above6 clutter-actor-add-child\n", __func__); */
 						clutter_actor_add_child(CLUTTER_ACTOR(grp), actor);
-						/* fprintf(stderr,"\n%s:ERROR: below6 clutter-actor-add-child\n", __func__); */
+						/* fprintf(stderr,"%s: below6 clutter-actor-add-child\n", __func__); */
 
                         clutter_actor_set_position(actor, xpos-12.0, ypos-12.0);
                     }
@@ -2309,9 +2395,9 @@ static void gui_show_icons()
 						/* clutter_container_add_actor is deprecated TW 20/04/13 */
                         /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor); */
 						
-						/* fprintf(stderr,"\n%s:ERROR: above7 clutter-actor-add-child\n", __func__); */
+						/* fprintf(stderr,"\n%s: above7 clutter-actor-add-child\n", __func__); */
 						clutter_actor_add_child(CLUTTER_ACTOR(grp), actor);
-						/* fprintf(stderr,"\n%s:ERROR: below7 clutter-actor-add-child\n", __func__); */
+						/* fprintf(stderr,"%s: below7 clutter-actor-add-child\n", __func__); */
 
                         clutter_actor_set_position(actor, xpos + (device_info->home_screen_icon_width - clutter_actor_get_width(actor)) / 2 + 1.0, ypos + device_info->home_screen_icon_height + 1.0);
                     }
@@ -2325,9 +2411,9 @@ static void gui_show_icons()
 					/*  Clutter-CRITICAL **: clutter_actor_add_child: assertion `child->priv->parent == NULL' failed */
 					/* Runlime error TW 10/05/13 */
 
-					/* fprintf(stderr,"\n%s:ERROR: above8 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"\n%s: above8 clutter-actor-add-child\n", __func__); */
 					clutter_actor_add_child(CLUTTER_ACTOR(grp), actor); 
-					/* fprintf(stderr,"\n%s:ERROR: below8 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"%s: below8 clutter-actor-add-child\n", __func__); */
 					
 					clutter_actor_set_position(actor, xpos, ypos);
                     clutter_actor_set_reactive(actor, TRUE);
@@ -2342,13 +2428,13 @@ static void gui_show_icons()
                     /* clutter_container_add_actor(CLUTTER_CONTAINER(grp), actor); */
                     /* clutter_container_add_actor(CLUTTER_CONTAINER(the_sb), grp); */
 					
-					/* fprintf(stderr,"\n%s:ERROR: above9 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"\n%s: above9 clutter-actor-add-child\n", __func__); */
 					clutter_actor_add_child(CLUTTER_ACTOR(grp), actor);
-					/* fprintf(stderr,"\n%s:ERROR: below9 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"%s: below9 clutter-actor-add-child\n", __func__); */
 
-					/* fprintf(stderr,"\n%s:ERROR: above10 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"\n%s: above10 clutter-actor-add-child\n", __func__); */
 					clutter_actor_add_child(CLUTTER_ACTOR(the_sb), grp);
-					/* fprintf(stderr,"\n%s:ERROR: below10 clutter-actor-add-child\n", __func__); */
+					/* fprintf(stderr,"%s: below10 clutter-actor-add-child\n", __func__); */
 
 					
 		    item->drawn = TRUE;
@@ -2369,7 +2455,7 @@ static void sbitem_texture_load_finished(ClutterActor *actor, gpointer error, gp
     SBItem *item = (SBItem *)data; 
 	/* fprintf(stderr,"\n executing: sbitem_texture_load_finished-start\n"); TEST TW 07/05/13 */
 	   if (item->texture_shadow) {
-		fprintf(stderr,"\nsbitem_texture_load_finished: in item->texture_shadow LINE 2189\n"); /* TEST TW 08/05/13 */ 
+		fprintf(stderr,"\nsbitem_texture_load_finished: in item->texture_shadow LINE 2454\n"); /* TEST TW 08/05/13 */ 
        clutter_actor_show(item->texture_shadow); 
    } 
 	/* fprintf(stderr,"\nsbitem_texture_load_finished: in item->label LINE 2157\n"); */
@@ -2378,7 +2464,7 @@ static void sbitem_texture_load_finished(ClutterActor *actor, gpointer error, gp
 	/* Runtime error TW 10/05/13 */
     /* clutter_actor_show(item->label); */
 	   if (item->label_shadow) {
-		fprintf(stderr,"\nsbitem_texture_load_finished: in item->texture_label_shadow LINE 2198\n"); /* TEST TW 08/05/13 */ 
+		fprintf(stderr,"\nsbitem_texture_load_finished: in item->texture_label_shadow LINE 2463\n"); /* TEST TW 08/05/13 */ 
        clutter_actor_show(item->label_shadow); 
 	  } 
 } 
@@ -2435,9 +2521,11 @@ static gboolean sbitem_texture_new(gpointer data)
     clutter_actor_set_scale(actor, 1.0, 1.0);
 	
     /* create item */
-    item->texture = actor;
+    item->texture = actor; 
+    
 	/* actor = item->texture; Tried for test does not work TW 10/05/13 */
-	/* item->texture = clutter_actor_get_content(CLUTTER_ACTOR (actor));  TEST TW 10/05/13 */
+	/* item->texture = clutter_actor_get_content(CLUTTER_ACTOR (actor));   TEST TW 10/05/13 */
+
 	if(item->texture == NULL){
 	fprintf(stderr, "\nERROR:item->texture = NULL\n");
 	}
@@ -2696,8 +2784,9 @@ static void gui_set_wallpaper(const char *wp)
                           gdk_pixbuf_get_rowstride (pixbuf),
                           NULL);
 	clutter_actor_set_content (actor, image);
-
+    /* FIXME see if size information is required here too TW 23/05/13 */
 	g_object_unref (pixbuf);
+    g_object_unref(image);
     if (err) {
         g_error_free(err);
         err = NULL;
@@ -2705,22 +2794,22 @@ static void gui_set_wallpaper(const char *wp)
     }
 	/* fprintf(stderr,"\nERROR: above clutter_set_size7: LINE 2462 \n"); TEST TW 03/05/13 */
     clutter_actor_set_size(actor, stage_area.x2, stage_area.y2);
-    clutter_actor_set_position(actor, 0, 18); /* WAS 0,0 but changed to 0,18 so that wallpaper does not cover clock etc TW 10/05/12 */
+    /* WAS actor, 0, 0 but changed to 0, 18 so that wallpaper does not cover clock etc TW 10/05/12 */
+    clutter_actor_set_position(actor, 0, 18); 
     clutter_actor_show(actor);
 
 	/* clutter_container_add_actor' is deprecated TW 21/04/13 */
     /* clutter_group_add(CLUTTER_GROUP(stage), actor); */
 	
-	/* NOTE This adds the phone wallpaper to stage TW 07/05/13 */
-	 /* clutter_actor_add_child(CLUTTER_ACTOR(stage), actor);   This is removed for test only TW 10/05/13 */
-
+	
 	/* clutter_actor_lower_bottom' is deprecated  TW 22/04/13 */  
 	/* clutter_actor_lower_bottom(actor); */
 	
-	/* THIS adds wallpaper to stage but loads it over the top of icons TW 18/05/13 */
-	 /* clutter_actor_insert_child_below(CLUTTER_ACTOR(stage), actor, ((void *)0));  TEST TW 05/05/13 */
-
-    wallpaper = actor;
+	/* THIS adds wallpaper to stage  TW 18/05/13 */
+    
+     clutter_actor_insert_child_below(CLUTTER_ACTOR(stage), actor, ((void *)0)); /*  TEST TW 05/05/13 */
+     wallpaper = actor; 
+    
     item_text_color.alpha = 255;
 }
 #endif
@@ -2813,6 +2902,7 @@ static gboolean update_battery_info_cb(gpointer user_data)
 
     if (device_poll_battery_capacity(uuid, &device_info, &error)) {
 	     clutter_actor_set_size(battery_level, (guint) (((double) (device_info->battery_capacity) / 100.0) * 15), 6);
+        /* do not update the battery display if battery is at 100% */
         if (device_info->battery_capacity == 100) {
             res = FALSE;
         }
@@ -3019,7 +3109,7 @@ GtkWidget *gui_init()
     g_signal_connect(stage, "motion-event", G_CALLBACK(stage_motion_cb), NULL);
     g_signal_connect(stage, "key-press-event", G_CALLBACK(stage_key_press_cb), NULL);
 
-    /* Load ui background */
+    /* Load ui initial image background */
     GError *err = NULL;
 
 	/* clutter_texture_new' is deprecated TW 21/04/13 */
@@ -3096,11 +3186,11 @@ GtkWidget *gui_init()
 	/* clutter_container_add_actor' is deprecated TW 21/04/13 */
     /* clutter_group_add(CLUTTER_GROUP(stage), type_label); */
 	
-	/* fprintf(stderr,"\n%s:ERROR: above1 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above1 clutter-actor-add-child\n", __func__); */
 	 clutter_actor_add_child(CLUTTER_ACTOR(stage), type_label); 
-	/* fprintf(stderr,"\n%s:ERROR: below1 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"%s: below1 clutter-actor-add-child\n", __func__); */
 
-    clutter_actor_set_position(type_label, 3.0, 2.0);
+    clutter_actor_set_position(type_label, 3.0, 2.0); /* device info initial position 3.0,2.0 */
 
     /* clock widget */
     clock_label = clutter_text_new_full(CLOCK_FONT, "00:00", &clock_text_color);
@@ -3108,9 +3198,11 @@ GtkWidget *gui_init()
 	/* clutter_container_add_actor' is deprecated TW 21/04/13 */
     /* clutter_group_add(CLUTTER_GROUP(stage), clock_label); */
 
-	/* fprintf(stderr,"\n%s:ERROR: above2 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above2 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), clock_label);
-	/* fprintf(stderr,"\n%s:ERROR: below2 clutter-actor-add-child\n", __func__); */
+    /* Position the clock widget to the centre top of stage on gui initial startup TW 26/05/13 */
+    clutter_actor_set_position(clock_label, 200,2); /* FIXME ensure this is centre position TW 26/05/13 */
+    /* fprintf(stderr,"%s: below2 clutter-actor-add-child\n", __func__); */
 
     /* page indicator group for holding the page indicator dots */
 	
@@ -3121,9 +3213,9 @@ GtkWidget *gui_init()
 	/* clutter_container_add_actor' is deprecated TW 21/04/13 */
     /* clutter_group_add(CLUTTER_GROUP(stage), page_indicator_group); */
 
-	/* fprintf(stderr,"\n%s:ERROR: above3 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above3 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), page_indicator_group); 
-	/* fprintf(stderr,"\n%s:ERROR: below3 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"%s: below3 clutter-actor-add-child\n", __func__); */
 
     /* alignment will be done when new indicators are added */
     clutter_actor_set_position(page_indicator_group, 0, stage_area.y2 - DOCK_HEIGHT - ICON_SPACING); 
@@ -3183,9 +3275,9 @@ GtkWidget *gui_init()
         /* clutter_container_add_actor(CLUTTER_CONTAINER(stage), page_indicator); */
 		
         
-        /* fprintf(stderr,"\n%s:ERROR: above4 clutter-actor-add-child\n", __func__); */
+        /* fprintf(stderr,"\n%s:above4 clutter-actor-add-child\n", __func__); */
 		 clutter_actor_add_child(CLUTTER_ACTOR(stage), page_indicator); 
-        /* fprintf(stderr,"\n%s:ERROR: below4 clutter-actor-add-child\n", __func__); */
+        /* fprintf(stderr,"%s: below4 clutter-actor-add-child\n", __func__); */
 
     } 
 
@@ -3239,9 +3331,9 @@ GtkWidget *gui_init()
 
 		/* clutter_container_add_actor is deprecated TW 20/04/13 */
         /* clutter_container_add_actor(CLUTTER_CONTAINER(stage), icon_shadow); */
-		/* fprintf(stderr,"\n%s:ERROR: above5 clutter-actor-add-child\n", __func__); */
+		/* fprintf(stderr,"\n%s: above5 clutter-actor-add-child\n", __func__); */
 		clutter_actor_add_child(CLUTTER_ACTOR(stage), icon_shadow); 
-		/* fprintf(stderr,"\n%s:ERROR: below5 clutter-actor-add-child\n", __func__); */
+		/* fprintf(stderr,"%s: below5 clutter-actor-add-child\n", __func__); */
 
     } 
 
@@ -3252,7 +3344,7 @@ GtkWidget *gui_init()
 	folder_marker = clutter_actor_new(); 
 
 	/* clutter_texture_set_load_async' is deprecated TW 24/04/13 */    
-	/* clutter_texture_set_load_async(CLUTTER_TEXTURE(folder_marker), TRUE); */
+	/* clutter_texture_set_load_async(CLUTTER_TEXTURE(marker), TRUE); */
     
 	/* clutter_texture_set_from_file is deprecated TW 24/04/13 */
 	/* clutter_texture_set_from_file(CLUTTER_TEXTURE(folder_marker), SBMGR_DATA "/foldermarker.png", &err); */
@@ -3298,9 +3390,9 @@ GtkWidget *gui_init()
 /*		clutter_actor_show(folder_marker);  TEST TW 12/05/13 */
 		/* clutter_container_add_actor is deprecated TW 20/04/13 */
         /* clutter_container_add_actor(CLUTTER_CONTAINER(stage), folder_marker); */
-		/* fprintf(stderr,"\n%s:ERROR: above6 clutter-actor-add-child\n", __func__); */
+		/* fprintf(stderr,"\n%s: above6 clutter-actor-add-child\n", __func__); */
 		clutter_actor_add_child(CLUTTER_ACTOR(stage), folder_marker); 
-		/* fprintf(stderr,"\n%s:ERROR: below6 clutter-actor-add-child\n", __func__); */
+		/* fprintf(stderr,"%s: below6 clutter-actor-add-child\n", __func__); */
 
     } 
 
@@ -3313,9 +3405,9 @@ GtkWidget *gui_init()
 	/* clutter_container_add_actor' is deprecated TW 21/04/13 */
     /* clutter_group_add(CLUTTER_GROUP(stage), the_sb); */
 
-	/* fprintf(stderr,"\n%s:ERROR: above7 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above7 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), the_sb);
-	/* fprintf(stderr,"\n%s:ERROR: below7 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"%s: below7 clutter-actor-add-child\n", __func__); */
 
     clutter_actor_set_position(the_sb, sb_area.x1, sb_area.y1);
 
@@ -3328,9 +3420,9 @@ GtkWidget *gui_init()
 
 	/* clutter_container_add_actor' is deprecated TW 21/04/13 */
     /* clutter_group_add(CLUTTER_GROUP(stage), the_dock); */
-	/* fprintf(stderr,"\n%s:ERROR: above8 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above8 clutter-actor-add-child\n", __func__); */
 	clutter_actor_add_child(CLUTTER_ACTOR(stage), the_dock);
-	/* fprintf(stderr,"\n%s:ERROR: below8 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"%s: below8 clutter-actor-add-child\n", __func__); */
 
     clutter_actor_set_position(the_dock, dock_area.x1, dock_area.y1);
 
@@ -3359,6 +3451,10 @@ GtkWidget *gui_init()
 
     /* Position and update the clock */
     clock_set_time(clock_label, time(NULL));
+    
+    /* FIXME There is no initial positioning of actor set, so this may be why the clock appears on the */
+    /* r/h side where the battery is normally located, on start up TW 23/05/13 */
+    
     clutter_actor_show(clock_label);
 
     /* battery capacity */
@@ -3372,9 +3468,9 @@ GtkWidget *gui_init()
     /* clutter_container_add_actor' is deprecated TW 21/04/13 */
 	/* clutter_group_add(CLUTTER_GROUP(stage), battery_level); */
 
-	/* fprintf(stderr,"\n%s:ERROR: above9 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"\n%s: above9 clutter-actor-add-child\n", __func__); */
 	 clutter_actor_add_child(CLUTTER_ACTOR(stage), battery_level);
-	/* fprintf(stderr,"\n%s:ERROR: below9 clutter-actor-add-child\n", __func__); */
+	/* fprintf(stderr,"%s:below9 clutter-actor-add-child\n", __func__); */
 
      clutter_actor_set_position(battery_level, stage_area.x2 - 22, 6); /* REMOVED FOR TEST TW ON 18/05/13 */
 
@@ -3386,4 +3482,6 @@ void gui_deinit()
     clutter_timeline_stop(clock_timeline);
     device_info_free(device_info);
     gui_deinitialized = 1;
+    /* actors need to be g_object_unref(actor); */
+
 }
