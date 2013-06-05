@@ -15,7 +15,7 @@ For development test remove GTK2 library from development system
 to ensure the application still runs. The application should operate
 with both gtk2 and gtk3 libraries available but at the moment I have removed it
 from the development system to concentrate on changes above and debugging of code
-in general.
+in general. This may have been a bug in gtk2 library.
 
 Recompile using only gtk3 library installed.
 
@@ -44,9 +44,18 @@ or for debugging code in general.
 
 Gui-init - added error handling for new image file loading code.
 
-Fixed background color for folders, gui fade in/out and spinner routines and battery display which
-had not been altered in the original Clutter code update.
+Fixed background color for folders, gui fade in/out and spinner routines and
+battery display which had not been altered in the original Clutter code update.
 
 Code review for all clutter code to ensure correct functions are being used and arguments are correct
 after finding several clutter actor functions and/or arguments that were not correct.
+
+Trouble-shooting of icon why the are not following the mouse position when selected. WIP
+
+Trouble-shooting why folders are not being opened and closed correctly. WIP
+NOTE:check code in areas for commented out reparenting functions as folders were opening.
+
+Added comments to top of functions in gui.c to better understand their intent for trouble-shooting. WIP
+
+Refactoring code in several functions are quite complicated for what they achieve. WIP
 
