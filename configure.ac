@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(sbmanager, 0.1.0, nospam@nowhere.com)
+AC_INIT(sbmanager, 0.1.1, nospam@nowhere.com)
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_SRCDIR([src/])
@@ -24,11 +24,16 @@ PKG_CHECK_MODULES(libimobiledevice11, libimobiledevice-1.0 >= 1.1.0, libimobiled
 if test x"$libimobiledevice_1_1" = xyes; then
   AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
 fi
+PKG_CHECK_MODULES(libimobiledevice11, libimobiledevice-1.0 >= 1.1.5, libimobiledevice_1_1_5=yess, libimobiledevice_1_1_5=no)
+if test x"$libimobiledevice_1_1_5" = xyes; then
+  AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
+fi
+
 PKG_CHECK_MODULES(libglib2, glib-2.0 >= 2.14.1)
 PKG_CHECK_MODULES(libgthread2, gthread-2.0 >= 2.14.1)
 PKG_CHECK_MODULES(libplist, libplist >= 1.0)
 PKG_CHECK_MODULES(libclutter, clutter-1.0 >= 1.0.6)
-PKG_CHECK_MODULES(libgtk, gtk+-2.0 >= 2.16)
+PKG_CHECK_MODULES(libgtk, gtk+-3.0 >= 3.8)
 PKG_CHECK_MODULES(libcluttergtk, clutter-gtk-1.0 >= 1.0)
 PKG_CHECK_MODULES(libgdkpixbuf, gdk-pixbuf-2.0 >= 2.16)
 # PKG_CHECK_MODULES(libbz2, bzip2 >= 1.0)

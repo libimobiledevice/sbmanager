@@ -1,8 +1,13 @@
  Timothy Ward <gtwa001@gmail> 2013
 
-This is a change log for sbmanager to GTK3 for Gnome3 and clutter 1.12-2 
+This is a change log for sbmanager to GTK3 for Gnome3.8 
+and Clutter Version 1.14-4-4 Development library.
 
-Change All Clutter deprecated functions to bring it up to clutter 1.12-2.
+Clutter Development Language
+Clutter-gst Version 1.6.0.6
+Clutter-gtk Version 1.4.4.1
+
+Change All Clutter deprecated functions to bring it up to clutter 1.14-4.
 There was a lot of deprecated functions as the Clutter API has changed a lot.
 
 Change code for all compiler warnings for both GTK3 and minor libimobiledevice 
@@ -57,5 +62,7 @@ NOTE:check code in areas for commented out reparenting functions as folders were
 
 Added comments to top of functions in gui.c to better understand their intent for trouble-shooting. WIP
 
-Refactoring code in several functions are quite complicated for what they achieve. WIP
+Refactoring code in several functions which are quite complicated for what they achieve. WIP
+
+Updated to clutter version 1.4-4-4 for Gnome3.8 This resulted in the Gui paging code working correctly.
 
