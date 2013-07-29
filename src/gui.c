@@ -1903,9 +1903,10 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
                                      clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2); */
         
         /* Added clutter set pivot point to mimic original code TW 25/05/13 */
-        clutter_actor_set_pivot_point(actor, clutter_actor_get_x(actor) +
+        /* This made the icon disappear of stage when actor first clicked */
+        /* clutter_actor_set_pivot_point(actor, clutter_actor_get_x(actor) +
                                      clutter_actor_get_width(actor) / 2,
-                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
+                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2); */
 		clutter_actor_set_scale(actor, 1.2, 1.2);
 
 
@@ -1972,9 +1973,9 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
                                      clutter_actor_get_x(actor) +
                                      clutter_actor_get_width(actor) / 2,
                                      clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2); */
-        clutter_actor_set_pivot_point(actor, clutter_actor_get_x(actor) +
+        /* clutter_actor_set_pivot_point(actor, clutter_actor_get_x(actor) +
                                      clutter_actor_get_width(actor) / 2,
-                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2);
+                                     clutter_actor_get_y(actor) + clutter_actor_get_height(actor) / 2); */
 		clutter_actor_set_scale(actor, 1.0, 1.0);
 
         clutter_actor_set_opacity(actor, 255);
@@ -2022,11 +2023,10 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
                
             clutter_actor_add_action(actor, clutter_drop_action_new()); /* ADDED FOR TEST TW 18/06/13 */
             
-            clutter_actor_set_reactive(actor, FALSE);                   /* ADDED FOR TEST TW 18/06/13 */
-
-            /* clutter_actor_set_position(actor,
+          
+             clutter_actor_set_position(actor,
                                        clutter_actor_get_x(actor) +
-                                       PAGE_X_OFFSET(current_page) - sb_area.x1, clutter_actor_get_y(actor) - sb_area.y1); */
+                                       PAGE_X_OFFSET(current_page) - sb_area.x1, clutter_actor_get_y(actor) - sb_area.y1); 
             
 
         }
