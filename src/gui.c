@@ -1856,7 +1856,7 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
 		
         /* NOTE TW 10/05/13 sc could be sb_area or dock_area or stage */
 		
- 		/* As all actors (icons) are added to either sb-area od dock_area reparenting may not be required */
+ 		/* As all actors (icons) are added to either sb-area or dock_area reparenting may not be required */
 		/* Reparenting the actor results in the actor going back to 0.0 on the sb_area or 0.0 on the dock area - because it is removed from */
         /* its original position then added to stage it resets it x and y coordintes */
 		/* when you click on it from this point it moves down only, but it raised to the top and will move over the top of other icons */
@@ -2100,7 +2100,7 @@ static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent 
        /* gfloat diffy = 0.0; */
 
 		fprintf(stderr,"\n%s: above1 clutter-actor-get-parent\n", __func__);
-        ClutterActor *sc = clutter_actor_get_parent(actor);
+        ClutterActor *sc = clutter_actor_get_parent(actor); 
 		fprintf(stderr,"%s: below1 clutter-actor-get-parent\n", __func__);
 
         fprintf(stderr,"\n%s: above: clutter-actor-get-y\n", __func__);
@@ -2113,8 +2113,8 @@ static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent 
 		/* fprintf(stderr, "\n%sERROR:above1-clutter-actor-remove-child: stage, sc\n",__func__);  TEST TW 28/04/13 */	
         /* FIXME Check that sc parent is the stage and alter code below as required */
         /* aquire reference before removing actor */
-        g_object_ref(actor);
-		clutter_actor_remove_child(sc, actor); 
+        /* g_object_ref(actor); */
+		/* clutter_actor_remove_child(sc, actor); */
 		/* fprintf(stderr, "\n%sERROR:below1-clutter-actor-remove-child: stage, sc\n",__func__);  TEST TW 28/04/13 */	
 
         /* clutter_actor_set_position(sc, clutter_actor_get_x(sc) + diffx, clutter_actor_get_y(sc) + diffy); */
@@ -2122,7 +2122,7 @@ static gboolean subitem_button_press_cb(ClutterActor *actor, ClutterButtonEvent 
 		/* clutter_actor_raise_top is deprecated TW 21/04/13 */		
 		/* clutter_actor_raise_top(sc); */
 		fprintf(stderr,"\n%s: above: clutter_actor_insert_child_above: \n", __func__); /* TEST TW 28/04/13 */
-		clutter_actor_insert_child_above(stage, actor, ((void *)0));
+		/* clutter_actor_insert_child_above(stage, actor, ((void *)0)); */
         fprintf(stderr,"%s: below: clutter_actor_insert_child_above: \n", __func__); /* TEST TW 28/04/13 */
 
 		/* clutter_actor_set_scale_full' is deprecated TW 21/04/13 
@@ -2873,7 +2873,7 @@ static gboolean wait_icon_load_finished(gpointer user_data)
     return res;
 }
 
-#ifdef HAVE_LIBIMOBILEDEVICE_1_1
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1_5
 static void gui_set_wallpaper(const char *wp)
 {
     GError *err = NULL;
@@ -2961,7 +2961,7 @@ static gboolean gui_pages_init_cb(gpointer user_data)
 
     if (sbc) {
         const char *fmt_version = NULL;
-#ifdef HAVE_LIBIMOBILEDEVICE_1_1
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1_5
         if (osversion >= 0x04000000) {
             fmt_version = "2";
         }
@@ -3103,7 +3103,7 @@ static void gui_update_layout(device_info_t info) {
     clutter_actor_set_position(spinner, (stage_area.x2 - 32.0) / 2, (stage_area.y2 - 64.0) / 2);
 	clutter_actor_set_size(fade_rectangle, stage_area.x2, stage_area.y2);
 
-#ifdef HAVE_LIBIMOBILEDEVICE_1_1
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1_5
 	/* fprintf(stderr,"\nERROR: above clutter_set_size10: LINE 2653 \n");  TEST TW 03/05/13 */
     
 	/* This returns a Runtime error */

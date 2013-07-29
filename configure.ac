@@ -1,6 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+$(LIBDIR) :/usr/lib
 AC_PREREQ(2.61)
 AC_INIT(sbmanager, 0.1.1, nospam@nowhere.com)
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
@@ -15,16 +16,16 @@ AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
-PKG_CHECK_MODULES(libimobiledevice, libimobiledevice-1.0 >= 0.9.7)
-PKG_CHECK_MODULES(libimobiledevice10, libimobiledevice-1.0 >= 1.0.0, libimobiledevice_1_0=yes, libimobiledevice_1_0=no)
-if test x"$libimobiledevice_1_0" = xyes; then
-  AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_0], 1, [Define if libimobiledevice is using 1.0.0 API])
-fi
-PKG_CHECK_MODULES(libimobiledevice11, libimobiledevice-1.0 >= 1.1.0, libimobiledevice_1_1=yes, libimobiledevice_1_1=no)
-if test x"$libimobiledevice_1_1" = xyes; then
-  AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
-fi
-PKG_CHECK_MODULES(libimobiledevice11, libimobiledevice-1.0 >= 1.1.5, libimobiledevice_1_1_5=yess, libimobiledevice_1_1_5=no)
+# PKG_CHECK_MODULES(libimobiledevice, libimobiledevice-1.0 = 0.9.7)
+# PKG_CHECK_MODULES(libimobiledevice10, libimobiledevice-1.0 = 1.0.0, libimobiledevice_1_0=yes, libimobiledevice_1_0=no)
+# if test x"$libimobiledevice_1_0" = xyes; then
+# AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_0], 1, [Define if libimobiledevice is using 1.0.0 API])
+# fi
+# PKG_CHECK_MODULES(libimobiledevice11, libimobiledevice-1.0 = 1.1.0, libimobiledevice_1_1=yes, libimobiledevice_1_1=no)
+# if test x"$libimobiledevice_1_1" = xyes; then
+# AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
+# fi
+PKG_CHECK_MODULES(libimobiledevice115, libimobiledevice-1.0 = 1.1.5, libimobiledevice_1_1_5=yes, libimobiledevice_1_1_5=no)
 if test x"$libimobiledevice_1_1_5" = xyes; then
   AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
 fi

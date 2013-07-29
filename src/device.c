@@ -143,7 +143,7 @@ gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, c
     *iconstate = NULL;
     if (sbc) {
         sbservices_error_t err;
-#ifdef HAVE_LIBIMOBILEDEVICE_1_1
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1_5
         err = sbservices_get_icon_state(sbc, &iconstate_loc, format_version);
 #else
         err = sbservices_get_icon_state(sbc, &iconstate_loc);
@@ -210,7 +210,7 @@ gboolean device_sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate, GE
     return result;
 }
 
-#ifdef HAVE_LIBIMOBILEDEVICE_1_1
+#ifdef HAVE_LIBIMOBILEDEVICE_1_1_5
 char *device_sbs_save_wallpaper(sbservices_client_t sbc, const char *uuid, GError **error)
 {
     char *res = NULL;
