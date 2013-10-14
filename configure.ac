@@ -3,7 +3,7 @@
 
 $(LIBDIR) :/usr/lib
 AC_PREREQ(2.61)
-AC_INIT(sbmanager, 0.1.1, nospam@nowhere.com)
+AC_INIT(sbmanager, 0.1.3, nospam@nowhere.com)
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_SRCDIR([src/])
