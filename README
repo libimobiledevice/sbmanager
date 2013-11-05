@@ -34,11 +34,17 @@ This project has the following features:
 * Supports "five icon dock" extension. - NOT TESTED
 
 ORIGINAL Source Code Repository:
-http://github.com/libimobivedevice/sbmanager
+http://cgit.sukimashita.com/sbmanager.git/
+
+MIRRORED ON:
+https://github.com/libimobivedevice/sbmanager
+
+THIS BRANCH
+https://github.com/gitsop01/sbmanager
 
 For more information about the original project:
 https://github.com/libimobiledevice/sbmanager
 http://matt.colyer.name/projects/iphone-linux/
 
 README updated on:
-2013-06-08
+2013-10-14

@@ -107,7 +107,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
         "Timothy Ward <gtwa001@gmail.com>",
         NULL
     };
-    const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki, Timothy Ward; All Rights Reserved.";
+    const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki, 2013 Timothy Ward; All Rights Reserved.";
     const gchar *program_name = PACKAGE_NAME;
     const gchar *version = PACKAGE_VERSION;
     const gchar *comments = _("Manage iPhone/iPod Touch SpringBoard from the computer");
