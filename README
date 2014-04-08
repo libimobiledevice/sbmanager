@@ -1,6 +1,6 @@
 SBManager
 ----------
-Timothy Ward <gtwa001@gmail>
+Timothy Ward <gtwa001@gmail.com>
 
 This code relies heavy on libimobiledevice communication
 and uses double linked Glist's for indexing and holding info.

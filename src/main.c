@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nikias Bassen <nikias@gmx.li>
  * Copyright (C) 2009-2010 Martin Szulecki <opensuse@sukimashita.com>
+ * Copyright (C) 2013-2014 Timothy Ward <gtwa001@gmail.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -107,7 +108,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
         "Timothy Ward <gtwa001@gmail.com>",
         NULL
     };
-    const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki, 2013 Timothy Ward; All Rights Reserved.";
+    const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki, 2013-2014 Timothy Ward; All Rights Reserved.";
     const gchar *program_name = PACKAGE_NAME;
     const gchar *version = PACKAGE_VERSION;
     const gchar *comments = _("Manage iPhone/iPod Touch SpringBoard from the computer");
@@ -141,11 +142,11 @@ static void quit_program_cb(GtkWidget *widget, gpointer user_data)
     gtk_main_quit();
 }
 
-static gboolean quit_button_clicked_cb(GtkButton *button, gpointer user_data)
+/* static gboolean quit_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
     quit_program_cb(GTK_WIDGET(button), user_data);
-    return TRUE;
-}
+    return TRUE; 
+} */
 
 static void gui_error_dialog(const gchar *string)
 {
@@ -223,15 +224,15 @@ static void wnd_init()
     GtkWidget *toolbar = gtk_toolbar_new();
     gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
 
-    btn_reload = (GtkWidget*)gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
+    btn_reload = (GtkWidget*)gtk_tool_button_new_from_icon_name((GtkWidget*) NULL, "view-refresh");
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(btn_reload), _("Reload icons from device"));
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(btn_reload), -1);
 
-    btn_apply = (GtkWidget*)gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
+    btn_apply = (GtkWidget*)gtk_tool_button_new((GtkWidget*) NULL, *GTK_STOCK_APPLY);
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(btn_apply), _("Upload changes to device"));
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(btn_apply), -1);
 
-    GtkToolItem *btn_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO);
+    GtkToolItem *btn_info = gtk_tool_button_new((GtkWidget*) NULL,*GTK_STOCK_INFO);
     gtk_tool_item_set_tooltip_text(btn_info, _("Get info about this cool program"));
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_info, -1);
 
@@ -239,9 +240,9 @@ static void wnd_init()
     gtk_tool_item_set_expand(spacer, TRUE);
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), spacer, -1);
 
-    GtkToolItem *btn_quit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
+    /* GtkToolItem *btn_quit = gtk_tool_button(GTK_STOCK_QUIT);
     gtk_tool_item_set_tooltip_text(btn_quit, _("Quit this program"));
-    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_quit, -1);
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_quit, -1); */
 
     gtk_widget_set_sensitive(btn_reload, FALSE);
     gtk_widget_set_sensitive(btn_apply, FALSE);
@@ -251,7 +252,7 @@ static void wnd_init()
     g_signal_connect(btn_reload, "clicked", G_CALLBACK(reload_button_clicked_cb), NULL);
     g_signal_connect(btn_apply, "clicked", G_CALLBACK(apply_button_clicked_cb), NULL);
     g_signal_connect(btn_info, "clicked", G_CALLBACK(info_button_clicked_cb), NULL);
-    g_signal_connect(btn_quit, "clicked", G_CALLBACK(quit_button_clicked_cb), NULL);
+    /* g_signal_connect(btn_quit, "clicked", G_CALLBACK(quit_button_clicked_cb), NULL); */
 
     /* insert sbmgr widget */
     gtk_box_pack_start(GTK_BOX(vbox), sbmgr_widget, TRUE, TRUE, 0);
