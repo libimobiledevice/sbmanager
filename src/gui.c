@@ -800,17 +800,17 @@ static plist_t sbitem_to_plist(SBItem *item)
             fprintf(stderr,"could not get displayName for folder!\n");
             return result;
         }
-        plist_dict_insert_item(result, "displayName", plist_copy(node));
+        plist_dict_set_item(result, "displayName", plist_copy(node));
         plist_t iconlists = plist_new_array();
         plist_array_append_item(iconlists, sbitem_get_subitems(item));
-        plist_dict_insert_item(result, "iconLists", iconlists);
+        plist_dict_set_item(result, "iconLists", iconlists);
     } else {
         node = plist_dict_get_item(item->node, "displayIdentifier");
         if (!node) {
             fprintf(stderr,"could not get displayIdentifier\n");
             return result;
         }
-        plist_dict_insert_item(result, "displayIdentifier", plist_copy(node));
+        plist_dict_set_item(result, "displayIdentifier", plist_copy(node));
     }
     return result;
 }
@@ -1167,7 +1167,7 @@ static gboolean folderview_close_finish(gpointer user_data)
         gfloat oldwidth = clutter_actor_get_width(item->label);
         clutter_text_set_text(CLUTTER_TEXT(item->label), newname);
         plist_dict_remove_item(item->node, "displayName");
-        plist_dict_insert_item(item->node, "displayName", plist_new_string(newname));
+        plist_dict_set_item(item->node, "displayName", plist_new_string(newname));
         gfloat newwidth = clutter_actor_get_width(item->label);
         gfloat xshift = -(newwidth-oldwidth)/2;
         clutter_actor_move_by(item->label, xshift, 0);

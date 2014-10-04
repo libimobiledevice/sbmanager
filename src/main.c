@@ -48,6 +48,13 @@
 GtkWidget *main_window;
 GtkWidget *btn_reload;
 GtkWidget *btn_apply;
+GtkWidget *btn_info;
+GtkWidget *image;
+GtkWidget *buttonbox;
+
+const gchar *_Apply;
+const gchar *_Refresh; 
+const gchar *dialog1 = "dialog-information";
 
 
 char *match_uuid = NULL;
@@ -82,7 +89,7 @@ static void finished_cb(gboolean success)
     }
 }
 
-static gboolean reload_button_clicked_cb(GtkButton *button, gpointer user_data)
+ static gboolean reload_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
     gtk_widget_set_sensitive(btn_reload, FALSE);
     gtk_widget_set_sensitive(btn_apply, FALSE);
@@ -90,7 +97,8 @@ static gboolean reload_button_clicked_cb(GtkButton *button, gpointer user_data)
     return TRUE;
 }
 
-static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
+
+ static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
     gtk_widget_set_sensitive(btn_reload, FALSE);
     gtk_widget_set_sensitive(btn_apply, FALSE);
@@ -100,14 +108,17 @@ static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
     return TRUE;
 }
 
-static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
-{
+
+ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
+ {
     const gchar *authors[] = {
         "Nikias Bassen <nikias@gmx.li>",
         "Martin Szulecki <opensuse@sukimashita.com>",
         "Timothy Ward <gtwa001@gmail.com>",
         NULL
-    };
+    }; 
+
+
     const gchar *copyright =  "Copyright © 2009-2010 Nikias Bassen, Martin Szulecki, 2013-2014 Timothy Ward; All Rights Reserved.";
     const gchar *program_name = PACKAGE_NAME;
     const gchar *version = PACKAGE_VERSION;
@@ -133,6 +144,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
             NULL);
     return TRUE;
 }
+
 
 static void quit_program_cb(GtkWidget *widget, gpointer user_data)
 {
@@ -220,25 +232,35 @@ static void wnd_init()
     gtk_container_add(GTK_CONTAINER(main_window), vbox);
     gtk_widget_show(vbox);
 
-    /* create a toolbar */
-    GtkWidget *toolbar = gtk_toolbar_new();
-    gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
+      /* create a toolbar */
+    GtkWidget *toolbar = gtk_toolbar_new(); 
+    gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0); 
+    buttonbox=gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 
-    btn_reload = (GtkWidget*)gtk_tool_button_new_from_icon_name((GtkWidget*) NULL, "view-refresh");
-    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(btn_reload), _("Reload icons from device"));
-    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(btn_reload), -1);
+    btn_reload = (GtkWidget*)gtk_button_new_from_icon_name("view-refresh",GTK_ICON_SIZE_BUTTON); 
 
-    btn_apply = (GtkWidget*)gtk_tool_button_new((GtkWidget*) NULL, *GTK_STOCK_APPLY);
-    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(btn_apply), _("Upload changes to device"));
-    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(btn_apply), -1);
+/**************************************************************************************************/
+/* button = gtk_button_new();   */
+/* image = gtk_image_new_from_stock(GTK_STOCK_HOME, GTK_ICON_SIZE_BUTTON); */
+/* gtk_button_set_image(GTK_BUTTON(button),image); */
+/*  LOTS OF CHANGES TO DO HERE TO WORK WITH GTK3 -TW 18/8/14  */
+/**************************************************************************************************/
 
-    GtkToolItem *btn_info = gtk_tool_button_new((GtkWidget*) NULL,*GTK_STOCK_INFO);
-    gtk_tool_item_set_tooltip_text(btn_info, _("Get info about this cool program"));
-    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_info, -1);
+     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(btn_reload), _("Reload icons from device")); 
+     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(buttonbox), -1); 
+   
+    btn_apply = (GtkWidget*)gtk_button_new_from_icon_name("_Apply",GTK_ICON_SIZE_BUTTON); 
+    gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(btn_apply), _("Upload changes to device"));  
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(btn_apply), -1); 
+
+    GtkToolItem *info= gtk_tool_button_new(btn_info,"dialog-information");
+   
+    gtk_tool_item_set_tooltip_text(info, _("Get info about this cool program"));
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(info), -1); 
 
     GtkToolItem *spacer = gtk_tool_item_new();
     gtk_tool_item_set_expand(spacer, TRUE);
-    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), spacer, -1);
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), spacer, -1); 
 
     /* GtkToolItem *btn_quit = gtk_tool_button(GTK_STOCK_QUIT);
     gtk_tool_item_set_tooltip_text(btn_quit, _("Quit this program"));
@@ -246,12 +268,12 @@ static void wnd_init()
 
     gtk_widget_set_sensitive(btn_reload, FALSE);
     gtk_widget_set_sensitive(btn_apply, FALSE);
-    gtk_widget_show(toolbar);
+    gtk_widget_show(toolbar); 
 
-    /* set up signal handlers */
+     /* set up signal handlers */
     g_signal_connect(btn_reload, "clicked", G_CALLBACK(reload_button_clicked_cb), NULL);
-    g_signal_connect(btn_apply, "clicked", G_CALLBACK(apply_button_clicked_cb), NULL);
-    g_signal_connect(btn_info, "clicked", G_CALLBACK(info_button_clicked_cb), NULL);
+    g_signal_connect(btn_apply, "clicked", G_CALLBACK(apply_button_clicked_cb), NULL); 
+    g_signal_connect(btn_info, "clicked", G_CALLBACK(info_button_clicked_cb), NULL); 
     /* g_signal_connect(btn_quit, "clicked", G_CALLBACK(quit_button_clicked_cb), NULL); */
 
     /* insert sbmgr widget */
@@ -260,11 +282,11 @@ static void wnd_init()
     gtk_widget_grab_focus(sbmgr_widget);
 
     /* create a statusbar */
-/*    statusbar = gtk_statusbar_new();
+ /*  statusbar = gtk_statusbar_new();
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(statusbar), FALSE);
     gtk_box_pack_start(GTK_BOX(vbox), statusbar, FALSE, FALSE, 0);
-    gtk_widget_show(statusbar);
-*/
+    gtk_widget_show(statusbar); */
+
     /* attach to window signals */
     g_signal_connect(G_OBJECT(main_window), "map-event", G_CALLBACK(win_map_cb), NULL);
 

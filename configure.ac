@@ -3,7 +3,7 @@
 
 $(LIBDIR) :/usr/lib
 AC_PREREQ(2.61)
-AC_INIT(sbmanager, 0.1.5, www.git.com/gitsop/sbmanager)
+AC_INIT(sbmanager, 0.1.6, www.git.com/gitsop/sbmanager)
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_SRCDIR([src/])
@@ -25,8 +25,8 @@ AC_PROG_LIBTOOL
 # if test x"$libimobiledevice_1_1" = xyes; then
 # AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
 # fi
-PKG_CHECK_MODULES(libimobiledevice115, libimobiledevice-1.0 = 1.1.5, libimobiledevice_1_1_5=yes, libimobiledevice_1_1_5=no)
-if test x"$libimobiledevice_1_1_5" = xyes; then
+PKG_CHECK_MODULES(libimobiledevice116, libimobiledevice-1.0 = 1.1.6, libimobiledevice_1_1_6=yes, libimobiledevice_1_1_6=no)
+if test x"$libimobiledevice_1_1_6" = xyes; then
   AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
 fi
 
