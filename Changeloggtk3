@@ -1,4 +1,4 @@
- Timothy Ward <gtwa001@gmail> 2013
+ Timothy Ward <gtwa001@gmail> 2014
 
 This is a change log for sbmanager to GTK3 for Gnome3.10 
 and Clutter Version 1.16-2 Development library.
@@ -6,6 +6,8 @@ and Clutter Version 1.16-2 Development library.
 Clutter Development Language
 Clutter-gst Version 1.6.0.8
 Clutter-gtk Version 1.4.4.3
+
+Sbmanager version = 0.16
 
 Change All Clutter deprecated functions to bring it up to clutter 1.14-4.
 There was a lot of deprecated functions as the Clutter API has changed a lot.
