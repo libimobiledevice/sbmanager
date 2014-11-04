@@ -15,7 +15,7 @@ using both Clutter and rewriting the backend operation to
 the phone etc. It does have some smart sections coded into it
 and the original authors should be proud of there achievement.
  
-This fork is for gtk3 for Gnome3.8 with code updated for clutter-1.14-4-4.
+This fork is for gtk3 for Gnome3.8 with code updated for clutter-1.16-2-4.
 This is experimental code only and still unstable in some
 areas.
 This is a development fork only - Use at your own risk.
@@ -47,4 +47,4 @@ https://github.com/libimobiledevice/sbmanager
 http://matt.colyer.name/projects/iphone-linux/
 
 README updated on:
-2013-10-14
+2014-10-31
