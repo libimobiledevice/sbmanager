@@ -2926,7 +2926,7 @@ static void gui_set_wallpaper(const char *wp)
 	
 	/* THIS adds wallpaper to stage  TW 18/05/13 */
     
-     clutter_actor_insert_child_below(CLUTTER_ACTOR(stage), actor, ((void *)0)); /*  TEST TW 05/05/13 */
+   /*  clutter_actor_insert_child_below(CLUTTER_ACTOR(stage), actor, ((void *)0));   TEST TW 05/05/13 */
      wallpaper = actor; 
     
     item_text_color.alpha = 255;
@@ -3412,7 +3412,7 @@ GtkWidget *gui_init()
 	
 	pixbuf2 = gdk_pixbuf_new_from_file ("/usr/local/share/sbmanager/iconshadow.png", NULL); 
     
-    if(pixbuf2 == NULL){
+    if (pixbuf2 == NULL){
 		fprintf(stderr, "\nError reading image file:iconshadow.png\n");
 	} 
 	image2 = clutter_image_new (); 
@@ -3438,7 +3438,7 @@ GtkWidget *gui_init()
 
     clutter_actor_set_size(icon_shadow, width2, height2);
     
-    clutter_actor_set_content (icon_shadow, image2); 
+    clutter_actor_set_content(icon_shadow, image2); 
 
     g_object_unref (image2); 
 	
@@ -3469,7 +3469,7 @@ GtkWidget *gui_init()
 	
 	pixbuf3 = gdk_pixbuf_new_from_file ("/usr/local/share/sbmanager/foldermarker.png", NULL);  
     
-    if(pixbuf3 == NULL){
+    if (pixbuf3 == NULL){
 		fprintf(stderr, "\nError reading image file: foldermarker.png\n");
 	} 
 	
