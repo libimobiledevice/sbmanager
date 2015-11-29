@@ -6,3 +6,4 @@ _Comment=Manage SpringBoard icons on iPhone/iPod Touch devices
 Icon=sbmanager
 Exec=sbmanager
 Categories=GNOME;GTK;Utility;
+StartupNotify=true

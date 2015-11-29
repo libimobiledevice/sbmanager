@@ -10,3 +10,4 @@ Comment[ja]=iPhone/iPod Touch の SpringBoard アイコンを管理します
 Icon=sbmanager
 Exec=sbmanager
 Categories=GNOME;GTK;Utility;
+StartupNotify=true

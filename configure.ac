@@ -25,16 +25,16 @@ AC_PROG_LIBTOOL
 # if test x"$libimobiledevice_1_1" = xyes; then
 # AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
 # fi
-PKG_CHECK_MODULES(libimobiledevice116, libimobiledevice-1.0 = 1.1.6, libimobiledevice_1_1_6=yes, libimobiledevice_1_1_6=no)
-if test x"$libimobiledevice_1_1_6" = xyes; then
+PKG_CHECK_MODULES(libimobiledevice120, libimobiledevice-1.0 = 1.2.0, libimobiledevice_1_2_0=yes, libimobiledevice_1_2_0=no)
+if test x"$libimobiledevice_1_2_0" = xyes; then
   AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
 fi
 
-PKG_CHECK_MODULES(libglib2, glib-2.0 >= 2.14.1)
+PKG_CHECK_MODULES(libglib2, glib-2.0 >= 2.39.0)
 PKG_CHECK_MODULES(libgthread2, gthread-2.0 >= 2.14.1)
 PKG_CHECK_MODULES(libplist, libplist >= 1.0)
 PKG_CHECK_MODULES(libclutter, clutter-1.0 >= 1.0.6)
-PKG_CHECK_MODULES(libgtk, gtk+-3.0 >= 3.8)
+PKG_CHECK_MODULES(libgtk, gtk+-3.0 >= 3.16)
 PKG_CHECK_MODULES(libcluttergtk, clutter-gtk-1.0 >= 1.0)
 PKG_CHECK_MODULES(libgdkpixbuf, gdk-pixbuf-2.0 >= 2.16)
 # PKG_CHECK_MODULES(libbz2, bzip2 >= 1.0)

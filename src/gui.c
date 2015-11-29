@@ -2926,7 +2926,7 @@ static void gui_set_wallpaper(const char *wp)
 	
 	/* THIS adds wallpaper to stage  TW 18/05/13 */
     
-   /*  clutter_actor_insert_child_below(CLUTTER_ACTOR(stage), actor, ((void *)0));   TEST TW 05/05/13 */
+     clutter_actor_insert_child_below(CLUTTER_ACTOR(stage), actor, ((void *)0));   /* TEST TW 05/05/13 */
      wallpaper = actor; 
     
     item_text_color.alpha = 255;

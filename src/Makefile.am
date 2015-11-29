@@ -1,6 +1,6 @@
 AM_CFLAGS =			\
 	$(GLOBAL_CFLAGS)	\
-	$(libimobiledevice116_CFLAGS)	\
+	$(libimobiledevice120_CFLAGS)	\
 	$(libglib2_CFLAGS)	\
 	$(libgthread2_CFLAGS)	\
 	$(libplist_CFLAGS)	\
@@ -11,7 +11,7 @@ AM_CFLAGS =			\
 	-DSBMGR_DATA=\"$(pkgdatadir)\"
 
 AM_LDFLAGS =			\
-	$(libimobiledevice116_LIBS)	\
+	$(libimobiledevice120_LIBS)	\
 	$(libglib2_LIBS)	\
 	$(libgthread2_LIBS)	\
 	$(libplist_LIBS)	\
