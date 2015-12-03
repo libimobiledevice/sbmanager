@@ -66,5 +66,8 @@ Added comments to top of functions in gui.c to better understand their intent fo
 
 Refactoring code in several functions which are quite complicated for what they achieve. WIP
 
-Updated to clutter version 1.4-4-4 for Gnome3.8 This resulted in the Gui paging code working correctly.
+Updated to clutter version 1.4-4-4 for Gnome3.8 on Fedora 19 This resulted in the Gui paging code working correctly.
+
+Started update to clutter version 1.2.4 clutter-gst 1.6.6 for Gnome 3.18.5 with gtk3 3.18.5 01/12/15 for Fedora 23. Minor updates to C Code and configure.ac
+
 

@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 $(LIBDIR) :/usr/lib64
-AC_PREREQ(2.61)
-AC_INIT(sbmanager, 0.1.6, www.git.com/gitsop/sbmanager)
+AC_PREREQ(2.61) # minimum version Autoconf to use.
+AC_INIT(sbmanager, 0.1.8, www.git.com/gitsop/sbmanager)
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_SRCDIR([src/])
@@ -25,17 +25,22 @@ AC_PROG_LIBTOOL
 # if test x"$libimobiledevice_1_1" = xyes; then
 # AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
 # fi
-PKG_CHECK_MODULES(libimobiledevice, libimobiledevice_1_2_0 => 1.2.0, libimobiledevice_1_2_0=yes, libimobiledevice_1_2_0=no)
-if test x"$libimobiledevice_1_2_0" = xyes; then
+
+PKG_CHECK_MODULES(libimobiledevice, libimobiledevice10 >= 1.2.0, libimobiledevice_1_0=yes, libimobiledevice_1_0=no)
+if test x"$libimobiledevice_1_0" = xyes; then
 AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
 fi
 
-PKG_CHECK_MODULES(libglib2-0, glib2-0 >= 2.39.0)
+# pkg-config --???? module (library name) to check version number
+# pkg-config --exists module (library name) to check module availablity
+
+
+PKG_CHECK_MODULES(libglib, glib-2.0 >= 1.0.0)
 PKG_CHECK_MODULES(libgthread2, gthread-2.0 >= 2.14.1)
 PKG_CHECK_MODULES(libplist, libplist >= 1.0)
-PKG_CHECK_MODULES(libclutter, clutter-1.0 >= 1.0.6)
-PKG_CHECK_MODULES(libgtk, gtk+-3.0 >= 3.16)
-PKG_CHECK_MODULES(libcluttergtk, clutter-gtk-1.0 >= 1.0)
+PKG_CHECK_MODULES(libclutter, clutter-1.0 >= 1.24.0)
+PKG_CHECK_MODULES(libgtk3, gtk+-3.0 >= 3.18.0)
+PKG_CHECK_MODULES(libcluttergtk, clutter-gtk-1.0 >= 1.6.0) 
 PKG_CHECK_MODULES(libgdkpixbuf, gdk-pixbuf-2.0 >= 2.16)
 # PKG_CHECK_MODULES(libbz2, bzip2 >= 1.0)
 
@@ -57,6 +62,7 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([strcasecmp strdup strerror strndup])
 
 AS_COMPILER_FLAGS(GLOBAL_CFLAGS, "-Wall -Wextra -Wmissing-declarations -Wredundant-decls -Wshadow -Wpointer-arith  -Wwrite-strings -Wswitch-default -Wno-unused-parameter -Werror")
+
 AC_SUBST(GLOBAL_CFLAGS)
 
 # i18n

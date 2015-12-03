@@ -39,7 +39,7 @@
 
 #include <gtk/gtk.h>
 #include <clutter/clutter.h>
-#include <clutter-gtk/clutter-gtk.h>
+#include <clutter-gtk/clutter-gtk.h> 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "sbmgr.h"
