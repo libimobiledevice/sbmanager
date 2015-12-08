@@ -25,11 +25,7 @@ AC_PROG_LIBTOOL
 # if test x"$libimobiledevice_1_1" = xyes; then
 # AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
 # fi
-<<<<<<< HEAD
-
-
-
->>>>>>> 88449d33b48b16d4b1b22f8b28a29cd74f8277c8
+# FIX ME remove AC_define from code as no longer needed 
 PKG_CHECK_MODULES(libimobiledevice, libimobiledevice10 >= 1.2.0, libimobiledevice_1_0=yes, libimobiledevice_1_0=no)
 if test x"$libimobiledevice_1_0" = xyes; then
 AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
