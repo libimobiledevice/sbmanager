@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009-2010 Nikias Bassen <nikias@gmx.li>
  * Copyright (C) 2009-2010 Martin Szulecki <opensuse@sukimashita.com>
+ * Copyright (C) 2012-2015 Timothy Ward <gtwa001@gmail.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
