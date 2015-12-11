@@ -26,10 +26,10 @@ AC_PROG_LIBTOOL
 # AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
 # fi
 # FIX ME remove AC_define from code as no longer needed 
-PKG_CHECK_MODULES(libimobiledevice, libimobiledevice10 >= 1.2.0, libimobiledevice_1_0=yes, libimobiledevice_1_0=no)
-if test x"$libimobiledevice_1_0" = xyes; then
-AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
-fi
+PKG_CHECK_MODULES(libimobiledevice, libimobiledevice10 >= 1.2.0)
+# if test x"$libimobiledevice_1_0" = xyes; then
+# AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
+# fi
 
 # pkg-config --???? module (library name) to check version number
 # pkg-config --exists module (library name) to check module availablity
@@ -42,9 +42,9 @@ PKG_CHECK_MODULES(libclutter, clutter-1.0 >= 1.24.0)
 PKG_CHECK_MODULES(libgtk3, gtk+-3.0 >= 3.18.0)
 PKG_CHECK_MODULES(libcluttergtk, clutter-gtk-1.0 >= 1.6.0) 
 PKG_CHECK_MODULES(libgdkpixbuf, gdk-pixbuf-2.0 >= 2.16)
+PKG_CHECK_MODULES(libbz2, bzip2 >= 1.0) #Fedora has pkg-config file.
+ 
 
-# FIX-ME add bzip2 library 
-# PKG_CHECK_MODULES(libbz2, bzip2 >= 1.0)
 
 # Checks for header files.
 AC_HEADER_STDC

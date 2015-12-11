@@ -94,7 +94,7 @@ static void finished_cb(gboolean success)
     return TRUE;
 }
 
-
+/* FIXME - GTK3 application update */
  static gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
     gtk_widget_set_sensitive(btn_reload, FALSE);
@@ -105,7 +105,7 @@ static void finished_cb(gboolean success)
     return TRUE;
 } 
 
-
+/* FIXME - GTK3 application update */
 static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
  {
     const gchar *authors[] = {
@@ -142,7 +142,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
     return TRUE;
 } 
 
-
+/* FIXME - GTK3 application update */
 /* static void quit_program_cb(GtkWidget *widget, gpointer user_data)
 { */
     /* cleanup */
@@ -151,6 +151,7 @@ static gboolean info_button_clicked_cb(GtkButton *button, gpointer user_data)
     gtk_main_quit();
 } */
 
+/* FIXME - GTK3 application update */
  /* static gboolean quit_button_clicked_cb(GtkButton *button, gpointer user_data)
 {
     quit_program_cb(GTK_WIDGET(button), user_data);
@@ -361,12 +362,15 @@ int main(int argc, char **argv)
             return 0;
         }
     }
+    
 
+/* FIXME This need to be changed for GTK3 application as it produces two windows on gtk 3.18 */
     /* Create the window and some child widgets */
     wnd_init();
 
+  /* FIXME this need to change to gapplication code and then add the wnd_init() above as a child process*/
     /* Start the main loop, so we can respond to events */
-    gtk_main();
+    gtk_main(); 
 
     return 0;
 }
