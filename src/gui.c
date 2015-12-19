@@ -3546,9 +3546,6 @@ GtkWidget *gui_init()
 	gui_fade_init(); 
     gui_spinner_init();
 
-    /* Show the stage */
-    clutter_actor_show(stage);
-
     /* Create a timeline to manage animation */
     clock_timeline = clutter_timeline_new(200);
 
