@@ -1,13 +1,9 @@
  Timothy Ward <gtwa001@gmail> 2013-2015
 
-This is a change log for sbmanager to GTK3 for Gnome3.10 
-and Clutter Version 1.16-2 Development library.
+This is a change log for sbmanager to GTK3  
 
-Clutter Development Language
-Clutter-gst Version 1.6.0.8
-Clutter-gtk Version 1.4.4.3
 
-Sbmanager version = 0.16
+Sbmanager version = 0.12
 
 Change All Clutter deprecated functions to bring it up to clutter 1.14.4.
 There was a lot of deprecated functions as the Clutter API has changed a lot.
@@ -80,12 +76,13 @@ Added comments to top of functions in gui.c to better understand their intent fo
 
 Refactoring code in several functions which are quite complicated for what they achieve. WIP
 
+Sbmanager version = 0.16
+
 Updated to clutter version 1.14.4.4 for Gnome 3.8 on Fedora 19 This resulted in the Gui paging code working correctly.
 
+Sbmanager version = 0.18
 
-
-Started update to clutter version 1.2.4 clutter-gst 1.6.6 for Gnome 3.18.5 with gtk3 3.18.5 01/12/15 for Fedora 23. Minor updates to C Code and configure.ac
-On fedora 23 two sbmanager windows are created when the application runs which needs to be fixed.
+Started update to clutter version 1.2.4, clutter-gtk 1.6.6 for Gnome 3.18.5 with gtk3 3.18.5 01/12/15 for Fedora 23. Minor updates to C Code and configure.ac
 
 iconshadow.png file added to makefile.am to ensure it is installed in correct directory
 
