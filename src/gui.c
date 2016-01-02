@@ -3100,7 +3100,7 @@ static void gui_update_layout(device_info_t info) {
     clutter_actor_set_position(the_dock, dock_area.x1, dock_area.y1);
     clutter_actor_set_position(page_indicator_group, 0, stage_area.y2 - DOCK_HEIGHT - ICON_SPACING);
     clutter_actor_set_position(the_sb, sb_area.x1, sb_area.y1);
-    clutter_actor_set_position(battery_level, stage_area.x2 - 22, 6);
+    clutter_actor_set_position(battery_level, stage_area.x2 - 33, 6);
     clutter_actor_set_position(spinner, (stage_area.x2 - 32.0) / 2, (stage_area.y2 - 64.0) / 2);
 	clutter_actor_set_size(fade_rectangle, stage_area.x2, stage_area.y2);
 
@@ -3223,6 +3223,9 @@ GtkWidget *gui_init()
     /* clutter_stage_set_color(CLUTTER_STAGE(stage), &stage_color); */
 	
 	clutter_actor_set_background_color(CLUTTER_ACTOR(stage), &stage_color);
+	
+	/* FIXME THIS DOES NOT WORK set key focus of stage so left and right keyboard arrows work  */
+	 clutter_stage_set_key_focus(CLUTTER_STAGE(stage),NULL);
 
     /* attach to stage signals */
     g_signal_connect(stage, "motion-event", G_CALLBACK(stage_motion_cb), NULL);
@@ -3367,8 +3370,12 @@ GtkWidget *gui_init()
                           gdk_pixbuf_get_height (pixbuf1), 
                           gdk_pixbuf_get_rowstride (pixbuf1), 
                           &err);
-     
-	
+     if (err) {
+	    g_printerr("%s", err->message);
+	    fprintf(stderr,"\n%s\n",err->message);
+        g_error_free(err);
+        err = NULL; 
+	}
     g_object_unref (pixbuf1); 
 
     clutter_content_get_preferred_size(image1, &width1, &height1); 
