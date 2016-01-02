@@ -24,7 +24,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
- #include <config.h> /* for GETTEXT_PACKAGE */
+#include <config.h> /* for GETTEXT_PACKAGE */
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +36,8 @@
 #include <sys/time.h>
 #include <glib.h>
 #include <glib/gi18n-lib.h>
+
+
 
 #include <gtk/gtk.h>
 #include <clutter/clutter.h>
@@ -51,6 +53,7 @@ GtkWidget *btn_apply;
 /* GtkToolButton *btn_info; */
 GtkWidget *image;
 GtkWidget *buttonbox;
+/* GtkWidget *vbox; */
 
 
 
@@ -211,21 +214,28 @@ static void device_event_cb(const idevice_event_t *event, void *user_data)
     }
 }
 
+
+
 static void wnd_init()
 {
-    /* Create the clutter widget */
+	printf( "activated ");
+
+	/* Create the clutter widget */
     GtkWidget *sbmgr_widget = sbmgr_new();
     if (!sbmgr_widget) {
         return;
     }
-
-    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    
+	gtk_window_set_interactive_debugging(TRUE);
+    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL); 
+  	/*  main_window =gtk_application_window_new(GTK_APPLICATION (app)); */
     gtk_window_set_resizable(GTK_WINDOW(main_window), FALSE);
 
     gtk_window_set_title(GTK_WINDOW(main_window), PACKAGE_NAME);
 
 	/* gtk_vbox_new’ is deprecated TW 27/04/13 */
     /* GtkWidget *vbox = gtk_vbox_new(FALSE, 6); */
+	/* GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6); Gtk_Widget *vbox now decared global */
 	GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
 
     gtk_container_add(GTK_CONTAINER(main_window), vbox);
@@ -236,38 +246,38 @@ static void wnd_init()
     gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0); 
     buttonbox=gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 
- /* btn_reload = (GtkWidget*)gtk_tool_button_from_stock(GTK_STOCK_REFESH); original code */
+	 /* btn_reload = (GtkWidget*)gtk_tool_button_from_stock(GTK_STOCK_REFESH); original code */
  
  	btn_reload = (GtkWidget*)gtk_tool_button_new(gtk_image_new_from_icon_name("view-refresh",GTK_ICON_SIZE_BUTTON),NULL);
 
 	/* gtk_button_set_icon_name(btn_reload,"view-refresh"); */
 
-/*  btn_reload = (GtkWidget*)gtk_image_new_from_icon_name("view-refresh", GTK_ICON_SIZE_BUTTON); */
+	/*  btn_reload = (GtkWidget*)gtk_image_new_from_icon_name("view-refresh", GTK_ICON_SIZE_BUTTON); */
    
-/**************************************************************************************************/
-/* button = gtk_button_new();   */
-/* image = gtk_image_new_from_stock(GTK_STOCK_HOME, GTK_ICON_SIZE_BUTTON); */
-/* gtk_button_set_image(GTK_BUTTON(button),image); */
-/*  LOTS OF CHANGES TO DO HERE TO WORK WITH GTK3 -TW 18/8/14  */
-/**************************************************************************************************/
+	/**************************************************************************************************/
+	/* button = gtk_button_new();   */
+	/* image = gtk_image_new_from_stock(GTK_STOCK_HOME, GTK_ICON_SIZE_BUTTON); */
+	/* gtk_button_set_image(GTK_BUTTON(button),image); */
+	/*  LOTS OF CHANGES TO DO HERE TO WORK WITH GTK3 -TW 18/8/14  */
+	/**************************************************************************************************/
 
      gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(btn_reload), _("Reload icons from device")); 
      gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(btn_reload), -1); 
  
     /* btn_apply = (GtkWidget*)gtk_tool_button_new_from_stock(GTK_STOCK_APPLY); Original Code */
 
-  /*  btn_apply = gtk_button_new_with_label("Apply"); */
+	/*  btn_apply = gtk_button_new_with_label("Apply"); */
 
     btn_apply = (GtkWidget*)gtk_tool_button_new(gtk_image_new_from_icon_name("Apply",GTK_ICON_SIZE_BUTTON),NULL);
  
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(btn_apply), _("Upload changes to device"));  
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(btn_apply), -1); 
  
-/*  GtkToolItem *btn_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO); original code */
+	/*  GtkToolItem *btn_info = gtk_tool_button_new_from_stock(GTK_STOCK_INFO); original code */
  
-   GtkToolItem *btn_info = gtk_tool_button_new(gtk_image_new_from_icon_name("dialog-information",GTK_ICON_SIZE_BUTTON),NULL);
+   GtkToolItem *btn_info = gtk_tool_button_new(gtk_image_new_from_icon_name("dialoginformation",GTK_ICON_SIZE_BUTTON),NULL);
 
-   /* gtk_tool_button_set_label(btn_info,("dialog-information")); */
+	/* gtk_tool_button_set_label(btn_info,("dialog-information")); */
    
     gtk_tool_item_set_tooltip_text(btn_info,_("Get info about this cool program")); 
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar),GTK_TOOL_ITEM(btn_info), -1); 
@@ -276,9 +286,9 @@ static void wnd_init()
     gtk_tool_item_set_expand(spacer, TRUE);
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), spacer, -1); 
 
- /*  GtkToolItem *btn_quit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT); */
+	/*  GtkToolItem *btn_quit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT); */
 
- /*   GtkWidget *btn_quit = gtk_image_new_from_icon_name("application-exit", GTK_ICON_SIZE_BUTTON);
+	/*   GtkWidget *btn_quit = gtk_image_new_from_icon_name("application-exit", GTK_ICON_SIZE_BUTTON);
     Gtk_tool_button_set_icon_widget(toolbar, *btn_quit);
     gtk_tool_item_set_tooltip_text(btn_quit, _("Quit this program")); 
     gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_quit, -1); */
@@ -293,30 +303,33 @@ static void wnd_init()
     g_signal_connect(btn_info, "clicked", G_CALLBACK(info_button_clicked_cb), NULL); 
    /*  g_signal_connect(btn_quit, "clicked", G_CALLBACK(quit_button_clicked_cb), NULL); */
 
-    /* insert sbmgr widget */
+
+	/* insert sbmgr widget */
     gtk_box_pack_start(GTK_BOX(vbox), sbmgr_widget, TRUE, TRUE, 0);
-    gtk_widget_show(sbmgr_widget);
-    gtk_widget_grab_focus(sbmgr_widget);
+    /* gtk_widget_show(sbmgr_widget); */
+    gtk_widget_grab_focus(sbmgr_widget); 
 
     /* create a statusbar */
- /*  statusbar = gtk_statusbar_new();
+	 /*  statusbar = gtk_statusbar_new();
     :gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(statusbar), FALSE);
     gtk_box_pack_start(GTK_BOX(vbox), statusbar, FALSE, FALSE, 0);
     gtk_widget_show(statusbar); */
 
     /* attach to window signals */
- /*   g_signal_connect(G_OBJECT(main_window), "map-event", G_CALLBACK(win_map_cb), NULL); */
+ 	/*   g_signal_connect(G_OBJECT(main_window), "map-event", G_CALLBACK(win_map_cb), NULL); */
 
     /* Show the window. This also sets the stage's bounding box. */
-    gtk_widget_show_all(GTK_WIDGET(main_window));
+ 
+   gtk_widget_show_all(GTK_WIDGET(main_window));
 
     g_set_printerr_handler((GPrintFunc)gui_error_dialog);
 
     /* Stop the application when the window is closed */
- /*   g_signal_connect(main_window, "hide", G_CALLBACK(quit_program_cb), NULL); */
+		/*   g_signal_connect(main_window, "hide", G_CALLBACK(quit_program_cb), NULL); */
 
     /* get notified when plug in/out events occur */
     idevice_event_subscribe(device_event_cb, NULL);
+	
 }
 
 /* main */
@@ -337,7 +350,7 @@ static void print_usage(int argc, char **argv)
 int main(int argc, char **argv)
 {
     int i;
-
+	printf( "in main1 ");
     /* parse cmdline args */
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-d") || !strcmp(argv[i], "--debug")) {
@@ -361,16 +374,54 @@ int main(int argc, char **argv)
             print_usage(argc, argv);
             return 0;
         }
-    }
+}
     
 
-/* FIXME This need to be changed for GTK3 application as it produces two windows on gtk 3.18 */
+    
+
+	/* FIXME This need to be changed for GTK3 application as it produces two windows on gtk 3.18 */
     /* Create the window and some child widgets */
-    wnd_init();
+	 wnd_init();
+
+	/*    GApplication *app;
+ 	 int status; 
+	   int success; 
+	printf("in main2 ");
+	 gtk_init (NULL, NULL); 
+
+  app = g_application_new ("github.gitsop01.sbmanager", G_APPLICATION_IS_SERVICE);
+	printf( "in main3 ");
+   g_signal_connect (app, "activate ", G_CALLBACK (activate), NULL); 
+	printf( "in main4 ");
+ success = g_application_register (G_APPLICATION (app), NULL, NULL); 
+	printf( "in main5 ");
+  if (success == FALSE){
+   printf("g_application_register failed");
+  
+   } 
+	printf( "in main6 ");
+
+
+ 
+	g_application_activate (G_APPLICATION (app)); 
+	g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+
+	printf( "in main7 ");
+   g_application_run (G_APPLICATION (app), argc, argv); 
+   g_application_hold (G_APPLICATION (app)); 
+  
+	printf( "in main8 "); */
+ 
+
+  
+    
 
   /* FIXME this need to change to gapplication code and then add the wnd_init() above as a child process*/
     /* Start the main loop, so we can respond to events */
-    gtk_main(); 
 
-    return 0;
+    gtk_main();  
+
+	/*	g_application_run ( g_application_wnd_init(), argc, argv); */
+ 
+   return 0; 
 }
