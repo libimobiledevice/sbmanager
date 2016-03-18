@@ -3,7 +3,7 @@
 
 $(LIBDIR) :/usr/lib64
 AC_PREREQ(2.61) # minimum version Autoconf to use.
-AC_INIT(sbmanager, 0.1.8, www.git.com/gitsop/sbmanager)
+AC_INIT(sbmanager, 0.2.0, www.git.com/gitsop/sbmanager)
 AM_INIT_AUTOMAKE([dist-bzip2 no-dist-gzip])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 AC_CONFIG_SRCDIR([src/])
@@ -26,7 +26,7 @@ AC_PROG_LIBTOOL
 # AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1], 1, [Define if libimobiledevice is using 1.1.0 API])
 # fi
 # FIX ME remove AC_define from code as no longer needed 
-PKG_CHECK_MODULES(libimobiledevice, libimobiledevice10 >= 1.2.0)
+PKG_CHECK_MODULES(libimobiledevice, libimobiledevice-1.0 >= 1.2.0)
 # if test x"$libimobiledevice_1_0" = xyes; then
 # AC_DEFINE([HAVE_LIBIMOBILEDEVICE_1_1_5], 1, [Define if libimobiledevice is using 1.1.5 API])
 # fi
@@ -80,7 +80,7 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 AC_OUTPUT([
 Makefile
 data/Makefile
-data/sbmanager.desktop.in
+data/github.com.gitsop01.sbmanager.desktop.in
 src/Makefile
 po/Makefile.in
 ])

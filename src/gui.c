@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2009-2010 Nikias Bassen <nikias@gmx.li>
  * Copyright (C) 2009-2010 Martin Szulecki <opensuse@sukimashita.com>
- * Copyright (C) 2012-2015 Timothy Ward <gtwa001@gmail.com>
+ * Copyright (C) 2012-2016 Timothy Ward <gtwa001@gmail.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -886,7 +886,7 @@ plist_t gui_get_iconstate(const char *format_version)
 }
 
     /* input */
-    /* moves all sb-area icons to a specified coordinated position afaik */
+    /* Moves all sb-area icons to a specified coordinated position afaik */
     /* as the selected icon(mouse pointer) is moved around the stage */
     /* updates the glist info of the icon to its new position */
 
@@ -1926,10 +1926,10 @@ static gboolean item_button_press_cb(ClutterActor *actor, ClutterButtonEvent *ev
     return TRUE;
 }
 
-    /* returns false if no user data or double clicks and item not enabled,removes empty pages, */
-    /* sets item enabled to false, counts number of pages if not current page - sets current page. */
+    /* Returns false if no user data or double clicks and item not enabled,removes empty pages, */
+    /* Sets item enabled to false, counts number of pages if not current page - sets current page. */
     /* If actor, gets parent of actor and sets actor full size, sets opacity to 255 - if item is dock item */
-    /* set dock item text color and position of text and label shadow, reparents actor to dock, sets actors */
+    /* Set dock item text color and position of text and label shadow, reparents actor to dock, sets actors */
     /* position in dock, then calls function to align the dock items and another function to align the */
     /* page items of the current page */
 
@@ -2047,12 +2047,13 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
 }
 
     /* FIXME Allow switching pages using left and right arrow keys - but does not work at present */
+	/* may need key code not symbol to work */
 static gboolean stage_key_press_cb(ClutterActor *actor, ClutterEvent *event, gpointer user_data)
 {
     if (!user_data || (event->type != CLUTTER_KEY_PRESS)) {
         return FALSE;
     }
-
+	
     guint symbol = clutter_event_get_key_symbol(event);
     switch(symbol) {
         case CLUTTER_KEY_Right: /* altered for clutter-gst 1.6.6 */
@@ -3603,6 +3604,6 @@ void gui_deinit()
     clutter_timeline_stop(clock_timeline);
     device_info_free(device_info);
     gui_deinitialized = 1;
-    /* actors need to be g_object_unref(actor); */
+    /* FIXME actors need to be g_object_unref(actor); */
 
 }

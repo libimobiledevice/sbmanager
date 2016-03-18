@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Terminal=false
-_Name=SpringBoard Manager
-_Comment=Manage SpringBoard icons on iPhone/iPod Touch devices
-Icon=sbmanager
-Exec=sbmanager
-Categories=GNOME;GTK;Utility;
-StartupNotify=true
