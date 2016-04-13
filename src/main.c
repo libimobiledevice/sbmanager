@@ -343,7 +343,7 @@ static void start(GtkApplication *app, gpointer user_data)
 static void initoptions (GApplication *app)
 {
 printf("in initoptions\n");
-gboolean debuglevel = FALSE;
+gboolean *debuglevel = FALSE;
 gboolean debugapp = FALSE;
 gchar uuid[40];
 
@@ -376,11 +376,15 @@ gchar uuid[40];
 }
 
 
-static int localcommandline( GApplication *app, GVariantDict *options)
+static int localcommandline( GApplication *app, GApplicationCommandLine *cmdline)
 {
 printf("in handle_local_options\n");
 /* GError *error; */
-gboolean debuglevel = FALSE;
+const gchar *debuglevel;
+
+GVariantDict *options;
+
+	options = g_application_command_line_get_options_dict ( *cmdline);
 
 	if (g_variant_dict_contains (options, "verbose"))
 		g_setenv ("G_MESSAGES_DEBUG", "all", TRUE);
@@ -391,6 +395,10 @@ gboolean debuglevel = FALSE;
 		return 0;
 	}
 
+	if (g_variant_dict_contains (options, "--debug")) {
+		g_print ("sbmanager-debug \n");
+		return 0;
+	}
 /*	if (!g_application_register (app, NULL, &error)) {
 		g_printerr ("%s\n", error->message);
 		return 1;
@@ -399,6 +407,7 @@ gboolean debuglevel = FALSE;
 	if (g_variant_dict_lookup (options, "debug", "&s", &debuglevel)) {
 		printf("Found debug in commandline from dictionary\n");
 	}
+
 	/*	g_action_group_activate_action (G_ACTION_GROUP (app),
 						"set-mode",
 						g_variant_new_string (mode)); 
@@ -491,14 +500,15 @@ int main(int argc, char **argv)
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE); */
 
+
 	/* start up the application window with dbus activation */
 	
-	app = g_application_new ("github.com.gitsop01.sbmanager", G_APPLICATION_IS_SERVICE);
+	app = g_application_new ("github.com.gitsop01.sbmanager", G_APPLICATION_HANDLES_COMMAND_LINE);
 	 
 	initoptions (app);
 
 	/* FIXME the command-line signal is emitted when a commndline is not handled locally */
-	 g_signal_connect (app, "handle-local-options", G_CALLBACK (localcommandline), NULL); 
+	 g_signal_connect (app, "command-line", G_CALLBACK (localcommandline), NULL);
 	 g_signal_connect (app, "startup", G_CALLBACK (start), NULL);
 	 g_application_set_inactivity_timeout (app, 10000);
 	 
