@@ -1,0 +1,20 @@
+
+1) Remove Define for HAVE_LIBIMOBILEDEVICE_1_1_5 references in source code as as no longer needed. DONE
+
+2) Turn it into a true gtk3 application using gtkapplication with about-dialogue, quit and licence-dialogues and command-line arguments. USE g_application_quit to stop application WIP
+
+Remember dbus service file, .desktop file, start and activate signals etc WIP
+
+3) Refactor gui.c code for displaying folder as icons with mini-icons as per phone display this include
+open, move and close folder icon sections. Use clutter grid for icons on stage with dnd to move them- see if
+clutter contrainsts can be used to control movement of icons 
+
+4) Refactor drag and drop code to work correctly on the sb-area and dock area and between the two.
+
+5)Carry out and audit on the clutter code used for actor_raise_above to ensure it is used correctly.
+
+6) Remove licence info in each file to a seperate licence file - include full licence details
+
+7) Find out why keyboard left and right arrows do not work to page through the springbox display. 
+
+

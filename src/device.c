@@ -82,7 +82,7 @@ sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError
    /* uint16_t port = 0; */
     lockdownd_service_descriptor_t service = NULL;
 
-    printf("%s: %s\n", __func__, uuid);
+/*    printf("%s: %s\n", __func__, uuid); */
 	
 	/* g_mutex_init(idevice_mutex);  Added here to test TW 28/04/13 */
 
@@ -346,29 +346,30 @@ gboolean device_poll_battery_capacity(const char *uuid, device_info_t *device_in
     return res;
 }
 
-static void device_dump_info(device_info_t info) {
-    printf("%s: Device Information\n", __func__);
-
-    printf("%s: UUID: %s\n", __func__, info->uuid);
-    printf("%s: Name: %s\n", __func__, info->device_name);
-    printf("%s: Type: %s\n", __func__, info->device_type);
-
-    printf("%s: Battery\n", __func__);
-    printf("%s: PollInterval: %d\n", __func__, info->battery_poll_interval);
-    printf("%s: CurrentCapacity: %d\n", __func__, info->battery_capacity);
-
-    printf("%s: HomeScreen Settings\n", __func__);
-
-    printf("%s: IconColumns: %d\n", __func__, info->home_screen_icon_columns);
-    printf("%s: IconRows: %d\n", __func__, info->home_screen_icon_rows);
-    printf("%s: IconDockMaxCount: %d\n", __func__, info->home_screen_icon_dock_max_count);
-    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
-    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
-
-    printf("%s: IconFolder Settings\n", __func__);
-    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
-    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
-}
+/** static void device_dump_info(device_info_t info) {
+*    printf("%s: Device Information\n", __func__);
+*
+*    printf("%s: UUID: %s\n", __func__, info->uuid);
+*    printf("%s: Name: %s\n", __func__, info->device_name);
+*    printf("%s: Type: %s\n", __func__, info->device_type);
+*
+*    printf("%s: Battery\n", __func__);
+*    printf("%s: PollInterval: %d\n", __func__, info->battery_poll_interval);
+*    printf("%s: CurrentCapacity: %d\n", __func__, info->battery_capacity);
+*
+*    printf("%s: HomeScreen Settings\n", __func__);
+*
+*    printf("%s: IconColumns: %d\n", __func__, info->home_screen_icon_columns);
+*    printf("%s: IconRows: %d\n", __func__, info->home_screen_icon_rows);
+*    printf("%s: IconDockMaxCount: %d\n", __func__, info->home_screen_icon_dock_max_count);
+*    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
+*    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
+*
+*    printf("%s: IconFolder Settings\n", __func__);
+*    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
+*    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
+*}
+**/
 
 gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **error)
 {
@@ -380,13 +381,13 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
     lockdownd_client_t client = NULL;
     gboolean res = FALSE;
 
-    printf("%s: %s\n", __func__, uuid);
+ /*   printf("%s: %s\n", __func__, uuid); */
 
     if (!device_info) {
 	return res;
     }
 
-    printf("%s\n", __func__);
+ /*   printf("%s\n", __func__); */
 
    /* g_mutex_lock(idevice_mutex); */
     if (!device_connect(uuid, &phone, &client, error)) {
@@ -539,7 +540,8 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
 
     res = TRUE;
 
-    device_dump_info((*device_info));
+ /* FIXME Print device info for debugging */
+ /*   device_dump_info((*device_info)); */
 
   leave_cleanup:
     if (client) {

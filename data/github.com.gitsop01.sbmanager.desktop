@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Name=SpringBoard Manager
+Name[ja]=SpringBoard マネージャ
+Comment=Manage SpringBoard icons on iPhone/iPod Touch devices
+Comment[es]=Ejecuta SBManager para organizar el Springboard de este dispositivo
+Comment[it]=Organizza le icone della Springboard dell' iPhone/iPod Touch
+Comment[ja]=iPhone/iPod Touch の SpringBoard アイコンを管理します
+DBusActivatable=true
+Icon=sbmanager
+Exec=gapplication launch github.com.gitsop01.sbmanager
+Categories=GNOME;GTK;Utility;
+StartupNotify=true
