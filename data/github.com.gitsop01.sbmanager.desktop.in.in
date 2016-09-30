@@ -6,6 +6,6 @@ _Name=SpringBoard Manager
 _Comment=Manage SpringBoard icons on iPhone/iPod Touch devices
 DBusActivatable=true
 Icon=sbmanager
-Exec=gapplication launch github.com.gitsop01.sbmanager
+Exec=sbmanager
 Categories=GNOME;GTK;Utility;
 StartupNotify=true

@@ -64,10 +64,26 @@ struct _SbAppClass {
         GtkApplicationClass parent_class;
 };
 
+
+gboolean reload_button_clicked_cb(GtkButton *button, gpointer user_data);
+gboolean apply_button_clicked_cb(GtkButton *button, gpointer user_data);
+
+
+
+
+void gui_error_dialog(const gchar *string);
+void finished_cb(gboolean success);
+gpointer device_add_cb(gpointer user_data);
+void update_device_info_cb(const char *device_name, const char *device_type);
+void device_event_cb(const idevice_event_t *event, void *user_data);
+
+
+
 GType sb_app_get_type (void) G_GNUC_CONST;
 
 SbApp         *sb_app_new               (void);
 void           app_quit              (SbApp *self);
+SbApp 		*sb_app_start (GApplication *application);
 
 
 G_END_DECLS
