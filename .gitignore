@@ -8,7 +8,6 @@
 *.lo
 *.la
 autom4te.cache/*
-*.in
 */.deps/*
 m4/*
 *.swp

@@ -2,6 +2,7 @@ SBManager
 ----------
 Timothy Ward <gtwa001@gmail.com>
 
+This application works on gnome3 X11 and gnome-on-wayland.
 
 This code relies heavy on libimobiledevice communication
 and uses double linked Glist's for indexing and holding info.

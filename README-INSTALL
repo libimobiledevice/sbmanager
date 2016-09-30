@@ -1,0 +1,12 @@
+Please note,
+
+
+Sbmanager is now activated using gapplication, gapplication uses dbus for activation.
+This means a dbus.service file named github.com.gitsop01.sbmanager must be included in the dbus service file directory
+This is usually /usr/share/dbus-1/services but may be at a different location on your distribution.
+
+
+The application specific .desktop file is also renamed to github.com.gitsop01.sbmanager.desktop and is
+usually located in /usr/share/applications, but may be at a different location on your distribution.
+
+

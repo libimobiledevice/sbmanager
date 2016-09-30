@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2009-2010 Nikias Bassen <nikias@gmx.li>
  * Copyright (C) 2009-2010 Martin Szulecki <opensuse@sukimashita.com>
+ * Copyright (C) 2013-2016 Timothy Ward <gtwa001@gmail.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -76,8 +77,6 @@ sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError
     idevice_t phone = NULL;
     lockdownd_client_t client = NULL;
     lockdownd_service_descriptor_t service = NULL;
-
-    printf("%s: %s\n", __func__, uuid);
 
         if (!device_connect(uuid, &phone, &client, error)) {
         goto leave_cleanup;
@@ -329,29 +328,30 @@ gboolean device_poll_battery_capacity(const char *uuid, device_info_t *device_in
     return res;
 }
 
-static void device_dump_info(device_info_t info) {
-    printf("%s: Device Information\n", __func__);
-
-    printf("%s: UUID: %s\n", __func__, info->uuid);
-    printf("%s: Name: %s\n", __func__, info->device_name);
-    printf("%s: Type: %s\n", __func__, info->device_type);
-
-    printf("%s: Battery\n", __func__);
-    printf("%s: PollInterval: %d\n", __func__, info->battery_poll_interval);
-    printf("%s: CurrentCapacity: %d\n", __func__, info->battery_capacity);
-
-    printf("%s: HomeScreen Settings\n", __func__);
-
-    printf("%s: IconColumns: %d\n", __func__, info->home_screen_icon_columns);
-    printf("%s: IconRows: %d\n", __func__, info->home_screen_icon_rows);
-    printf("%s: IconDockMaxCount: %d\n", __func__, info->home_screen_icon_dock_max_count);
-    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
-    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
-
-    printf("%s: IconFolder Settings\n", __func__);
-    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
-    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
-}
+/** static void device_dump_info(device_info_t info) {
+*    printf("%s: Device Information\n", __func__);
+*
+*    printf("%s: UUID: %s\n", __func__, info->uuid);
+*    printf("%s: Name: %s\n", __func__, info->device_name);
+*    printf("%s: Type: %s\n", __func__, info->device_type);
+*
+*    printf("%s: Battery\n", __func__);
+*    printf("%s: PollInterval: %d\n", __func__, info->battery_poll_interval);
+*    printf("%s: CurrentCapacity: %d\n", __func__, info->battery_capacity);
+*
+*    printf("%s: HomeScreen Settings\n", __func__);
+*
+*    printf("%s: IconColumns: %d\n", __func__, info->home_screen_icon_columns);
+*    printf("%s: IconRows: %d\n", __func__, info->home_screen_icon_rows);
+*    printf("%s: IconDockMaxCount: %d\n", __func__, info->home_screen_icon_dock_max_count);
+*    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
+*    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
+*
+*    printf("%s: IconFolder Settings\n", __func__);
+*    printf("%s: IconWidth: %d\n", __func__, info->home_screen_icon_width);
+*    printf("%s: IconHeight: %d\n", __func__, info->home_screen_icon_height);
+*}
+**/
 
 gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **error)
 {
@@ -363,13 +363,13 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
     lockdownd_client_t client = NULL;
     gboolean res = FALSE;
 
-    printf("%s: %s\n", __func__, uuid);
+ /*   printf("%s: %s\n", __func__, uuid); */
 
     if (!device_info) {
 	return res;
     }
 
-    printf("%s\n", __func__);
+ /*   printf("%s\n", __func__); */
 
     if (!device_connect(uuid, &phone, &client, error)) {
         goto leave_cleanup;
@@ -398,26 +398,59 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
     lockdownd_get_value(client, NULL, "ProductType", &node);
     if (node) {
         char *devtype = NULL;
-        const char *devtypes[18][2] = {
+        const char *devtypes[51][2] = {
             {"iPhone1,1", "iPhone"},
             {"iPhone1,2", "iPhone 3G"},
             {"iPhone2,1", "iPhone 3GS"},
             {"iPhone3,1", "iPhone 4"},
             {"iPhone3,3", "iPhone 4 CDMA"},
             {"iPhone4,1", "iPhone 4S"},
+            {"iPhone5,1", "iPhone 5 (A1428)"},
+            {"iPhone5,2", "iPhone 5 (A1429)"},
+            {"iPhone5,3", "iPhone 5c (A1456/A1532)"},
+            {"iPhone5,4", "iPhone 5c (A1507/A1516/A1529)"},
+            {"iPhone6,1", "iPhone 5s (A1433/A1453)"},
+            {"iPhone6,2", "iPhone 5s (A1457/A1518/A1530)"},
+            {"iPhone7,1", "iPhone 6 Plus"},
+            {"iPhone7,2", "iPhone 6"},
+            {"iPhone8,1", "iPhone 6s"},
+            {"iPhone8,2", "iPhone 6s Plus"},
             {"iPad1,1", "iPad"},
-            {"iPad2,1", "iPad 2"},
+            {"iPad2,1", "iPad 2 (WiFi"},
             {"iPad2,2", "iPad 2 3G GSM"},
             {"iPad2,3", "iPad 2 3G CDMA"},
-            {"iPad2,4", "iPad"},
+            {"iPad2,4", "iPad 2 WiFi Revised"},
+            {"iPad2,5", "iPad Mini (WiFi)"},
+            {"iPad2,6", "iPad Mini (A1454)"},
+            {"iPad2,7", "iPad Mini (A1455)"},
             {"iPad3,1", "iPad (3rd Gen)"},
             {"iPad3,2", "iPad 4G LTE (3rd Gen)"},
             {"iPad3,3", "iPad 4G LTE (3rd Gen)"},
+            {"iPad3,4", "iPad 4G (4th Gen WiFi)"},
+            {"iPad3,5", "iPad 4G (4th Gen A1459)"},
+            {"iPad3,6", "iPad 4G (4th Gen A1460)"},
+            {"iPad4,1", "iPad Air (WiFi)"},
+            {"iPad4,2", "iPad Air (WiFi+LTE)"},
+            {"iPad4,3", "iPad Air (Rev)"},
+            {"iPad4,4", "iPad Mini 2 (WiFi)"},
+            {"iPad4,5", "iPad Mini 2 (WiFi+LTE)"},
+            {"iPad4,6", "iPad Mini 2 (Rev)"},
+            {"iPad4,7", "iPad Mini 3 (WiFi)"},
+            {"iPad4,8", "iPad Mini 3 (A1600)"},
+            {"iPad4,9", "iPad Mini 3 (A1601)"},
+            {"iPad5,1", "iPad Mini 4 (WiFi)"},
+            {"iPad5,2", "iPad Mini 4 (WiFi+LTE)"},
+            {"iPad5,3", "iPad Air 2 (WiFi)"},
+            {"iPad5,4", "iPad air 2 (WiFi+LTE)"},
+            {"iPad6,7", "iPad Pro (WiFi)"},
+            {"iPad6,8", "iPad Pro 2 (WiFi+LTE)"},
             {"iPod1,1", "iPod Touch"},
-            {"iPod2,1", "iPod Touch (2G)"},
-            {"iPod3,1", "iPod Touch (3G)"},
-            {"iPod4,1", "iPod Touch (4G)"}
-        };
+            {"iPod2,1", "iPod Touch (2nd Gen)"},
+            {"iPod3,1", "iPod Touch (3rd Gen)"},
+            {"iPod4,1", "iPod Touch (4th Gen)"},
+			{"iPod5,1", "iPod Touch (5th Gen)"},
+			{"iPod7,1", "iPod Touch (6th Gen)"},
+	};
         plist_get_string_val(node, &devtype);
         if (devtype) {
             int i;
@@ -488,7 +521,8 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
 
     res = TRUE;
 
-    device_dump_info((*device_info));
+ /* FIXME Print device info for debugging */
+ /*   device_dump_info((*device_info)); */
 
   leave_cleanup:
     if (client) {

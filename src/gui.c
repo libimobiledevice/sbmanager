@@ -763,6 +763,7 @@ plist_t gui_get_iconstate(const char *format_version)
      * updates the glist info of the icon to its new position
      */
 
+
 static gboolean stage_motion_cb(ClutterActor *actor, ClutterMotionEvent *event, gpointer user_data)
 {
     /* check if an item has been raised */
@@ -1638,12 +1639,13 @@ static gboolean item_button_release_cb(ClutterActor *actor, ClutterButtonEvent *
 }
 
     /* FIXME Allow switching pages using left and right arrow keys - but does not work at present */
+	/* may need key code not symbol to work */
 static gboolean stage_key_press_cb(ClutterActor *actor, ClutterEvent *event, gpointer user_data)
 {
     if (!user_data || (event->type != CLUTTER_KEY_PRESS)) {
         return FALSE;
     }
-
+	
     guint symbol = clutter_event_get_key_symbol(event);
     switch(symbol) {
         case CLUTTER_KEY_Right: /* altered for clutter-gst 1.6.6 */
@@ -2087,6 +2089,7 @@ static gboolean sbitem_texture_new(gpointer data)
 	
     /* create item */
     item->texture = actor; 
+
         if(item->texture == NULL){
         fprintf(stderr, "\nERROR:item->texture = NULL\n");
 	}
@@ -2100,10 +2103,12 @@ static gboolean sbitem_texture_new(gpointer data)
 
     char *txtval = sbitem_get_display_name(item);
     if (txtval) {
+
         item->label = clutter_text_new_with_text(ITEM_FONT, txtval);
         clutter_actor_hide(item->label); 
         
       /*  if (wallpaper) { */
+
             item->label_shadow = clutter_text_new_full(ITEM_FONT, txtval, &label_shadow_color);
             clutter_actor_hide(item->label_shadow);
     }
@@ -2472,7 +2477,8 @@ static void gui_update_layout(device_info_t info) {
     stage_area.y2 += ((ICON_SPACING*2) * info->home_screen_icon_rows);
     stage_area.y2 += DOCK_HEIGHT;
 
-    printf("%s: stage_area x: %f, y: %f, width: %f, height: %f\n", __func__, stage_area.x1, stage_area.y1, stage_area.x2, stage_area.y2);
+/*  FIXME Used for Trouble-shooting either include in debugging code or remove */
+/*    printf("%s: stage_area x: %f, y: %f, width: %f, height: %f\n", __func__, stage_area.x1, stage_area.y1, stage_area.x2, stage_area.y2); */
 
     /* update areas */
     dock_area.x1 = 0.0;
@@ -2480,14 +2486,16 @@ static void gui_update_layout(device_info_t info) {
     dock_area.x2 = stage_area.x2;
     dock_area.y2 = stage_area.y2;
 
-    printf("%s: dock_area x: %f, y: %f, width: %f, height: %f\n", __func__, dock_area.x1, dock_area.y1, dock_area.x2, dock_area.y2);
+/*  FIXME Used for Trouble-shooting either include in debugging code or remove */
+/*    printf("%s: dock_area x: %f, y: %f, width: %f, height: %f\n", __func__, dock_area.x1, dock_area.y1, dock_area.x2, dock_area.y2); */
 
     sb_area.x1 = 0.0;
     sb_area.y1 = ICON_SPACING;
     sb_area.x2 = stage_area.x2;
     sb_area.y2 = dock_area.y1;
 
-    printf("%s: sb_area x: %f, y: %f, width: %f, height: %f\n", __func__, sb_area.x1, sb_area.y1, sb_area.x2, sb_area.y2);
+/*  FIXME Used for Trouble-shooting either include in debugging code or remove */
+/*   printf("%s: sb_area x: %f, y: %f, width: %f, height: %f\n", __func__, sb_area.x1, sb_area.y1, sb_area.x2, sb_area.y2); */
 
     /* update triggers */
     left_trigger.x1 = -ICON_SPACING - 2;
@@ -2495,14 +2503,16 @@ static void gui_update_layout(device_info_t info) {
     left_trigger.x2 = -(ICON_SPACING / 2);
     left_trigger.y2 = stage_area.y2 - DOCK_HEIGHT - ICON_SPACING;
 
-    printf("%s: left_trigger x: %f, y: %f, width: %f, height: %f\n", __func__, left_trigger.x1, left_trigger.y1, left_trigger.x2, left_trigger.y2);
+/*  FIXME Used for Trouble-shooting either include in debugging code or remove */
+/*    printf("%s: left_trigger x: %f, y: %f, width: %f, height: %f\n", __func__, left_trigger.x1, left_trigger.y1, left_trigger.x2, left_trigger.y2); */
 
     right_trigger.x1 = stage_area.x2 + (ICON_SPACING / 2);
     right_trigger.y1 = ICON_SPACING;
     right_trigger.x2 = stage_area.x2 + (ICON_SPACING*2);
     right_trigger.y2 = stage_area.y2 - DOCK_HEIGHT - ICON_SPACING;
 
-    printf("%s: right_trigger x: %f, y: %f, width: %f, height: %f\n", __func__, right_trigger.x1, right_trigger.y1, right_trigger.x2, right_trigger.y2);
+/*  FIXME Used for Trouble-shooting either include in debugging code or remove */
+/*    printf("%s: right_trigger x: %f, y: %f, width: %f, height: %f\n", __func__, right_trigger.x1, right_trigger.y1, right_trigger.x2, right_trigger.y2); */
 
     /* update widget to new layout */
     gtk_widget_set_size_request(clutter_gtk_widget, stage_area.x2, stage_area.y2);
@@ -2560,7 +2570,7 @@ static gboolean device_info_cb(gpointer user_data)
 
 void gui_pages_load(const char *uuid, device_info_cb_t info_cb, finished_cb_t finished_cb)
 {
-    printf("%s: %s\n", __func__, uuid);
+ /*   printf("%s: %s\n", __func__, uuid); */
     finished_callback = finished_cb;
     device_info_callback = info_cb;
 
@@ -2875,6 +2885,8 @@ void gui_deinit()
     clutter_timeline_stop(clock_timeline);
     device_info_free(device_info);
     gui_deinitialized = 1;
-    /* FIXME All actors need to be g_object_unref(actor); */
+
+    /* FIXME actors need to be g_object_unref(actor); */
+
 
 }
