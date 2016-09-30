@@ -39,14 +39,11 @@
 
 #include "device.h"
 
-/* static GMutex *idevice_mutex = NULL; */ /* Static GMutex moved to actual Function that uses it TW 28/04/13 */
 static GQuark device_domain = 0;
 
 void device_init()
 {
-	/* Changed from g_mutex_new to g_mutex_init due deprecated. TW 17/04/13 */
-   /* idevice_mutex = g_mutex_new(); */
-	/* idevice_mutex = g_mutex_init(); */  /* g_mutex_init  moved to actual Function that uses it TW 28/04/13 */
+
     device_domain = g_quark_from_string("libimobiledevice");
 }
 
@@ -74,19 +71,15 @@ static gboolean device_connect(const char *uuid, idevice_t *phone, lockdownd_cli
 
 sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError **error)
 {
-	/* static GMutex *idevice_mutex = NULL; */
+
     sbservices_client_t sbc = NULL;
     idevice_t phone = NULL;
     lockdownd_client_t client = NULL;
-   /* uint16_t port = 0; */
     lockdownd_service_descriptor_t service = NULL;
 
     printf("%s: %s\n", __func__, uuid);
-	
-	/* g_mutex_init(idevice_mutex);  Added here to test TW 28/04/13 */
 
-   /* g_mutex_lock(idevice_mutex); */
-    if (!device_connect(uuid, &phone, &client, error)) {
+        if (!device_connect(uuid, &phone, &client, error)) {
         goto leave_cleanup;
     }
 
@@ -106,12 +99,12 @@ sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError
             }
         }
     }
-									/* service changed from &port to match libimobiledevice TW 17/04/13 */
+
     if ((lockdownd_start_service(client, "com.apple.springboardservices", &service) != LOCKDOWN_E_SUCCESS) || !service) {
         if (error)
             *error = g_error_new(device_domain, EIO, _("Could not start com.apple.springboardservices service! Remind that this feature is only supported in OS 3.1 and later!"));
         goto leave_cleanup;
-    }					/* port changed to service to match libimobiledevice TW 19/04/13 */
+    }
     if (sbservices_client_new(phone, service, &sbc) != SBSERVICES_E_SUCCESS) {
         if (error)
             *error = g_error_new(device_domain, EIO, _("Could not connect to springboardservices!"));
@@ -123,7 +116,6 @@ sbservices_client_t device_sbs_new(const char *uuid, uint32_t *osversion, GError
         lockdownd_client_free(client);
     }
     idevice_free(phone);
-  /*  g_mutex_unlock(idevice_mutex); */
 
     return sbc;
 }
@@ -143,11 +135,8 @@ gboolean device_sbs_get_iconstate(sbservices_client_t sbc, plist_t *iconstate, c
     *iconstate = NULL;
     if (sbc) {
         sbservices_error_t err;
-/* #ifdef HAVE_LIBIMOBILEDEVICE_1_1_5 */
+
         err = sbservices_get_icon_state(sbc, &iconstate_loc, format_version);
-/* #else
-        err = sbservices_get_icon_state(sbc, &iconstate_loc);
-#endif */
         if (err != SBSERVICES_E_SUCCESS || !iconstate_loc) {
             if (error)
                 *error = g_error_new(device_domain, EIO, _("Could not get icon state!"));
@@ -178,8 +167,7 @@ gboolean device_sbs_save_icon(sbservices_client_t sbc, char *display_identifier,
     if ((sbservices_get_icon_pngdata(sbc, display_identifier, &png, &pngsize) == SBSERVICES_E_SUCCESS) && (pngsize > 0)) {
         /* save png icon to disk */
         res = g_file_set_contents (filename, png, pngsize, error);
-		/* fprintf(stderr,"\n device_sbs_save_icon file name = %s \n",filename); TW 01/05/13 */
-    } else {
+		} else {
         if (error)
             *error = g_error_new(device_domain, EIO, _("Could not get icon png data for '%s'"), display_identifier);
     }
@@ -210,7 +198,7 @@ gboolean device_sbs_set_iconstate(sbservices_client_t sbc, plist_t iconstate, GE
     return result;
 }
 
-/* #ifdef HAVE_LIBIMOBILEDEVICE_1_1_5 */
+
 char *device_sbs_save_wallpaper(sbservices_client_t sbc, const char *uuid, GError **error)
 {
     char *res = NULL;
@@ -250,7 +238,7 @@ char *device_sbs_save_wallpaper(sbservices_client_t sbc, const char *uuid, GErro
     }
     return res;
 }
-/* #endif */
+
 
 device_info_t device_info_new()
 {
@@ -302,7 +290,6 @@ static guint battery_info_get_current_capacity(plist_t battery_info)
 }
 
 gboolean device_poll_battery_capacity(const char *uuid, device_info_t *device_info, GError **error) {
-   /* static GMutex *idevice_mutex = NULL; */
 	plist_t node = NULL;
     idevice_t phone = NULL;
     lockdownd_client_t client = NULL;
@@ -316,9 +303,7 @@ gboolean device_poll_battery_capacity(const char *uuid, device_info_t *device_in
 
     printf("%s\n", __func__);
 
-	
-    /* g_mutex_lock(idevice_mutex); */
-    if (!device_connect(uuid, &phone, &client, error)) {
+	    if (!device_connect(uuid, &phone, &client, error)) {
         goto leave_cleanup;
     }
 
@@ -340,7 +325,6 @@ gboolean device_poll_battery_capacity(const char *uuid, device_info_t *device_in
         lockdownd_client_free(client);
     }
     idevice_free(phone);
-    /* g_mutex_unlock(idevice_mutex); */
 
     return res;
 }
@@ -371,7 +355,7 @@ static void device_dump_info(device_info_t info) {
 
 gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **error)
 {
-	/* static GMutex *idevice_mutex = NULL; */
+
     uint8_t boolean = FALSE;
     uint64_t integer = 60;
     plist_t node = NULL;
@@ -387,7 +371,6 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
 
     printf("%s\n", __func__);
 
-   /* g_mutex_lock(idevice_mutex); */
     if (!device_connect(uuid, &phone, &client, error)) {
         goto leave_cleanup;
     }
@@ -512,7 +495,7 @@ gboolean device_get_info(const char *uuid, device_info_t *device_info, GError **
         lockdownd_client_free(client);
     }
     idevice_free(phone);
-   /* g_mutex_unlock(idevice_mutex); */
+
 
     return res;
 }
