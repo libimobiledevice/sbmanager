@@ -1,0 +1,8 @@
+	../data/sbmanager.desktop.in.in \
+	../src/device.c \
+	../src/gui.c \
+	../src/iconstate.c \
+	../src/main.c \
+	../src/sbitem.c \
+	../src/sbmgr.c \
+	../src/utility.c

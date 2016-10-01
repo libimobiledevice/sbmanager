@@ -1,22 +1,53 @@
 SBManager
 ----------
+Timothy Ward <gtwa001@gmail.com>
+
+This application works on gnome3 X11 and gnome-on-wayland.
+
+This code relies heavy on libimobiledevice communication
+and uses double linked Glist's for indexing and holding info.
+It is not really suited for beginners as the learning curve will be
+steep to gasp the concepts as well as learn the Clutter API.
+But this is up to you to decide. 
+
+Because it was experimental/proof of concept code there 
+are many areas were the code could be refactored to 
+suit the application better and make it simpler- 
+using both Clutter and rewriting the backend operation to 
+the phone etc. It does have some smart sections coded into it
+and the original authors should be proud of there achievement.
+ 
+This code is for gtk3 for Gnome3= 3.18.5 with code updated for clutter-1.24.2.
+
+This is experimental code only and still unstable in some areas.
+This is a development fork only - Use at your own risk.
+
+This fork does not have all the features below at present.
 
 SBManager is a program which allows to manage the SpringBoard icons on any
 iPhone/iPod Touch device running firmware 3.1 or later.
 
 This project has the following features:
 
-* Show SpringBoard icons as they appear on the device display.
-* Manage icons using drag and drop and upload changes back to the device.
-* Smooth hardware accelerated animations using the Clutter library.
-* Show the device's battery level and current clock.
-* Supports "five icon dock" extension.
+* Show SpringBoard icons as they appear on the device display.- STABLE
+* Manage icons using drag and drop and upload changes back to the device. - UNSTABLE
+* Smooth hardware accelerated animations using the Clutter library. - STABLE
+* Show the device's battery level and current clock. - STABLE
+* Supports "five icon dock" extension. - NOT TESTED
 
-Source Code Repository:
-	http://cgit.sukimashita.com/sbmanager.git/
+ORIGINAL Source Code Repository:
+http://cgit.sukimashita.com/sbmanager.git/
 
-For more information:
-	http://matt.colyer.name/projects/iphone-linux/
+MIRRORED ON:
+https://github.com/libimobivedevice/sbmanager
+
+GTK3 DEVELOPMENT FORK:
+https://github.com/gitsop01/sbmanager
+
+For more information about the original project:
+
+https://github.com/libimobiledevice/sbmanager
+http://matt.colyer.name/projects/iphone-linux/
 
 README updated on:
-	2010-01-05
+2015-12-12

@@ -1,0 +1,97 @@
+ Timothy Ward <gtwa001@gmail> 2013-2015
+
+This is a change log for sbmanager to GTK3  
+
+
+Sbmanager version = 0.1.2
+
+Change All Clutter deprecated functions to bring it up to clutter 1.14.4.
+There was a lot of deprecated functions as the Clutter API has changed a lot.
+
+Change code for all compiler warnings for both GTK3 and minor libimobiledevice 
+library calls and function arguments.
+
+At this point the code compiled using gcc but the application failed to run due
+to gtk2 and gtk3 library available.  
+
+For development test remove GTK2 library from development system
+to ensure the application still runs. The application should operate
+with both gtk2 and gtk3 libraries available but at the moment I have removed it
+from the development system to concentrate on changes above and debugging of code
+in general. This may have been a bug in gtk2 library.
+
+Recompile using only gtk3 library installed.
+
+The application failed to run due to Gmutex locks and these where removed in the code
+but a review will be done when the code base is stable to ensure that in the areas
+that the Gmutex where removed that this does not cause stability issues. At this time
+debugger sessions indicated that the application is stable with the Gmutex locks removed.
+
+The initial test of the application failed to run due to Gmutex locks and unlocks
+    although some of the library used are thread safe or their functions are thread safe
+    this file is a reminder to review the source code when development reaches a stable
+    code base.
+
+
+    The Glib threading system is automatically initialised at the start of the program
+    Ref: - Glib Reference manual - Glib is thread safe
+
+    GMutex Locks
+    Clutter threading support is initialized when Clutter is initialized 
+    Ref : Clutter Reference Manual
+
+
+Thread code functions was altered to include a name for debugging and due to deprecated functions.
+
+A callback function was fixed that allowed the icons to load to the stage
+
+Deprecated timing functions and Clutter callback functions altered were necessary.
+
+At this point the application ran but did not load any initial Gui image data files.
+
+Further clutter code was added to load icons, and needs further cleanup and proper error code
+handling .
+
+Clutter code was added to the gui.c file for initial gui image files load but failed due to not
+setting the size of the images in clutter,further cleanup and error code handling still to be 
+done.
+
+Lots of debugging code added around Clutter functions to isolate Clutter critical run time errors
+or for debugging code in general.
+
+Gui-init - added error handling for new image file loading code.
+
+Fixed background color for folders, gui fade in/out and spinner routines and
+battery display which had not been altered in the original Clutter code update.
+
+Code review for all clutter code to ensure correct functions are being used and arguments are correct
+after finding several clutter actor functions and/or arguments that were not correct.
+
+Trouble-shooting of icon why the are not following the mouse position when selected. WIP
+
+Trouble-shooting why folders are not being opened and closed correctly. WIP
+NOTE:check code in areas for commented out reparenting functions as folders were opening.
+
+Added comments to top of functions in gui.c to better understand their intent for trouble-shooting. WIP
+
+Refactoring code in several functions which are quite complicated for what they achieve. WIP
+
+Sbmanager version = 0.1.6
+
+Updated to clutter version 1.14.4.4 for Gnome 3.8 on Fedora 19 This resulted in the Gui paging code working correctly.
+
+Sbmanager version = 0.1.8
+
+Started update to clutter version 1.2.4, clutter-gtk 1.6.6 for Gnome 3.18.5 with gtk3 3.18.5 01/12/15 for Fedora 23. Minor updates to C Code and configure.ac
+
+iconshadow.png file added to makefile.am to ensure it is installed in correct directory
+
+Sbmanager version = 0.2.0
+
+gapplication code added for dbus activation for gnome 3  
+
+application runs on X window server as well as wayland
+
+
+
+

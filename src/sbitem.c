@@ -132,9 +132,7 @@ char *sbitem_get_icon_filename(SBItem *item)
     char *filename, *path;
 
     if (create_dir == FALSE) {
-      path = g_build_filename (g_get_user_cache_dir (),
-			       "libimobiledevice",
-			       "icons", NULL);
+      path = g_build_filename (g_get_user_cache_dir (), "libimobiledevice", "icons", NULL);
       if (g_mkdir_with_parents (path, 0755) >= 0)
         create_dir = TRUE;
       g_free (path);
@@ -145,10 +143,7 @@ char *sbitem_get_icon_filename(SBItem *item)
         return NULL;
 
     filename = g_strdup_printf ("%s.png", value);
-    path = g_build_filename (g_get_user_cache_dir (),
-			     "libimobiledevice",
-			     "icons",
-			     filename, NULL);
+    path = g_build_filename (g_get_user_cache_dir (),"libimobiledevice", "icons", filename, NULL);
     g_free (filename);
     return path;
 }
