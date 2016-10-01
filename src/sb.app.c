@@ -46,7 +46,7 @@ GtkWidget *buttonbox;
 char *match_uuid = NULL;
 char *current_uuid = NULL;
 
-/*
+/* FIXME -
  * static void
  *app_quit_cb (GSimpleAction *simple, GVariant *parameter, gpointer user_data)
  * {
