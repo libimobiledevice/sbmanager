@@ -46,17 +46,18 @@ GtkWidget *buttonbox;
 char *match_uuid = NULL;
 char *current_uuid = NULL;
 
-
-static void
-app_quit_cb (GSimpleAction *simple, GVariant *parameter, gpointer user_data)
-{
-
-    /* cleanup */
-    sbmgr_finalize();
-    idevice_event_unsubscribe();
-    debug_printf("quit-called\n");
-	gtk_widget_destroy(main_window);
-}
+/*
+ * static void
+ *app_quit_cb (GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+ * {
+ *
+ *   // cleanup 
+ *   sbmgr_finalize();
+ *   idevice_event_unsubscribe();
+ *   debug_printf("quit-called\n");
+ *	gtk_widget_destroy(main_window);
+ * }
+ */
 
 static void
 about_cb (GSimpleAction *simple, GVariant *parameter, gpointer user_data)
@@ -107,7 +108,7 @@ static void
 sb_app_startup (GApplication *application)
 {
 
-         SbApp *app = SB_APP (application);
+      /*   SbApp *app = SB_APP (application); */
      /*   SbAppPrivate *priv = dh_app_get_instance_private (app); */
 
               /* Chain up parent's startup */
@@ -287,6 +288,7 @@ sb_app_start (GApplication *application)
 
     /* Stop the application when the window is closed */
 	g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_widget_destroyed), &main_window);
+  /*  g_signal_connect(main_window, "destroy", G_GALLBACK(app_quit_cb), NULL); */
 
     /* get notified when plug in/out events occur */
     idevice_event_subscribe(device_event_cb, NULL);
